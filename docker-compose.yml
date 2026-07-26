@@ -1,0 +1,76 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      APP_ENV: docker
+      LOG_LEVEL: INFO
+      OLLAMA_BASE_URL: http://ollama:11434
+      CHAT_MODEL: gemma3:4b
+      EMBED_MODEL: bge-m3
+      CHROMA_HOST: chroma
+      CHROMA_PORT: 8000
+      CHROMA_COLLECTION: crop_knowledge_base
+      BM25_CACHE_TTL_SECONDS: 300
+      CROP_REGISTRY_PATH: /app/data/crops.json
+      RERANKER_ENABLED: "true"
+      RERANKER_MODEL: BAAI/bge-reranker-v2-m3
+      RERANKER_USE_FP16: "false"
+      RERANKER_QUERY_MAX_LENGTH: 256
+      RERANKER_PASSAGE_MAX_LENGTH: 512
+      RERANKER_FAIL_OPEN: "true"
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    volumes:
+      - ./data:/app/data
+      - huggingface_cache:/models/huggingface
+    depends_on:
+      chroma:
+        condition: service_started
+      ollama-init:
+        condition: service_completed_successfully
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  ollama-init:
+    image: ollama/ollama:latest
+    restart: "no"
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["/bin/sh", "-c"]
+    command: >-
+      ollama pull gemma3:4b &&
+      ollama pull bge-m3
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+  chroma:
+    image: chromadb/chroma:latest
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/data
+
+volumes:
+  ollama_data:
+  chroma_data:
+  huggingface_cache:

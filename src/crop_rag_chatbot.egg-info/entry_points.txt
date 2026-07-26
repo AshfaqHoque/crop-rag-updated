@@ -1,0 +1,2 @@
+[console_scripts]
+crop-rag-ingest = app.ingestion.loader:main

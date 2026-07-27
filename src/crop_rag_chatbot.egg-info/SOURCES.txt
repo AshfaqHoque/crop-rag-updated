@@ -44,6 +44,7 @@ src/crop_rag_chatbot.egg-info/dependency_links.txt
 src/crop_rag_chatbot.egg-info/entry_points.txt
 src/crop_rag_chatbot.egg-info/requires.txt
 src/crop_rag_chatbot.egg-info/top_level.txt
+tests/test.py
 tests/test_chat_api.py
 tests/test_chat_service.py
 tests/test_generate_node.py

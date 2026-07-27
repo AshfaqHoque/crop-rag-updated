@@ -1,0 +1,1299 @@
+[
+  {
+    "test_number": 1,
+    "query": "What is the seed rate for aman rice?",
+    "expected": [
+      "seed"
+    ],
+    "actual": [
+      "seed"
+    ],
+    "passed": true,
+    "time_seconds": 19.368
+  },
+  {
+    "test_number": 2,
+    "query": "How much seed is required for one acre of wheat?",
+    "expected": [
+      "seed"
+    ],
+    "actual": [
+      "seed"
+    ],
+    "passed": true,
+    "time_seconds": 6.347
+  },
+  {
+    "test_number": 3,
+    "query": "How should I treat maize seeds before sowing?",
+    "expected": [
+      "seed"
+    ],
+    "actual": [
+      "seed"
+    ],
+    "passed": true,
+    "time_seconds": 6.306
+  },
+  {
+    "test_number": 4,
+    "query": "What is the correct sowing distance for onion?",
+    "expected": [
+      "seed"
+    ],
+    "actual": [
+      "seed"
+    ],
+    "passed": true,
+    "time_seconds": 6.239
+  },
+  {
+    "test_number": 5,
+    "query": "When should I sow mustard seeds?",
+    "expected": [
+      "seed"
+    ],
+    "actual": [
+      "seed"
+    ],
+    "passed": true,
+    "time_seconds": 6.132
+  },
+  {
+    "test_number": 6,
+    "query": "বোরো ধানের বীজের হার কত?",
+    "expected": [
+      "seed"
+    ],
+    "actual": [
+      "seed"
+    ],
+    "passed": true,
+    "time_seconds": 5.659
+  },
+  {
+    "test_number": 7,
+    "query": "বীজ শোধন কীভাবে করব?",
+    "expected": [
+      "seed"
+    ],
+    "actual": [
+      "seed"
+    ],
+    "passed": true,
+    "time_seconds": 6.254
+  },
+  {
+    "test_number": 8,
+    "query": "ধানের চারা কত দিনের হলে রোপণ করব?",
+    "expected": [
+      "seed"
+    ],
+    "actual": [
+      "seed"
+    ],
+    "passed": true,
+    "time_seconds": 6.095
+  },
+  {
+    "test_number": 9,
+    "query": "গম বপনের সঠিক দূরত্ব কত?",
+    "expected": [
+      "seed"
+    ],
+    "actual": [
+      "seed"
+    ],
+    "passed": true,
+    "time_seconds": 5.567
+  },
+  {
+    "test_number": 10,
+    "query": "How do I prepare a rice nursery?",
+    "expected": [
+      "seed"
+    ],
+    "actual": [
+      "seed",
+      "land_preparation"
+    ],
+    "passed": false,
+    "time_seconds": 6.646
+  },
+  {
+    "test_number": 11,
+    "query": "How should I prepare land for potato cultivation?",
+    "expected": [
+      "land_preparation"
+    ],
+    "actual": [
+      "land_preparation"
+    ],
+    "passed": true,
+    "time_seconds": 6.971
+  },
+  {
+    "test_number": 12,
+    "query": "How many times should the field be ploughed for wheat?",
+    "expected": [
+      "land_preparation"
+    ],
+    "actual": [
+      "land_preparation"
+    ],
+    "passed": true,
+    "time_seconds": 7.91
+  },
+  {
+    "test_number": 13,
+    "query": "What is the best way to prepare raised beds for vegetables?",
+    "expected": [
+      "land_preparation"
+    ],
+    "actual": [
+      "land_preparation"
+    ],
+    "passed": true,
+    "time_seconds": 6.975
+  },
+  {
+    "test_number": 14,
+    "query": "How do I level a rice field before planting?",
+    "expected": [
+      "land_preparation"
+    ],
+    "actual": [
+      "land_preparation"
+    ],
+    "passed": true,
+    "time_seconds": 6.802
+  },
+  {
+    "test_number": 15,
+    "query": "মরিচ চাষের জন্য জমি কীভাবে প্রস্তুত করব?",
+    "expected": [
+      "land_preparation"
+    ],
+    "actual": [
+      "land_preparation"
+    ],
+    "passed": true,
+    "time_seconds": 7.08
+  },
+  {
+    "test_number": 16,
+    "query": "ধানের জমি কতবার চাষ দিতে হবে?",
+    "expected": [
+      "land_preparation"
+    ],
+    "actual": [
+      "land_preparation"
+    ],
+    "passed": true,
+    "time_seconds": 7.123
+  },
+  {
+    "test_number": 17,
+    "query": "সবজি চাষের জন্য বেড তৈরি করব কীভাবে?",
+    "expected": [
+      "land_preparation"
+    ],
+    "actual": [
+      "land_preparation"
+    ],
+    "passed": true,
+    "time_seconds": 7.158
+  },
+  {
+    "test_number": 18,
+    "query": "কলার চারা লাগানোর গর্ত কীভাবে তৈরি করব?",
+    "expected": [
+      "land_preparation"
+    ],
+    "actual": [
+      "seed",
+      "land_preparation"
+    ],
+    "passed": false,
+    "time_seconds": 7.446
+  },
+  {
+    "test_number": 19,
+    "query": "Is deep ploughing required for maize?",
+    "expected": [
+      "land_preparation"
+    ],
+    "actual": null,
+    "passed": false,
+    "time_seconds": 5.357
+  },
+  {
+    "test_number": 20,
+    "query": "How should I prepare soil before planting tomato?",
+    "expected": [
+      "land_preparation"
+    ],
+    "actual": [
+      "land_preparation"
+    ],
+    "passed": true,
+    "time_seconds": 6.468
+  },
+  {
+    "test_number": 21,
+    "query": "How do I remove weeds manually from a rice field?",
+    "expected": [
+      "intercultural"
+    ],
+    "actual": [
+      "intercultural",
+      "land_preparation"
+    ],
+    "passed": false,
+    "time_seconds": 7.005
+  },
+  {
+    "test_number": 22,
+    "query": "When should I prune tomato plants?",
+    "expected": [
+      "intercultural"
+    ],
+    "actual": [
+      "pesticide"
+    ],
+    "passed": false,
+    "time_seconds": 7.313
+  },
+  {
+    "test_number": 23,
+    "query": "Is mulching useful for chilli cultivation?",
+    "expected": [
+      "intercultural"
+    ],
+    "actual": [
+      "overview",
+      "intercultural"
+    ],
+    "passed": false,
+    "time_seconds": 7.339
+  },
+  {
+    "test_number": 24,
+    "query": "How should I thin maize seedlings?",
+    "expected": [
+      "intercultural"
+    ],
+    "actual": [
+      "intercultural",
+      "seed"
+    ],
+    "passed": false,
+    "time_seconds": 7.129
+  },
+  {
+    "test_number": 25,
+    "query": "ধানের জমিতে হাত দিয়ে আগাছা কখন পরিষ্কার করব?",
+    "expected": [
+      "intercultural"
+    ],
+    "actual": [
+      "intercultural"
+    ],
+    "passed": true,
+    "time_seconds": 6.818
+  },
+  {
+    "test_number": 26,
+    "query": "টমেটো গাছে খুঁটি কীভাবে দেব?",
+    "expected": [
+      "intercultural"
+    ],
+    "actual": [
+      "seed",
+      "land_preparation",
+      "intercultural"
+    ],
+    "passed": false,
+    "time_seconds": 8.195
+  },
+  {
+    "test_number": 27,
+    "query": "আলু গাছে মাটি তুলে দেওয়ার সঠিক সময় কখন?",
+    "expected": [
+      "intercultural"
+    ],
+    "actual": [
+      "land_preparation"
+    ],
+    "passed": false,
+    "time_seconds": 6.5
+  },
+  {
+    "test_number": 28,
+    "query": "বেগুন গাছ ছাঁটাই করার নিয়ম কী?",
+    "expected": [
+      "intercultural"
+    ],
+    "actual": [
+      "intercultural",
+      "harvest"
+    ],
+    "passed": false,
+    "time_seconds": 6.748
+  },
+  {
+    "test_number": 29,
+    "query": "How often should intercultural operations be performed?",
+    "expected": [
+      "intercultural"
+    ],
+    "actual": [
+      "intercultural"
+    ],
+    "passed": true,
+    "time_seconds": 6.56
+  },
+  {
+    "test_number": 30,
+    "query": "Should I use mulch around watermelon plants?",
+    "expected": [
+      "intercultural"
+    ],
+    "actual": [
+      "intercultural",
+      "harvest"
+    ],
+    "passed": false,
+    "time_seconds": 7.324
+  },
+  {
+    "test_number": 31,
+    "query": "How often should I irrigate boro rice?",
+    "expected": [
+      "irrigation"
+    ],
+    "actual": [
+      "irrigation"
+    ],
+    "passed": true,
+    "time_seconds": 6.41
+  },
+  {
+    "test_number": 32,
+    "query": "How much water does maize need?",
+    "expected": [
+      "irrigation"
+    ],
+    "actual": [
+      "irrigation"
+    ],
+    "passed": true,
+    "time_seconds": 6.3
+  },
+  {
+    "test_number": 33,
+    "query": "When should irrigation be stopped before harvesting wheat?",
+    "expected": [
+      "irrigation"
+    ],
+    "actual": [
+      "irrigation"
+    ],
+    "passed": true,
+    "time_seconds": 6.95
+  },
+  {
+    "test_number": 34,
+    "query": "How can I improve drainage in a vegetable field?",
+    "expected": [
+      "irrigation"
+    ],
+    "actual": [
+      "land_preparation",
+      "irrigation"
+    ],
+    "passed": false,
+    "time_seconds": 7.51
+  },
+  {
+    "test_number": 35,
+    "query": "বোরো ধানে সেচ কীভাবে দেব?",
+    "expected": [
+      "irrigation"
+    ],
+    "actual": [
+      "irrigation"
+    ],
+    "passed": true,
+    "time_seconds": 6.74
+  },
+  {
+    "test_number": 36,
+    "query": "পেঁয়াজে কত দিন পর পর পানি দিতে হবে?",
+    "expected": [
+      "irrigation"
+    ],
+    "actual": null,
+    "passed": false,
+    "time_seconds": 5.714
+  },
+  {
+    "test_number": 37,
+    "query": "ফসল কাটার আগে সেচ কখন বন্ধ করব?",
+    "expected": [
+      "irrigation"
+    ],
+    "actual": [
+      "irrigation"
+    ],
+    "passed": true,
+    "time_seconds": 6.943
+  },
+  {
+    "test_number": 38,
+    "query": "জমিতে পানি জমে গেলে কীভাবে নিষ্কাশন করব?",
+    "expected": [
+      "irrigation"
+    ],
+    "actual": [
+      "irrigation"
+    ],
+    "passed": true,
+    "time_seconds": 6.558
+  },
+  {
+    "test_number": 39,
+    "query": "Does mustard require frequent irrigation?",
+    "expected": [
+      "irrigation"
+    ],
+    "actual": [
+      "irrigation"
+    ],
+    "passed": true,
+    "time_seconds": 6.458
+  },
+  {
+    "test_number": 40,
+    "query": "What are the critical irrigation stages of wheat?",
+    "expected": [
+      "irrigation"
+    ],
+    "actual": [
+      "irrigation"
+    ],
+    "passed": true,
+    "time_seconds": 6.481
+  },
+  {
+    "test_number": 41,
+    "query": "When should aman rice be harvested?",
+    "expected": [
+      "harvest"
+    ],
+    "actual": [
+      "harvest"
+    ],
+    "passed": true,
+    "time_seconds": 6.681
+  },
+  {
+    "test_number": 42,
+    "query": "What are the maturity signs of watermelon?",
+    "expected": [
+      "harvest"
+    ],
+    "actual": [
+      "harvest"
+    ],
+    "passed": true,
+    "time_seconds": 6.757
+  },
+  {
+    "test_number": 43,
+    "query": "How should wheat be harvested?",
+    "expected": [
+      "harvest"
+    ],
+    "actual": [
+      "harvest"
+    ],
+    "passed": true,
+    "time_seconds": 6.863
+  },
+  {
+    "test_number": 44,
+    "query": "How can harvested onions be stored?",
+    "expected": [
+      "harvest"
+    ],
+    "actual": [
+      "harvest",
+      "pesticide"
+    ],
+    "passed": false,
+    "time_seconds": 7.626
+  },
+  {
+    "test_number": 45,
+    "query": "আমন ধান কাটার সঠিক সময় কখন?",
+    "expected": [
+      "harvest"
+    ],
+    "actual": [
+      "harvest"
+    ],
+    "passed": true,
+    "time_seconds": 6.355
+  },
+  {
+    "test_number": 46,
+    "query": "তরমুজ পেকেছে কীভাবে বুঝব?",
+    "expected": [
+      "harvest"
+    ],
+    "actual": [
+      "harvest"
+    ],
+    "passed": true,
+    "time_seconds": 6.774
+  },
+  {
+    "test_number": 47,
+    "query": "পেঁয়াজ সংগ্রহের পর কীভাবে সংরক্ষণ করব?",
+    "expected": [
+      "harvest"
+    ],
+    "actual": [
+      "harvest",
+      "seed"
+    ],
+    "passed": false,
+    "time_seconds": 7.553
+  },
+  {
+    "test_number": 48,
+    "query": "এক একরে গমের ফলন কত হতে পারে?",
+    "expected": [
+      "harvest"
+    ],
+    "actual": [
+      "overview"
+    ],
+    "passed": false,
+    "time_seconds": 6.235
+  },
+  {
+    "test_number": 49,
+    "query": "What is the expected yield of maize per hectare?",
+    "expected": [
+      "harvest"
+    ],
+    "actual": [
+      "overview",
+      "harvest"
+    ],
+    "passed": false,
+    "time_seconds": 7.38
+  },
+  {
+    "test_number": 50,
+    "query": "How should potatoes be handled after harvesting?",
+    "expected": [
+      "harvest"
+    ],
+    "actual": null,
+    "passed": false,
+    "time_seconds": 5.721
+  },
+  {
+    "test_number": 51,
+    "query": "What fertilizer dose is recommended for boro rice?",
+    "expected": [
+      "fertilizer"
+    ],
+    "actual": [
+      "fertilizer"
+    ],
+    "passed": true,
+    "time_seconds": 7.299
+  },
+  {
+    "test_number": 52,
+    "query": "When should urea be applied to maize?",
+    "expected": [
+      "fertilizer"
+    ],
+    "actual": [
+      "fertilizer"
+    ],
+    "passed": true,
+    "time_seconds": 8.134
+  },
+  {
+    "test_number": 53,
+    "query": "Is compost beneficial for tomato cultivation?",
+    "expected": [
+      "fertilizer"
+    ],
+    "actual": [
+      "fertilizer"
+    ],
+    "passed": true,
+    "time_seconds": 7.305
+  },
+  {
+    "test_number": 54,
+    "query": "What causes nitrogen deficiency in rice?",
+    "expected": [
+      "fertilizer"
+    ],
+    "actual": [
+      "fertilizer",
+      "climate"
+    ],
+    "passed": false,
+    "time_seconds": 7.656
+  },
+  {
+    "test_number": 55,
+    "query": "বোরো ধানে কতটুকু ইউরিয়া দিতে হবে?",
+    "expected": [
+      "fertilizer"
+    ],
+    "actual": [
+      "fertilizer"
+    ],
+    "passed": true,
+    "time_seconds": 7.026
+  },
+  {
+    "test_number": 56,
+    "query": "টমেটো চাষে গোবর সার কতটুকু দেব?",
+    "expected": [
+      "fertilizer"
+    ],
+    "actual": [
+      "fertilizer"
+    ],
+    "passed": true,
+    "time_seconds": 7.184
+  },
+  {
+    "test_number": 57,
+    "query": "ধান গাছের পাতা হলুদ হলে কোন পুষ্টির অভাব হতে পারে?",
+    "expected": [
+      "fertilizer"
+    ],
+    "actual": [
+      "fertilizer"
+    ],
+    "passed": true,
+    "time_seconds": 6.755
+  },
+  {
+    "test_number": 58,
+    "query": "গমে সার প্রয়োগের সময়সূচি কী?",
+    "expected": [
+      "fertilizer"
+    ],
+    "actual": [
+      "fertilizer"
+    ],
+    "passed": true,
+    "time_seconds": 7.229
+  },
+  {
+    "test_number": 59,
+    "query": "Which micronutrients are required for onion?",
+    "expected": [
+      "fertilizer"
+    ],
+    "actual": [
+      "fertilizer"
+    ],
+    "passed": true,
+    "time_seconds": 7.105
+  },
+  {
+    "test_number": 60,
+    "query": "Can I apply organic manure to chilli plants?",
+    "expected": [
+      "fertilizer"
+    ],
+    "actual": [
+      "fertilizer"
+    ],
+    "passed": true,
+    "time_seconds": 7.137
+  },
+  {
+    "test_number": 61,
+    "query": "What temperature is suitable for wheat cultivation?",
+    "expected": [
+      "climate"
+    ],
+    "actual": [
+      "climate"
+    ],
+    "passed": true,
+    "time_seconds": 7.034
+  },
+  {
+    "test_number": 62,
+    "query": "Which soil is best for tomato?",
+    "expected": [
+      "climate"
+    ],
+    "actual": [
+      "climate",
+      "fertilizer"
+    ],
+    "passed": false,
+    "time_seconds": 8.06
+  },
+  {
+    "test_number": 63,
+    "query": "How much rainfall is required for jute?",
+    "expected": [
+      "climate"
+    ],
+    "actual": [
+      "climate"
+    ],
+    "passed": true,
+    "time_seconds": 6.784
+  },
+  {
+    "test_number": 64,
+    "query": "What is the suitable soil pH for maize?",
+    "expected": [
+      "climate"
+    ],
+    "actual": [
+      "climate"
+    ],
+    "passed": true,
+    "time_seconds": 7.114
+  },
+  {
+    "test_number": 65,
+    "query": "গম চাষের উপযুক্ত তাপমাত্রা কত?",
+    "expected": [
+      "climate"
+    ],
+    "actual": null,
+    "passed": false,
+    "time_seconds": 5.576
+  },
+  {
+    "test_number": 66,
+    "query": "টমেটো চাষের জন্য কোন মাটি ভালো?",
+    "expected": [
+      "climate"
+    ],
+    "actual": [
+      "overview",
+      "climate"
+    ],
+    "passed": false,
+    "time_seconds": 7.339
+  },
+  {
+    "test_number": 67,
+    "query": "পাট চাষে কত বৃষ্টিপাত প্রয়োজন?",
+    "expected": [
+      "climate"
+    ],
+    "actual": null,
+    "passed": false,
+    "time_seconds": 5.814
+  },
+  {
+    "test_number": 68,
+    "query": "ভুট্টা কোন মৌসুমে ভালো হয়?",
+    "expected": [
+      "climate"
+    ],
+    "actual": [
+      "climate"
+    ],
+    "passed": true,
+    "time_seconds": 6.892
+  },
+  {
+    "test_number": 69,
+    "query": "Does cucumber require full sunlight?",
+    "expected": [
+      "climate"
+    ],
+    "actual": [
+      "climate",
+      "overview"
+    ],
+    "passed": false,
+    "time_seconds": 7.577
+  },
+  {
+    "test_number": 70,
+    "query": "What humidity level is suitable for rice?",
+    "expected": [
+      "climate"
+    ],
+    "actual": [
+      "climate"
+    ],
+    "passed": true,
+    "time_seconds": 7.178
+  },
+  {
+    "test_number": 71,
+    "query": "Compare different varieties of aman rice.",
+    "expected": [
+      "variety"
+    ],
+    "actual": [
+      "variety"
+    ],
+    "passed": true,
+    "time_seconds": 7.151
+  },
+  {
+    "test_number": 72,
+    "query": "Which wheat variety gives the highest yield?",
+    "expected": [
+      "variety"
+    ],
+    "actual": [
+      "variety"
+    ],
+    "passed": true,
+    "time_seconds": 7.142
+  },
+  {
+    "test_number": 73,
+    "query": "What are the characteristics of BRRI dhan 89?",
+    "expected": [
+      "variety"
+    ],
+    "actual": [
+      "variety"
+    ],
+    "passed": true,
+    "time_seconds": 6.994
+  },
+  {
+    "test_number": 74,
+    "query": "Which tomato variety is suitable for summer?",
+    "expected": [
+      "variety"
+    ],
+    "actual": [
+      "variety"
+    ],
+    "passed": true,
+    "time_seconds": 7.041
+  },
+  {
+    "test_number": 75,
+    "query": "আমন ধানের ভালো জাত কোনটি?",
+    "expected": [
+      "variety"
+    ],
+    "actual": [
+      "variety"
+    ],
+    "passed": true,
+    "time_seconds": 6.579
+  },
+  {
+    "test_number": 76,
+    "query": "ব্রি ধান ৮৯ এর বৈশিষ্ট্য কী?",
+    "expected": [
+      "variety"
+    ],
+    "actual": [
+      "variety"
+    ],
+    "passed": true,
+    "time_seconds": 7.353
+  },
+  {
+    "test_number": 77,
+    "query": "গমের দুটি জাতের মধ্যে তুলনা করুন",
+    "expected": [
+      "variety"
+    ],
+    "actual": [
+      "variety"
+    ],
+    "passed": true,
+    "time_seconds": 6.491
+  },
+  {
+    "test_number": 78,
+    "query": "গ্রীষ্মকালীন টমেটোর জাত কী কী?",
+    "expected": [
+      "variety"
+    ],
+    "actual": [
+      "variety"
+    ],
+    "passed": true,
+    "time_seconds": 7.188
+  },
+  {
+    "test_number": 79,
+    "query": "Which maize cultivar is drought tolerant?",
+    "expected": [
+      "variety"
+    ],
+    "actual": [
+      "variety",
+      "climate"
+    ],
+    "passed": false,
+    "time_seconds": 7.637
+  },
+  {
+    "test_number": 80,
+    "query": "Tell me the available varieties of mustard.",
+    "expected": [
+      "variety"
+    ],
+    "actual": [
+      "variety"
+    ],
+    "passed": true,
+    "time_seconds": 6.906
+  },
+  {
+    "test_number": 81,
+    "query": "How can I control fall armyworm in maize?",
+    "expected": [
+      "pesticide"
+    ],
+    "actual": [
+      "pesticide",
+      "pesticide"
+    ],
+    "passed": true,
+    "time_seconds": 7.611
+  },
+  {
+    "test_number": 82,
+    "query": "Which insecticide controls rice stem borer?",
+    "expected": [
+      "pesticide"
+    ],
+    "actual": [
+      "pesticide"
+    ],
+    "passed": true,
+    "time_seconds": 6.888
+  },
+  {
+    "test_number": 83,
+    "query": "How do I treat fungal disease in tomato?",
+    "expected": [
+      "pesticide"
+    ],
+    "actual": [
+      "pesticide"
+    ],
+    "passed": true,
+    "time_seconds": 6.911
+  },
+  {
+    "test_number": 84,
+    "query": "What causes leaf blight in rice?",
+    "expected": [
+      "pesticide"
+    ],
+    "actual": [
+      "pesticide",
+      "climate"
+    ],
+    "passed": false,
+    "time_seconds": 8.363
+  },
+  {
+    "test_number": 85,
+    "query": "ভুট্টার ফল আর্মিওয়ার্ম কীভাবে দমন করব?",
+    "expected": [
+      "pesticide"
+    ],
+    "actual": [
+      "pesticide"
+    ],
+    "passed": true,
+    "time_seconds": 6.844
+  },
+  {
+    "test_number": 86,
+    "query": "ধানের মাজরা পোকার ওষুধ কী?",
+    "expected": [
+      "pesticide"
+    ],
+    "actual": [
+      "pesticide"
+    ],
+    "passed": true,
+    "time_seconds": 7.614
+  },
+  {
+    "test_number": 87,
+    "query": "টমেটোর ছত্রাক রোগের চিকিৎসা কী?",
+    "expected": [
+      "pesticide"
+    ],
+    "actual": [
+      "pesticide"
+    ],
+    "passed": true,
+    "time_seconds": 6.847
+  },
+  {
+    "test_number": 88,
+    "query": "বেগুনের পাতা কুঁকড়ে যাচ্ছে কেন?",
+    "expected": [
+      "pesticide"
+    ],
+    "actual": [
+      "pesticide",
+      "climate"
+    ],
+    "passed": false,
+    "time_seconds": 7.177
+  },
+  {
+    "test_number": 89,
+    "query": "Which herbicide should I use in a rice field?",
+    "expected": [
+      "herbicide"
+    ],
+    "actual": [
+      "pesticide"
+    ],
+    "passed": false,
+    "time_seconds": 6.637
+  },
+  {
+    "test_number": 90,
+    "query": "What chemical can kill weeds in maize?",
+    "expected": [
+      "herbicide"
+    ],
+    "actual": [
+      "pesticide",
+      "herbicide"
+    ],
+    "passed": false,
+    "time_seconds": 7.722
+  },
+  {
+    "test_number": 91,
+    "query": "আগাছানাশক কী?",
+    "expected": [
+      "herbicide"
+    ],
+    "actual": [
+      "pesticide"
+    ],
+    "passed": false,
+    "time_seconds": 7.22
+  },
+  {
+    "test_number": 92,
+    "query": "ধানের জমিতে কোন আগাছানাশক ব্যবহার করব?",
+    "expected": [
+      "herbicide"
+    ],
+    "actual": [
+      "pesticide"
+    ],
+    "passed": false,
+    "time_seconds": 6.711
+  },
+  {
+    "test_number": 93,
+    "query": "আগাছা মারার ওষুধ কখন প্রয়োগ করতে হবে?",
+    "expected": [
+      "herbicide"
+    ],
+    "actual": [
+      "pesticide"
+    ],
+    "passed": false,
+    "time_seconds": 7.378
+  },
+  {
+    "test_number": 94,
+    "query": "How do I control weeds using chemicals?",
+    "expected": [
+      "herbicide"
+    ],
+    "actual": [
+      "pesticide"
+    ],
+    "passed": false,
+    "time_seconds": 6.694
+  },
+  {
+    "test_number": 95,
+    "query": "Tell me the seed rate and fertilizer dose for wheat.",
+    "expected": [
+      "seed",
+      "fertilizer"
+    ],
+    "actual": [
+      "seed",
+      "fertilizer"
+    ],
+    "passed": true,
+    "time_seconds": 6.947
+  },
+  {
+    "test_number": 96,
+    "query": "How should I prepare land and irrigate maize?",
+    "expected": [
+      "land_preparation",
+      "irrigation"
+    ],
+    "actual": [
+      "land_preparation",
+      "irrigation"
+    ],
+    "passed": true,
+    "time_seconds": 7.3
+  },
+  {
+    "test_number": 97,
+    "query": "How can I remove weeds manually and also use herbicide?",
+    "expected": [
+      "intercultural",
+      "herbicide"
+    ],
+    "actual": [
+      "intercultural",
+      "pesticide"
+    ],
+    "passed": false,
+    "time_seconds": 7.056
+  },
+  {
+    "test_number": 98,
+    "query": "বলসট",
+    "expected": null,
+    "actual": null,
+    "passed": true,
+    "time_seconds": 5.478
+  },
+  {
+    "test_number": 99,
+    "query": "What is the capital of Bangladesh?",
+    "expected": null,
+    "actual": null,
+    "passed": true,
+    "time_seconds": 5.535
+  },
+  {
+    "test_number": 100,
+    "query": "Hello, how are you?",
+    "expected": null,
+    "actual": null,
+    "passed": true,
+    "time_seconds": 5.711
+  },
+  {
+    "test_number": 101,
+    "query": "আমন ধানের ভালো জাত, সার এবং সেচ সম্পর্কে বলুন",
+    "expected": [
+      "variety",
+      "fertilizer",
+      "irrigation"
+    ],
+    "actual": [
+      "variety",
+      "fertilizer",
+      "irrigation"
+    ],
+    "passed": true,
+    "time_seconds": 7.603
+  },
+  {
+    "test_number": 102,
+    "query": "Which herbicide controls weeds and which insecticide controls stem borer?",
+    "expected": [
+      "herbicide",
+      "pesticide"
+    ],
+    "actual": [
+      "herbicide",
+      "pesticide"
+    ],
+    "passed": true,
+    "time_seconds": 7.309
+  },
+  {
+    "test_number": 103,
+    "query": "Compare rice varieties by yield, disease resistance and maturity time.",
+    "expected": [
+      "variety",
+      "harvest",
+      "pesticide"
+    ],
+    "actual": [
+      "variety",
+      "overview"
+    ],
+    "passed": false,
+    "time_seconds": 6.928
+  },
+  {
+    "test_number": 104,
+    "query": "How much rainfall is needed and when should the crop be harvested?",
+    "expected": [
+      "climate",
+      "harvest"
+    ],
+    "actual": [
+      "climate",
+      "harvest"
+    ],
+    "passed": true,
+    "time_seconds": 6.697
+  },
+  {
+    "test_number": 105,
+    "query": "Should I mulch the field, apply manure and irrigate afterward?",
+    "expected": [
+      "intercultural",
+      "fertilizer",
+      "irrigation"
+    ],
+    "actual": [
+      "overview",
+      "fertilizer",
+      "irrigation"
+    ],
+    "passed": false,
+    "time_seconds": 7.499
+  },
+  {
+    "test_number": 106,
+    "query": "Explain seed treatment, soil preparation and pest management.",
+    "expected": [
+      "seed",
+      "land_preparation",
+      "pesticide"
+    ],
+    "actual": [
+      "seed",
+      "land_preparation",
+      "pesticide"
+    ],
+    "passed": true,
+    "time_seconds": 7.735
+  }
+]

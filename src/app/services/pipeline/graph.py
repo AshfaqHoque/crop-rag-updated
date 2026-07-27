@@ -22,7 +22,7 @@ def build_chat_graph():
     builder.add_node("rewrite_query", rewrite_query)
     builder.add_node("understand_query", understand_query)
     builder.add_node("retrieve", retrieve)
-    builder.add_node("rerank", rerank)
+    # builder.add_node("rerank", rerank)
     builder.add_node("generate", generate)
 
     builder.add_edge(START, "rewrite_query")
@@ -32,8 +32,9 @@ def build_chat_graph():
         route_after_understanding,
         {"retrieve": "retrieve", "generate": "generate"},
     )
-    builder.add_edge("retrieve", "rerank")
-    builder.add_edge("rerank", "generate")
+    # builder.add_edge("retrieve", "rerank")
+    # builder.add_edge("rerank", "generate")
+    builder.add_edge("retrieve", "generate")
     builder.add_edge("generate", END)
     return builder.compile()
 

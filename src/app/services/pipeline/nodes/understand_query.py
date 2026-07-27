@@ -60,8 +60,7 @@ def _format_history(history: list[dict[str, str]]) -> str:
 
 
 def understand_query(state: PipelineState) -> PipelineState:
-    logger.info("Starting understand_query node")
-    logger.info("crop_list=", format_crop_list_for_prompt())
+    # logger.info("crop_list=", format_crop_list_for_prompt())
     messages = [
         SystemMessage(
             content=_SYSTEM_TEMPLATE.format(
@@ -78,7 +77,6 @@ def understand_query(state: PipelineState) -> PipelineState:
         ),
     ]
     result = invoke_structured(QueryUnderstanding, messages)
-    logger.info("detected crops: ", result.crops)
 
     valid_crops = set(crop_names())
     valid_sections = set(SECTIONS)

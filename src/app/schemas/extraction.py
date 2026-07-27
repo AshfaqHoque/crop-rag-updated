@@ -23,11 +23,5 @@ class QueryUnderstanding(BaseModel):
 
 
 class QueryRewrite(BaseModel):
-    rewritten_query: str = Field(
-        min_length=1,
-        max_length=4000,
-        description="A standalone version of the user's question, without answering it.",
-    )
-    used_history: bool = Field(
-        description="True only when conversation history was required to resolve the subject."
-    )
+    rewritten_query: str
+    used_history: bool

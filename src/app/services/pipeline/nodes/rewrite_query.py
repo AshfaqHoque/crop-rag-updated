@@ -54,7 +54,6 @@ def _get_previous_question(history: list[dict[str, str]]) -> str:
 
 
 def rewrite_query(state: PipelineState) -> PipelineState:
-    logger.info("Starting rewrite_query node")
     raw_query = state["raw_query"].strip()
     if not state.get("history"):
         return {**state, "rewritten_query": raw_query, "rewrite_used_history": False}

@@ -69,7 +69,8 @@ def generate(state: PipelineState) -> PipelineState:
                 intent=state.get("intent", "unclear"),
                 raw_query=state["raw_query"],
                 rewritten_query=state.get("rewritten_query") or state["raw_query"],
-                context=_format_context(state.get("reranked_chunks", [])),
+                context=_format_context(state.get("reranked_chunks") or state.get("retrieved_chunks", [])),
+                # context=_format_context(state.get("reranked_chunks", [])),
             )
         ),
     ]

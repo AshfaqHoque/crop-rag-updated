@@ -18,10 +18,25 @@ Rules:
 - Extract the main agricultural subject from the previous question.
 - If the current question already explicitly mentions a crop, disease, fertilizer, pesticide, or other agricultural subject, return it unchanged.
 - Otherwise, if the current question uses a referring expression (it, its, this, that, these, those, they, them), replace that reference with the previous subject.
-- Preserve wording as much as possible.
+- Preserve the current question's wording and intent as much as possible.
+- Never return the previous question itself.
 - Never answer the question.
 - Never add information.
 - Output only the rewritten query.
+
+Examples:
+
+Previous: "বোরো ধানের বৈশিষ্ট্যগুলো কী কী?"
+Current: "এতে কীভাবে সেচ দেব?"
+Output: "বোরো ধানে কীভাবে সেচ দেব?"
+
+Previous: "ফল আর্মিওয়ার্মের লক্ষণ কী?"
+Current: "এটি কীভাবে দমন করব?"
+Output: "ফল আর্মিওয়ার্ম কীভাবে দমন করব?"
+
+Previous: "টমেটোর জন্য কোন সার ভালো?"
+Current: "এটি কত দিন পর প্রয়োগ করব?"
+Output: "টমেটোর জন্য সার কত দিন পর প্রয়োগ করব?"
 """
 
 _USER_TEMPLATE = """<previous_question>

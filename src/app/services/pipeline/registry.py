@@ -1,9 +1,7 @@
 """
-Canonical crop & section registry — the fixed vocabulary the extraction
-node is allowed to output. Keeping this out of the LLM's free-text control
-is what stops a hallucinated crop or section name from ever reaching the
-retriever's metadata filter (which would otherwise silently return zero
-results with no obvious cause).
+Canonical crop and section registry. Crops are matched deterministically,
+while sections extracted by the LLM are validated against this fixed
+vocabulary before either value reaches the retriever's metadata filters.
 """
 import json
 from dataclasses import dataclass
@@ -57,7 +55,12 @@ def get_known_crops() -> list[CropInfo]:
     with path.open("r", encoding="utf-8") as file:
         raw = json.load(file)
      
-    rows = raw.get("data", {}).get("getAllCropsFullDetails", {}).get("rows", [])
+    if isinstance(raw, dict):
+        rows = raw.get("data", {}).get("getAllCropsFullDetails", {}).get("rows", [])
+    else:
+        logger.warning("Crop registry at %s has an unsupported JSON shape.", path)
+        return []
+    
     crops: list[CropInfo] = []
     
     for item in rows:

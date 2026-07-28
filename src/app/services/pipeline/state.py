@@ -11,12 +11,14 @@ class PipelineState(TypedDict, total=False):
     # query understanding
     language: str
     intent: str
-    crops: list[str]
     sections: list[str]
 
     # subject resolution
     rewritten_query: str
     rewrite_used_history: bool
+
+    # deterministic entity extraction
+    crops: list[str]
 
     # retrieval/reranking
     retrieved_chunks: list[dict[str, Any]]

@@ -10,11 +10,6 @@ class QueryUnderstanding(BaseModel):
     intent: Literal["small_talk", "unclear", "crop_query"] = Field(
         description="The conversational intent of the current message."
     )
-    crops: list[str] = Field(
-        default_factory=list,
-        max_length=10,
-        description="Canonical crop names from the supplied registry only.",
-    )
     sections: list[str] = Field(
         default_factory=list,
         max_length=10,

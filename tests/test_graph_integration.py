@@ -14,6 +14,10 @@ def test_full_graph_crop_query_path(monkeypatch):
             "sections": ["seed"],
         }
 
+    def extract(state):
+        visited.append("extract")
+        return {**state, "crops": ["Boro Paddy"]}
+
     def rewrite(state):
         visited.append("rewrite")
         return {**state, "rewritten_query": "seed rate for rice", "rewrite_used_history": True}
@@ -26,24 +30,20 @@ def test_full_graph_crop_query_path(monkeypatch):
             "retrieved_chunks": [{"chunk_id": "x", "content": "rate", "metadata": {}}],
         }
 
-    def rerank(state):
-        visited.append("rerank")
-        return {**state, "reranked_chunks": state["retrieved_chunks"]}
-
     def generate(state):
         visited.append("generate")
         return {**state, "answer": "answer [1]"}
 
     monkeypatch.setattr(graph_module, "understand_query", understand)
+    monkeypatch.setattr(graph_module, "extract_crop", extract)
     monkeypatch.setattr(graph_module, "rewrite_query", rewrite)
     monkeypatch.setattr(graph_module, "retrieve", retrieve)
-    monkeypatch.setattr(graph_module, "rerank", rerank)
     monkeypatch.setattr(graph_module, "generate", generate)
 
     result = graph_module.build_chat_graph().invoke(
         {"session_id": "s", "raw_query": "what about it?", "history": []}
     )
-    assert visited == ["rewrite", "understand", "retrieve", "rerank", "generate"]
+    assert visited == ["rewrite", "understand", "extract", "retrieve", "generate"]
     assert result["answer"] == "answer [1]"
     assert result["retrieval_mode"] == "dense_bm25_rrf"
 
@@ -68,10 +68,9 @@ def test_full_graph_small_talk_skips_retrieval(monkeypatch):
     )
     monkeypatch.setattr(
         graph_module,
-        "rerank",
-        lambda state: (_ for _ in ()).throw(AssertionError("rerank should be skipped")),
+        "extract_crop",
+        lambda state: (_ for _ in ()).throw(AssertionError("crop extraction should be skipped")),
     )
-
     def generate(state):
         visited.append("generate")
         return {**state, "answer": "hello"}

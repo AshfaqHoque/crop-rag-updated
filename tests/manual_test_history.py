@@ -7,12 +7,27 @@ You rewrite follow-up questions.
 Rules:
 
 - Extract the main agricultural subject from the previous question.
-- If the current question already explicitly mentions a crop, disease, fertilizer, pesticide, or other agricultural subject, return it unchanged.
-- Otherwise, if the current question uses a referring expression (it, its, this, that, these, those, they, them), replace that reference with the previous subject.
-- Preserve wording as much as possible.
+- If the current question already explicitly mentions its own crop, disease, fertilizer, pesticide, pest, or other agricultural subject, return the current question exactly unchanged. Do not combine it with the previous question.
+- Otherwise, if the current question is clearly a follow-up question or uses a referring expression (it, this, that), replace the reference with the previous subject.
+- Preserve the current question's wording and intent as much as possible.
+- Never return the previous question itself.
 - Never answer the question.
 - Never add information.
 - Output only the rewritten query.
+
+Examples:
+
+Previous: "বোরো ধানের বৈশিষ্ট্যগুলো কী কী?"
+Current: "এতে কীভাবে সেচ দেব?"
+Output: "বোরো ধানে কীভাবে সেচ দেব?"
+
+Previous: "ফল আর্মিওয়ার্মের লক্ষণ কী?"
+Current: "এটি কীভাবে দমন করব?"
+Output: "ফল আর্মিওয়ার্ম কীভাবে দমন করব?"
+
+Previous: "আমন ধানে কতবার সেচ দিতে হয়?"
+Current: "ব্লাস্ট রোগ কীভাবে দমন করব?"
+Output: "ব্লাস্ট রোগ কীভাবে দমন করব?"
 """
 CONTEXT = """
 Previous Question:
@@ -30,8 +45,8 @@ prompt = ChatPromptTemplate.from_messages([
 chain = prompt | llm 
 
 
-previous = "ভুট্টার চাষ কীভাবে করব?"
-current = "এতে কতবার সেচ দিতে হবে?"
+current = "গমে প্রথম সেচ কখন দিতে হবে?"
+previous = "ব্রি ধান ১১ সেচ কিভাবে দিবো?"
 
 result = chain.invoke(
     {
@@ -40,4 +55,6 @@ result = chain.invoke(
     }
 )
 
-print(result.content)
+print("previous ques: ", previous)
+print("current ques: ", current)
+print("rewritten ques: ", result.content)

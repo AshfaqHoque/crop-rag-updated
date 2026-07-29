@@ -37,6 +37,13 @@ class CropInfo:
     crop_name: str  # canonical English name — must match Chroma metadata "crop_name" exactly
     crop_bangla_name: str
 
+@dataclass(frozen=True)
+class VarietyInfo:
+    variety_id: int
+    variety_name: str
+    crop_id: int
+    crop_name: str
+    crop_bangla_name: str
 
 @lru_cache
 def get_known_crops() -> list[CropInfo]:
@@ -81,11 +88,52 @@ def get_known_crops() -> list[CropInfo]:
     
     return crops
 
+def get_known_varieties() -> list[VarietyInfo]:
+    settings = get_settings()
+    path = Path(settings.crop_registry_path)
+    if not path.exists():
+        logger.warning("Crop registry file not found at %s — extraction will match no varieties.", path)    
+    with path.open("r", encoding="utf-8") as file:
+        raw = json.load(file)
+    if isinstance(raw, dict):
+        rows = raw.get("data", {}).get("getAllCropsFullDetails", {}).get("rows", [])
+    else:
+        logger.warning("Crop registry at %s has an unsupported JSON shape.", path)
+        return []
+    
+    varities: list[VarietyInfo] = []
+    
+    for item in rows:
+        crop_id = item.get("crop_id") or item.get("id")
+        crop_name = item.get("crop_name")
+        crop_bangla_name = item.get("crop_bangla_name")
+        
+        variety = item.get("variety", [])
+        for v in variety:
+            variety_id = v.get("id")
+            variety_name = v.get("variety_name")
+            
+            if crop_id is None or variety_id is None or not crop_name or not crop_bangla_name or not variety_name:
+                continue
+            
+            varities.append(
+                VarietyInfo(
+                    crop_id=str(crop_id),
+                    crop_name=str(crop_name).strip(),
+                    crop_bangla_name=str(crop_bangla_name).strip(),
+                    variety_id=str(variety_id),
+                    variety_name=str(variety_name).strip(),
+                )
+            )
+    return varities
+            
+        
 
-def crop_names() -> list[str]:
-    return [c.crop_name for c in get_known_crops()]
+# def crop_names() -> list[str]:
+#     return [c.crop_name for c in get_known_crops()]
 
 
-def format_crop_list_for_prompt() -> str:
-    """'Boro Paddy (বোরো ধান), Mango (আম), ...' — fed into the extraction prompt."""
-    return ", ".join(f"{c.crop_name} ({c.crop_bangla_name})" for c in get_known_crops())
+# def format_crop_list_for_prompt() -> str:
+#     """'Boro Paddy (বোরো ধান), Mango (আম), ...' — fed into the extraction prompt."""
+#     return ", ".join(f"{c.crop_name} ({c.crop_bangla_name})" for c in get_known_crops())
+

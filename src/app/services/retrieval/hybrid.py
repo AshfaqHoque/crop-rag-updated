@@ -51,7 +51,7 @@ def _document_payload(document: Document) -> dict[str, Any]:
     }
 
 
-class HybridRetriever:
+class SemanticRetriever:
     def __init__(
         self,
         dense_search: Callable[..., list[tuple[Document, float]]] = similarity_search,
@@ -80,7 +80,7 @@ class HybridRetriever:
         try:
             dense_results = self._dense_search(
                 query,
-                k=max(limit, settings.dense_candidate_k),
+                k=limit,
                 crops=crops,
                 sections=sections,
             )
@@ -89,33 +89,33 @@ class HybridRetriever:
                 raise
             logger.warning("Dense retrieval failed; attempting filtered BM25 fallback")
 
-        if crops:
-            chunks = []
-            seen: set[str] = set()
-            for rank, (document, distance) in enumerate(dense_results, start=1):
-                chunk_id = _chunk_id(document)
-                if chunk_id in seen:
-                    continue
-                seen.add(chunk_id)
-                item = _document_payload(document)
-                item.update(
-                    {
-                        "dense_distance": float(distance),
-                        "retrieval_score": 1.0 / (settings.rrf_k + rank),
-                    }
-                )
-                chunks.append(item)
-            return chunks[:limit], "dense_filtered"
+        # if crops:
+        chunks = []
+        seen: set[str] = set()
+        for document, distance in dense_results:
+            chunk_id = _chunk_id(document)
+            if chunk_id in seen:
+                continue
+            seen.add(chunk_id)
+            item = _document_payload(document)
+            item.update(
+                {
+                    "dense_distance": float(distance),
+                    # "retrieval_score": 1.0 / (settings.rrf_k + rank),
+                }
+            )
+            chunks.append(item)
+        return chunks[:limit], "dense_filtered"
 
-        bm25_results = self._bm25_search(
-            query,
-            crops=crops,
-            sections=sections,
-            k=max(limit, settings.bm25_candidate_k),
-        )
-        fused = self._rrf_fuse(dense_results, bm25_results)
-        mode = "dense_bm25_rrf" if dense_results else "bm25_fallback"
-        return fused[:limit], mode
+        # bm25_results = self._bm25_search(
+        #     query,
+        #     crops=crops,
+        #     sections=sections,
+        #     k=max(limit, settings.bm25_candidate_k),
+        # )
+        # fused = self._rrf_fuse(dense_results, bm25_results)
+        # mode = "dense_bm25_rrf" if dense_results else "bm25_fallback"
+        # return fused[:limit], mode
 
     def clear_bm25_cache(self) -> None:
         with self._cache_lock:

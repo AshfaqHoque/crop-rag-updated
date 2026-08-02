@@ -1,3 +1,3 @@
-from app.services.retrieval.hybrid import HybridRetriever
+from app.services.retrieval.hybrid import SemanticRetriever
 
-__all__ = ["HybridRetriever"]
+__all__ = ["SemanticRetriever"]

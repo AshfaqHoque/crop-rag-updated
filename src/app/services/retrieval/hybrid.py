@@ -100,12 +100,12 @@ class SemanticRetriever:
             item = _document_payload(document)
             item.update(
                 {
-                    "dense_distance": float(distance),
+                    "retrieval_score": float(distance),
                     # "retrieval_score": 1.0 / (settings.rrf_k + rank),
                 }
             )
             chunks.append(item)
-        return chunks[:limit], "dense_filtered"
+        return chunks[:limit], "dense_fi  ltered"
 
         # bm25_results = self._bm25_search(
         #     query,

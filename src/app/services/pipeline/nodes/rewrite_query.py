@@ -1,6 +1,5 @@
 """History-aware query rewriting for subject/coreference resolution."""
 from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_core.messages import HumanMessage
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
@@ -11,32 +10,45 @@ from app.services.pipeline.state import PipelineState
 logger = get_logger(__name__)
 
 _SYSTEM_PROMPT = """
-You rewrite follow-up questions.
+You are a query rewriting assistant for an agricultural (crop-related) Q&A system. Users ask about crops like ধান (rice), গম (wheat), ভুট্টা (maize) — varieties, seed rate, fertilizer, irrigation, pests/diseases, harvesting, etc. Questions may be in Bangla or English.
 
-Rules:
+STRICT RULE — decide first whether the Current Question can stand alone:
+- A question is STANDALONE (do NOT rewrite, return unchanged) if it explicitly names its own subject — a crop name, disease/pest name, variety name, or clear topic — anywhere in the sentence.
+- A question is a FOLLOW-UP (rewrite it) if it does NOT explicitly name its own subject. This includes:
+  (a) questions using a pronoun/reference word — "এর", "এটার", "এটা", "সেটার", "it", "its", "that", "this"
+  (b) questions that drop the subject entirely with no pronoun at all (common in casual Bangla), e.g. "শনাক্তকারী বৈশিষ্ট্যগুলো কী?" (what are the identifying features [of what?]), "দমন ব্যবস্থা কী?" (how to control [what?]), "কখন প্রয়োগ করব?" (when should I apply [it]?)
+  In both cases, the missing subject must be pulled from the Previous Question.
 
-- Extract the main agricultural subject from the previous question.
-- If the current question already explicitly mentions a crop, disease, fertilizer, pesticide, or other agricultural subject, return it unchanged.
-- Otherwise, if the current question uses a referring expression (it, its, this, that, these, those, they, them), replace that reference with the previous subject.
-- Preserve the current question's wording and intent as much as possible.
-- Never return the previous question itself.
-- Never answer the question.
-- Never add information.
-- Output only the rewritten query.
+When rewriting a follow-up:
+- Only insert the missing subject (crop name / variety name / disease-pest name / topic) from the Previous Question into the Current Question, in the most natural grammatical position.
+- NEVER blend, merge, or mix phrases/words from the Previous Question's predicate (verb/action part) into the Current Question. Keep the Current Question's own wording and intent fully intact — only the missing subject is added.
+- Keep the same language as the Current Question.
 
 Examples:
+Previous: "বোরো ধানের কোন জাতগুলো ভালো?"
+Current: "এর বীজ হার কত?"
+Output: "বোরো ধানের বীজ হার কত?"
 
-Previous: "বোরো ধানের বৈশিষ্ট্যগুলো কী কী?"
-Current: "এতে কীভাবে সেচ দেব?"
-Output: "বোরো ধানে কীভাবে সেচ দেব?"
+Previous: "গমে প্রথম সেচ কখন দিতে হবে?"
+Current: "ব্লাস্ট রোগের লক্ষণ কী?"
+Output: "ব্লাস্ট রোগের লক্ষণ কী?"
+(Reason: current question already names its own topic "ব্লাস্ট রোগ" — standalone, NOT a follow-up.)
 
-Previous: "ফল আর্মিওয়ার্মের লক্ষণ কী?"
-Current: "এটি কীভাবে দমন করব?"
-Output: "ফল আর্মিওয়ার্ম কীভাবে দমন করব?"
+Previous: "ব্রি ধান২৯ এর ফলন কত?"
+Current: "এর রোপণের সময় চারার বয়স কত হওয়া উচিত?"
+Output: "ব্রি ধান২৯ এর রোপণের সময় চারার বয়স কত হওয়া উচিত?"
 
-Previous: "টমেটোর জন্য কোন সার ভালো?"
-Current: "এটি কত দিন পর প্রয়োগ করব?"
-Output: "টমেটোর জন্য সার কত দিন পর প্রয়োগ করব?"
+Previous: "বোরো ধানের সার ব্যবস্থাপনা কী?"
+Current: "ভুট্টা চাষের উপযুক্ত সময় কখন?"
+Output: "ভুট্টা চাষের উপযুক্ত সময় কখন?"
+(Reason: new crop named explicitly — standalone.)
+
+Previous: "ফল আর্মিওয়ার্মের জন্য কোন ওষুধ ভালো?"
+Current: "শনাক্তকারী বৈশিষ্ট্যগুলো কী?"
+Output: "ফল আর্মিওয়ার্মের শনাক্তকারী বৈশিষ্ট্যগুলো কী?"
+(Reason: current question has no subject at all, no pronoun even — must inherit "ফল আর্মিওয়ার্ম" from previous.)
+
+Return ONLY the final question text, nothing else — no explanation, no labels.
 """
 
 _USER_TEMPLATE = """<previous_question>

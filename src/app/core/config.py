@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     supported_languages: str = "bn,en"
 
     # Pipeline tuning
-    retrieval_top_k: int = 8
+    retrieval_top_k: int = 5
     dense_candidate_k: int = 20
     bm25_candidate_k: int = 20
     bm25_cache_ttl_seconds: int = 300

@@ -1,20 +1,78 @@
-"""Deterministic crop extraction from the canonical crop registry."""
+"""Deterministic crop extraction from the canonical crop registry.
+
+Scope: matches against crop.crop_name (English) and crop.crop_bangla_name
+(Bangla script) only. Romanized/Banglish queries (e.g. "gomer" typed in Latin
+script for what is written "গমের" in Bangla) are NOT handled -- that would
+require a transliteration layer, which is intentionally out of scope for now.
+
+Matching strategy
+------------------
+1. Normalize text (NFKC, casefold, punctuation -> space, preserve Bangla
+   vowel signs / combining marks).
+2. Tokenize on whitespace.
+3. Compare each *whole token* (or, for multi-word aliases, a contiguous run
+   of whole tokens) against known crop aliases -- never a raw substring
+   check. This is what stops "আম" (mango) from matching inside "আমি" or
+   "আমন" (Aman rice).
+4. Bangla attaches case/plural suffixes directly onto the stem with no space
+   (e.g. "গমের" = "গম" + "ের"), so the *last* token in a candidate window is
+   compared via its stem, not just its raw form.
+
+No hardcoded suffix list
+-------------------------
+Stemming is delegated entirely to bnltk (BanglaStemmer), a real Bangla NLP
+library trained on actual corpora -- this module does not encode any suffix
+or morphology rules of its own. If bnltk isn't installed, stemming is
+simply skipped: matching degrades to exact whole-token comparison only
+(so "গমের" won't match "গম" until the library is installed), rather than
+guessing at suffixes. This is a deliberate choice -- a hand-rolled, partial
+suffix list is worse than no stemming at all, because it silently gets
+morphology wrong for cases nobody thought to test. A missing dependency
+should fail loudly (via the startup log warning below), not quietly
+reintroduce incorrect matching.
+
+Why not just alias in normalized_query?
+------------------------------------------
+Plain substring containment has no concept of word boundaries, so it treats
+"আম" as a match anywhere those two characters appear -- including inside
+totally unrelated words. Whole-token / stem-aware matching fixes that while
+still catching real inflected forms.
+"""
+from __future__ import annotations
+
 import unicodedata
-from dataclasses import dataclass
 from functools import lru_cache
 
 from app.core.logging import get_logger
-from app.services.pipeline.registry import get_known_crops
+from app.services.pipeline.registry import CropInfo, get_known_crops
 from app.services.pipeline.state import PipelineState
 
 logger = get_logger(__name__)
 
-@dataclass(frozen=True)
-class CropAlias:
-    crop_name: str
-    alias: str
-    tokens: tuple[str, ...]
-    registry_order: int
+# --------------------------------------------------------------------------
+# bnltk gives real Bangla stemming trained on actual corpora. It is the
+# ONLY source of morphology knowledge in this module -- there is no
+# hand-maintained suffix list. If it's missing, we log once at import time
+# and matching degrades to exact whole-token comparison (see module
+# docstring for why we don't paper over this with our own suffix guesses).
+# Install with: pip install bnltk
+# (Note: the similarly-named bnlp_toolkit package does NOT provide a
+# stemmer as of this writing -- bnltk is the correct package for this.)
+# --------------------------------------------------------------------------
+try:
+    from bnltk.stemmer import BanglaStemmer  # type: ignore
+
+    _stemmer = BanglaStemmer()
+    _HAS_STEMMER = True
+except ImportError:
+    _stemmer = None
+    _HAS_STEMMER = False
+    logger.warning(
+        "bnltk not installed -- crop matching will not handle Bangla "
+        "inflected forms (e.g. 'গমের' will not match 'গম'). "
+        "Install with: pip install bnltk"
+    )
+
 
 def normalize_text(text: str) -> str:
     """
@@ -42,175 +100,83 @@ def normalize_text(text: str) -> str:
 
     return " ".join("".join(characters).split())
 
-def is_non_ascii_token(token: str) -> bool:
+
+def stem_token(token: str) -> str:
     """
-    Bengali and other non-ASCII words may contain grammatical additions
-    directly after the registered word.
+    Reduce a Bangla-script token to its stem so inflected forms (e.g.
+    "গমের") match their dictionary form (e.g. "গম").
+
+    Delegates entirely to bnltk's BanglaStemmer. If it's unavailable or
+    errors on a given token, returns the token unchanged (no local suffix
+    guessing) -- that token will then only match via exact whole-token
+    comparison.
     """
-    return any(ord(character) > 127 for character in token)
+    if not _HAS_STEMMER:
+        return token
 
-def token_matches(alias_token: str, query_token: str) -> bool:
-    """
-    Match a registry token against a query token.
+    try:
+        stemmed = _stemmer.stem(token)
+        return stemmed if stemmed else token
+    except Exception:
+        logger.warning("stemming failed for token=%r; using token as-is", token)
+        return token
 
-    Exact examples:
-        ধান == ধান
-        wheat == wheat
 
-    Attached-form examples:
-        গম matches গমের
-        ধান matches ধানের
-
-    No suffix names are hardcoded.
-    """
-    if alias_token == query_token:
-        return True
-
-    # Prefix matching is only used for non-ASCII words.
-    # This prevents English words such as "rice" matching arbitrary
-    # longer English words.
-    return (
-        is_non_ascii_token(alias_token)
-        and len(query_token) > len(alias_token)
-        and query_token.startswith(alias_token)
-    )
-    
 @lru_cache
-def get_crop_aliases() -> tuple[CropAlias, ...]:
-    aliases: list[CropAlias] = []
+def get_crop_aliases() -> list[tuple[str, str]]:
+    """Return (normalized_alias, canonical_crop_name) pairs, longest alias first."""
+    aliases: list[tuple[str, str]] = []
 
-    for registry_order, crop in enumerate(get_known_crops()):
-        crop_aliases = {
-            normalize_text(crop.crop_name),
-            normalize_text(crop.crop_bangla_name),
-        }
+    for crop in get_known_crops():
+        english_name = normalize_text(crop.crop_name)
+        bangla_name = normalize_text(crop.crop_bangla_name)
 
-        for alias in crop_aliases:
-            if not alias:
-                continue
+        aliases.append((english_name, crop.crop_name))
+        aliases.append((bangla_name, crop.crop_name))
 
-            aliases.append(
-                CropAlias(
-                    crop_name=crop.crop_name,
-                    alias=alias,
-                    tokens=tuple(alias.split()),
-                    registry_order=registry_order,
-                )
-            )
+    aliases.sort(key=lambda item: len(item[0]), reverse=True)
 
-    return tuple(aliases)
+    return aliases
 
-def match_complete_alias(
-    query_tokens: list[str],
-    start_index: int,
-) -> CropAlias | None:
-    """
-    Match a complete crop alias starting at the current query token.
-
-    Examples:
-        বোরো ধান       -> Boro Rice
-        আমন ধানের      -> Aman Rice
-        গমের           -> Wheat
-    """
-    candidates: list[CropAlias] = []
-
-    for crop_alias in get_crop_aliases():
-        alias_tokens = crop_alias.tokens
-        end_index = start_index + len(alias_tokens)
-
-        if end_index > len(query_tokens):
-            continue
-
-        query_part = query_tokens[start_index:end_index]
-
-        if all(
-            token_matches(alias_token, query_token)
-            for alias_token, query_token in zip(alias_tokens, query_part)
-        ):
-            candidates.append(crop_alias)
-
-    if not candidates:
-        return None
-
-    # Prefer the most specific alias.
-    # Registry order resolves equal matches deterministically.
-    candidates.sort(
-        key=lambda item: (
-            -len(item.tokens),
-            -len(item.alias),
-            item.registry_order,
-        )
-    )
-
-    return candidates[0]
-
-def match_generic_crop_token(query_token: str) -> CropAlias | None:
-    """
-    Resolve a generic query token against words inside crop aliases.
-
-    Example registry:
-
-        বোরো ধান
-        আমন ধান
-        গম
-
-    Query token:
-
-        ধান
-
-    Both rice entries contain ধান, so the first one in the registry wins.
-    """
-    candidates: list[CropAlias] = []
-
-    for crop_alias in get_crop_aliases():
-        if any(
-            token_matches(alias_token, query_token)
-            for alias_token in crop_alias.tokens
-        ):
-            candidates.append(crop_alias)
-
-    if not candidates:
-        return None
-
-    candidates.sort(key=lambda item: item.registry_order)
-
-    return candidates[0]
 
 def extract_crop_names(query: str) -> list[str]:
     normalized_query = normalize_text(query)
-    query_tokens = normalized_query.split()
+    query_tokens = normalized_query.split(" ")
+    if not query_tokens or query_tokens == [""]:
+        return []
+
+    # Stem once per token up front, reused across every alias comparison.
+    stemmed_tokens = [stem_token(t) for t in query_tokens]
 
     found_crops: list[str] = []
-    token_index = 0
 
-    while token_index < len(query_tokens):
-        # First try a complete and specific crop name.
-        matched_alias = match_complete_alias(
-            query_tokens=query_tokens,
-            start_index=token_index,
-        )
-
-        if matched_alias is not None:
-            if matched_alias.crop_name not in found_crops:
-                found_crops.append(matched_alias.crop_name)
-
-            token_index += len(matched_alias.tokens)
+    for alias, crop_name in get_crop_aliases():
+        if crop_name in found_crops:
             continue
 
-        # Otherwise resolve a generic token such as ধান.
-        matched_alias = match_generic_crop_token(
-            query_token=query_tokens[token_index]
-        )
+        alias_tokens = alias.split(" ")
+        n = len(alias_tokens)
+        if n == 0:
+            continue
 
-        if (
-            matched_alias is not None
-            and matched_alias.crop_name not in found_crops
-        ):
-            found_crops.append(matched_alias.crop_name)
+        for i in range(len(query_tokens) - n + 1):
+            window_raw = query_tokens[i : i + n]
+            window_stemmed = stemmed_tokens[i : i + n]
 
-        token_index += 1
+            # Interior tokens of a multi-word alias must match exactly --
+            # Bangla inflection lands on the final word of a phrase, not
+            # the middle of it (e.g. "বোরো ধানের" -> stem last token only).
+            interior_ok = all(
+                w == a for w, a in zip(window_raw[:-1], alias_tokens[:-1])
+            )
+            last_ok = window_stemmed[-1] == alias_tokens[-1] or window_raw[-1] == alias_tokens[-1]
+
+            if interior_ok and last_ok:
+                found_crops.append(crop_name)
+                break
 
     return found_crops
+
 
 def extract_crop(state: PipelineState) -> PipelineState:
     query = state.get("rewritten_query") or state["raw_query"]

@@ -105,7 +105,7 @@ class SemanticRetriever:
                 }
             )
             chunks.append(item)
-        return chunks[:limit], "dense_fi  ltered"
+        return chunks[:limit], "dense_filtered"
 
         # bm25_results = self._bm25_search(
         #     query,

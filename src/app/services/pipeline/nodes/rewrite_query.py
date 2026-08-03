@@ -66,8 +66,7 @@ def _get_previous_question(history: list[dict[str, str]]) -> str:
     """
     for turn in reversed(history):
         if turn.get("role") == "user":
-            return turn.get("content", "")
-
+            return turn.get("canonical_query", "")
     return ""
 
 # def _format_history(history: list[dict[str, str]]) -> str:
@@ -99,9 +98,10 @@ def rewrite_query(state: PipelineState) -> PipelineState:
 
     rewritten = result.rewritten_query.strip() if result.used_history else raw_query
     rewritten = rewritten or raw_query
-    logger.info("rewrite_query used_history=%s rewritten=%r", result.used_history, rewritten)
+    logger.info("rewrite_query previous_query=%r used_history=%s rewritten=%r", previous, result.used_history, rewritten)
     return {
         **state,
+        "previous_query": previous,
         "rewritten_query": rewritten,
         "rewrite_used_history": result.used_history,
     }

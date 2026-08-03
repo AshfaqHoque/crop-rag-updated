@@ -22,10 +22,11 @@ class InMemoryConversationStore:
         with self._lock:
             return [dict(message) for message in self._sessions.get(session_id, ())]
 
-    def append_turn(self, session_id: str, user_message: str, assistant_message: str) -> None:
+    def append_turn(self, session_id: str, user_message: str, assistant_message: str, *, standalone_query: str | None = None,) -> None:
+        canonical_query = (standalone_query or user_message).strip()
         with self._lock:
             history = self._sessions[session_id]
-            history.append({"role": "user", "content": user_message})
+            history.append({"role": "user", "content": user_message, "canonical_query": canonical_query})
             history.append({"role": "assistant", "content": assistant_message})
 
     def clear(self, session_id: str) -> None:

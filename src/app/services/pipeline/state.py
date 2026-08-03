@@ -14,6 +14,7 @@ class PipelineState(TypedDict, total=False):
     sections: list[str]
 
     # subject resolution
+    previous_query: str
     rewritten_query: str
     rewrite_used_history: bool
 

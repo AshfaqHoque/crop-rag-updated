@@ -1,11 +1,12 @@
 # Crop RAG Chatbot — Steps 1–9
 
-A history-aware crop advisory RAG API for Bangla and English, built with FastAPI, LangGraph, Ollama, Chroma, BM25, and `BAAI/bge-reranker-v2-m3`.
+A history-aware crop advisory RAG API for Bangla and English, built with FastAPI,
+LangGraph, Ollama, optional Groq, Chroma, BM25, and `BAAI/bge-reranker-v2-m3`.
 
 ## Implemented pipeline
 
 1. Project scaffold, settings, logging, health check
-2. Ollama chat client, `bge-m3` embeddings, Chroma, ingestion CLI
+2. Selectable Ollama/Groq chat clients, Ollama `bge-m3` embeddings, Chroma, ingestion CLI
 3. Combined language/intent/crop/section extraction
 4. History-aware standalone-query rewrite for subject resolution
 5. Metadata-filtered retrieval:
@@ -46,7 +47,22 @@ pip install -e ".[dev,reranker]"
 cp .env.example .env
 ```
 
-Start Ollama and pull the models:
+Ollama is the default chat provider. Configure `.env` like this:
+
+```dotenv
+CHAT_PROVIDER=ollama
+OLLAMA_CHAT_MODEL=gemma3:4b
+```
+
+To use Groq instead for chat calls, change only these values:
+
+```dotenv
+CHAT_PROVIDER=groq
+GROQ_API_KEY=gsk_your_key_here
+GROQ_CHAT_MODEL=openai/gpt-oss-120b
+```
+
+Ollama remains available for local chat and is always used for embeddings:
 
 ```bash
 ollama pull gemma3:4b
@@ -110,7 +126,9 @@ Services:
 - Ollama: `http://localhost:11434`
 - Chroma: `http://localhost:8001`
 
-The one-shot `ollama-init` service pulls `gemma3:4b` and `bge-m3`. The reranker is downloaded into the persistent Hugging Face cache when first loaded.
+Set `CHAT_PROVIDER=groq` and `GROQ_API_KEY` before starting Compose when Groq is
+desired. Otherwise, Compose uses Ollama. The one-shot `ollama-init` service pulls
+`gemma3:4b` and `bge-m3`; the reranker is downloaded when first loaded.
 
 Ingest inside Docker:
 
@@ -120,7 +138,8 @@ docker compose exec app python -m app.ingestion.loader --input /app/data/your_ch
 
 ## Tests and lint
 
-The test suite mocks all live model calls; Ollama and the reranker model are not required.
+The test suite mocks all live model calls; running Groq, Ollama, and the reranker
+model are not required.
 
 ```bash
 pytest -q

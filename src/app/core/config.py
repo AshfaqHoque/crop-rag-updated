@@ -3,16 +3,23 @@ Centralized configuration. Every tunable value in the app is read from
 here so nodes remain deterministic and easy to test.
 """
 from functools import lru_cache
+from typing import Literal
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    # Ollama
+    # Chat models. Ollama remains the default; Groq can be selected per deployment.
+    chat_provider: Literal["ollama", "groq"] = "ollama"
+    ollama_chat_model: str = "gemma3:4b"
+    groq_chat_model: str = "openai/gpt-oss-120b"
+    groq_api_key: SecretStr | None = None
+
+    # Ollama chat/embedding server
     ollama_base_url: str = "http://localhost:11434"
-    chat_model: str = "gemma3:4b"
     embed_model: str = "bge-m3"
 
     # Chroma. When chroma_host is empty, embedded/persistent Chroma is used.
@@ -52,6 +59,12 @@ class Settings(BaseSettings):
     @property
     def supported_languages_list(self) -> list[str]:
         return [lang.strip() for lang in self.supported_languages.split(",") if lang.strip()]
+
+    @property
+    def chat_model(self) -> str:
+        if self.chat_provider == "groq":
+            return self.groq_chat_model
+        return self.ollama_chat_model
 
 
 @lru_cache

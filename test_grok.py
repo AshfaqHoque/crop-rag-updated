@@ -19,8 +19,8 @@ if not os.getenv("GROQ_API_KEY"):
 from langchain_groq import ChatGroq
 
 llm2 = ChatGroq(
-    model="llama-3.3-70b-versatile",
+    model="openai/gpt-oss-120b",
     temperature=0,
 )
-response = llm2.invoke("what is the capital of France?")
+response = llm2.invoke("tomar naam ki?")
 print(response.content)

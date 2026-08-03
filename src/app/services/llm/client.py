@@ -4,6 +4,7 @@ from functools import lru_cache
 from typing import TypeVar
 
 from langchain_core.messages import BaseMessage
+from langchain_groq import ChatGroq
 from langchain_ollama import ChatOllama
 from pydantic import BaseModel
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -18,13 +19,33 @@ PromptInput = str | Sequence[BaseMessage]
 
 
 @lru_cache
-def get_chat_llm(temperature: float | None = None) -> ChatOllama:
+def get_ollama_chat_llm(temperature: float | None = None) -> ChatOllama:
     settings = get_settings()
     return ChatOllama(
         base_url=settings.ollama_base_url,
-        model=settings.chat_model,
+        model=settings.ollama_chat_model,
         temperature=settings.llm_temperature if temperature is None else temperature,
     )
+
+
+@lru_cache
+def get_groq_chat_llm(temperature: float | None = None) -> ChatGroq:
+    settings = get_settings()
+    api_key = settings.groq_api_key.get_secret_value() if settings.groq_api_key else None
+    return ChatGroq(
+        api_key=api_key,
+        model=settings.groq_chat_model,
+        temperature=settings.llm_temperature if temperature is None else temperature,
+        max_retries=0,  # Retries are handled by invoke_text/invoke_structured below.
+    )
+
+
+@lru_cache
+def get_chat_llm(temperature: float | None = None) -> ChatOllama | ChatGroq:
+    settings = get_settings()
+    if settings.chat_provider == "groq":
+        return get_groq_chat_llm(temperature)
+    return get_ollama_chat_llm(temperature)
 
 
 def get_structured_llm(schema: type[T], *, temperature: float | None = None):
@@ -45,7 +66,7 @@ def invoke_structured(
         return result
     except LLMGenerationError:
         raise
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("Structured LLM call failed: %s", exc)
         raise LLMGenerationError(str(exc)) from exc
 
@@ -69,6 +90,6 @@ def invoke_text(prompt: PromptInput, *, temperature: float | None = None) -> str
         return text
     except LLMGenerationError:
         raise
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("Text LLM call failed: %s", exc)
         raise LLMGenerationError(str(exc)) from exc

@@ -13,9 +13,9 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     # Chat models. Ollama remains the default; Groq can be selected per deployment.
-    chat_provider: Literal["ollama", "groq"] = "ollama"
+    chat_provider: Literal["ollama", "groq"] = "groq"
     ollama_chat_model: str = "gemma3:4b"
-    groq_chat_model: str = "openai/gpt-oss-120b"
+    groq_chat_model: str = "llama-3.1-8b-instant"
     groq_api_key: SecretStr | None = None
 
     # Ollama chat/embedding server

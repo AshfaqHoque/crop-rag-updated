@@ -1,4 +1,4 @@
-"""Central Ollama chat-model wrapper with retries and normalized errors."""
+"""Central chat-model wrapper with provider selection, retries, and normalized errors."""
 from collections.abc import Sequence
 from functools import lru_cache
 from typing import TypeVar
@@ -21,6 +21,7 @@ PromptInput = str | Sequence[BaseMessage]
 @lru_cache
 def get_ollama_chat_llm(temperature: float | None = None) -> ChatOllama:
     settings = get_settings()
+    logger.info("Initializing chat model provider=ollama model=%s", settings.ollama_chat_model)
     return ChatOllama(
         base_url=settings.ollama_base_url,
         model=settings.ollama_chat_model,
@@ -31,6 +32,7 @@ def get_ollama_chat_llm(temperature: float | None = None) -> ChatOllama:
 @lru_cache
 def get_groq_chat_llm(temperature: float | None = None) -> ChatGroq:
     settings = get_settings()
+    logger.info("Initializing chat model provider=groq model=%s", settings.groq_chat_model)
     api_key = settings.groq_api_key.get_secret_value() if settings.groq_api_key else None
     return ChatGroq(
         api_key=api_key,
@@ -49,7 +51,13 @@ def get_chat_llm(temperature: float | None = None) -> ChatOllama | ChatGroq:
 
 
 def get_structured_llm(schema: type[T], *, temperature: float | None = None):
-    return get_chat_llm(temperature).with_structured_output(schema)
+    llm = get_chat_llm(temperature)
+    if get_settings().chat_provider == "groq":
+        # ChatGroq defaults to function/tool calling, which can fail when the
+        # model emits plain text instead of the required tool call. GPT-OSS
+        # supports Groq's native JSON Schema response format directly.
+        return llm.with_structured_output(schema, method="json_mode")
+    return llm.with_structured_output(schema)
 
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=0.5, max=4), reraise=True)
@@ -60,6 +68,13 @@ def invoke_structured(
     temperature: float | None = None,
 ) -> T:
     try:
+        settings = get_settings()
+        logger.info(
+            "Invoking chat model provider=%s model=%s operation=structured schema=%s",
+            settings.chat_provider,
+            settings.chat_model,
+            schema.__name__,
+        )
         result = get_structured_llm(schema, temperature=temperature).invoke(prompt)
         if not isinstance(result, schema):
             raise LLMGenerationError(f"Model did not return expected schema {schema.__name__}")
@@ -74,6 +89,12 @@ def invoke_structured(
 @retry(stop=stop_after_attempt(2), wait=wait_exponential(multiplier=0.5, max=4), reraise=True)
 def invoke_text(prompt: PromptInput, *, temperature: float | None = None) -> str:
     try:
+        settings = get_settings()
+        logger.info(
+            "Invoking chat model provider=%s model=%s operation=text",
+            settings.chat_provider,
+            settings.chat_model,
+        )
         result = get_chat_llm(temperature).invoke(prompt)
         content = result.content
         if isinstance(content, str):

@@ -1,9 +1,16 @@
+import logging
 from types import SimpleNamespace
 from unittest.mock import patch
 
 from pydantic import SecretStr
 
-from app.services.llm.client import get_chat_llm, get_groq_chat_llm, get_ollama_chat_llm
+from app.services.llm.client import (
+    get_chat_llm,
+    get_groq_chat_llm,
+    get_ollama_chat_llm,
+    get_structured_llm,
+    invoke_text,
+)
 
 MODULE = "app.services.llm.client"
 
@@ -62,3 +69,44 @@ def test_chat_provider_selects_groq(mock_settings, mock_groq, mock_ollama):
     mock_groq.assert_called_once_with(None)
     mock_ollama.assert_not_called()
     get_chat_llm.cache_clear()
+
+
+@patch(f"{MODULE}.get_chat_llm")
+@patch(f"{MODULE}.get_settings")
+def test_groq_structured_output_uses_json_schema(mock_settings, mock_get_llm):
+    mock_settings.return_value = SimpleNamespace(chat_provider="groq")
+    schema = type("Schema", (), {})
+
+    result = get_structured_llm(schema)
+
+    mock_get_llm.return_value.with_structured_output.assert_called_once_with(
+        schema,
+        method="json_schema",
+    )
+    assert result is mock_get_llm.return_value.with_structured_output.return_value
+
+
+@patch(f"{MODULE}.get_chat_llm")
+@patch(f"{MODULE}.get_settings")
+def test_ollama_structured_output_keeps_default_method(mock_settings, mock_get_llm):
+    mock_settings.return_value = SimpleNamespace(chat_provider="ollama")
+    schema = type("Schema", (), {})
+
+    get_structured_llm(schema)
+
+    mock_get_llm.return_value.with_structured_output.assert_called_once_with(schema)
+
+
+@patch(f"{MODULE}.get_chat_llm")
+@patch(f"{MODULE}.get_settings")
+def test_text_invocation_logs_provider_and_model(mock_settings, mock_get_llm, caplog):
+    mock_settings.return_value = SimpleNamespace(
+        chat_provider="groq",
+        chat_model="openai/gpt-oss-120b",
+    )
+    mock_get_llm.return_value.invoke.return_value = SimpleNamespace(content="answer")
+
+    with caplog.at_level(logging.INFO, logger=MODULE):
+        assert invoke_text("question") == "answer"
+
+    assert "provider=groq model=openai/gpt-oss-120b operation=text" in caplog.text

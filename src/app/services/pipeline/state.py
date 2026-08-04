@@ -11,7 +11,7 @@ class PipelineState(TypedDict, total=False):
     # query understanding
     language: str
     intent: str
-    sections: list[str]
+    sections: list[str]  
 
     # subject resolution
     previous_query: str

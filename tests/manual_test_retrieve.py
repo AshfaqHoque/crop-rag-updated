@@ -17,9 +17,10 @@ vectorstore = Chroma(
     persist_directory=persist_directory,
 )
 
-query = "ব্রি ধান৮৭"
-result = vectorstore.similarity_search_with_score(query, k=10)
-for doc, score in result:
+query = "ফল আর্মিওয়ার্ম"
+
+semantic_results = vectorstore.similarity_search_with_score(query, k=10)
+for doc, score in semantic_results:
     print("-----score---- ", score)
     print(doc.metadata.get("chunk_id"))
     print(doc.page_content[:100])

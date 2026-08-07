@@ -1,5 +1,12 @@
+import re
 from langchain_chroma import Chroma
 from langchain_ollama import OllamaEmbeddings
+from langchain_core.documents import Document
+from rank_bm25 import BM25Okapi
+
+from sentence_transformers import CrossEncoder
+
+reranker = CrossEncoder("BAAI/bge-reranker-v2-m3")
 
 from app.core.config import get_settings
 
@@ -17,11 +24,51 @@ vectorstore = Chroma(
     persist_directory=persist_directory,
 )
 
-query = "ব্রি ধান৮৭"
-result = vectorstore.similarity_search_with_score(query, k=10)
-for doc, score in result:
-    print("-----score---- ", score)
-    print(doc.metadata.get("chunk_id"))
+# data = vectorstore.get()
+# docs = [Document(page_content=text, metadata=meta) for text, meta in zip(data["documents"], data["metadatas"])]
+# tokenize_docs =[tokenize(doc.page_content) for doc in docs]
+
+# bm25 = BM25Okapi(tokenize_docs)
+query = "বোরো ধান ও গম উভয়ের জন্য কোন ধরনের মাটি ভালো?"
+
+semantic_results = vectorstore.similarity_search_with_score(query, k=20)
+
+docs = [doc for doc, _ in semantic_results]
+
+pairs = [
+    (query, doc.page_content)
+    for doc in docs
+]
+
+scores = reranker.predict(pairs)
+
+reranked = sorted(
+    zip(docs, scores),
+    key=lambda x: x[1],
+    reverse=True,
+)
+
+print("Reranked Results")
+for doc, score in reranked[:5]:
+    print("=" * 80)
+    print(f"Score: {score:.4f}")
+    print(f"Chunk: {doc.metadata['chunk_id']}")
     print(doc.page_content[:100])
-    
-    
+
+# print("bm255555555")
+# bm25_results =  bm25.get_scores(tokenize(query))
+# results = sorted(
+#     zip(docs, bm25_results),
+#     key=lambda x: x[1],
+#     reverse=True,
+# )
+# best_score = max(bm25_results)
+# threshold = best_score * 0.75
+# for doc, score in results[:5]:
+#     if score < threshold:
+#         continue
+
+#     print("=" * 80)
+#     print(f"Score    : {score:.4f}")
+#     print(f"Chunk ID : {doc.metadata['chunk_id']}")
+#     print(doc.page_content[:100])

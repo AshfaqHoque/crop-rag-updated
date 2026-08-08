@@ -27,10 +27,8 @@ class ChatService:
                 "history": history,
             }
             result = await run_in_threadpool(self._graph.invoke, initial_state)
-            answer = result.get("answer", "").strip()
-            standalone_query=result.get("rewritten_query") or request.message.strip()
-            
-            self._history_store.append_turn(request.session_id, request.message.strip(), answer, standalone_query=standalone_query)  # noqa: E501
+            answer = result.get("answer", "").strip()            
+            self._history_store.append_turn(request.session_id, request.message.strip(), answer,)  # noqa: E501
 
             return self._to_response(request.session_id, result, answer)
 

@@ -1,12 +1,12 @@
 """State threaded through the LangGraph pipeline."""
 from typing import Any, TypedDict
-
+from langchain_core.messages import BaseMessage
 
 class PipelineState(TypedDict, total=False):
     # input
     session_id: str
     raw_query: str
-    history: list[dict[str, str]]
+    history: list[BaseMessage]
 
     # query understanding
     language: str

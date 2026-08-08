@@ -13,7 +13,7 @@ from app.core.config import get_settings
 
 
 class InMemoryConversationStore:
-    def __init__(self, max_turns: int = 6):
+    def __init__(self, max_turns: int = 1):
         # One turn = one HumanMessage + one AIMessage
         self._max_messages = max_turns * 2
         self._sessions: dict[str, deque[BaseMessage]] = defaultdict(
@@ -26,10 +26,10 @@ class InMemoryConversationStore:
         with self._lock:
             return list(self._sessions.get(session_id, ()))
 
-    def append_turn(self, session_id: str, user_message: str, assistant_message: str,) -> None:
+    def append_turn(self, session_id: str, user_message: str, assistant_message: str, rewritten_query: str) -> None:
         with self._lock:
             history = self._sessions[session_id]
-            history.append( HumanMessage(content=user_message))
+            history.append( HumanMessage(content=user_message, additional_kwargs={"rewritten_query": rewritten_query,}))
             history.append(AIMessage(content=assistant_message))
 
     def clear(self, session_id: str) -> None:

@@ -69,7 +69,7 @@ _USER_TEMPLATE = """<previous_question>
 def _get_previous_question(history) -> str:
     for message in reversed(history):
         if isinstance(message, HumanMessage):
-            return message.content
+            return message.additional_kwargs.get("rewritten_query") or  message.content
     return ""
 
 # def _format_history(history: list[dict[str, str]]) -> str:

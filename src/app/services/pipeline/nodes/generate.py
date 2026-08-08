@@ -27,16 +27,16 @@ Guidelines:
 - Respond naturally like a professional chatbot.
 """
 
-_USER_TEMPLATE = """<request>
-<intent>{intent}</intent>
-<original_message>{raw_query}</original_message>
-<standalone_query>{rewritten_query}</standalone_query>
-</request>
+# _USER_TEMPLATE = """<request>
+# <intent>{intent}</intent>
+# <original_message>{raw_query}</original_message>
+# <standalone_query>{rewritten_query}</standalone_query>
+# </request>
 
-<knowledge_context>
-{context}
-</knowledge_context>
-"""
+# <knowledge_context>
+# {context}
+# </knowledge_context>
+# """
 
 
 def _answer_language(language: str) -> str:
@@ -63,7 +63,7 @@ def _format_context(chunks: list[dict]) -> str:
 
 def generate(state: PipelineState) -> PipelineState:
     history = state.get("history") or []
-    previous_messages = history[-2:]
+    # previous_messages = history
     current_message = f"""<user_message>
     {state["raw_query"]}
     </user_message>
@@ -81,10 +81,10 @@ def generate(state: PipelineState) -> PipelineState:
                 answer_language=_answer_language(state.get("language", "en"))
             )
         ),
-        *previous_messages,
+        *history,
         HumanMessage(content=current_message)
     ]
 
     answer = invoke_text(messages).strip()
-    logger.info("generate answer_chars=%d", len(answer))
+    logger.info("generate answer_chars=%d, length of history used=%d", len(answer), len(history))
     return {**state, "answer": answer}

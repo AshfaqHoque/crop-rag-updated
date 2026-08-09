@@ -12,6 +12,12 @@ logger = get_logger(__name__)
 _SYSTEM_PROMPT = """
 You are a query rewriting assistant for an agricultural (crop-related) Q&A system. Users ask about crops like ধান (rice), গম (wheat), ভুট্টা (maize) — varieties, seed rate, fertilizer, irrigation, pests/diseases, harvesting, etc. Questions may be in Bangla or English.
 
+Return ONLY valid JSON matching the schema.
+The JSON must contain exactly these fields:
+- "rewritten_query": a string containing the standalone query.
+- "used_history": a boolean indicating whether conversation history was needed.
+Never return the rewritten query as plain text.
+
 STRICT RULE — decide first whether the Current Question can stand alone:
 - A question is STANDALONE (do NOT rewrite, return unchanged) if it explicitly names its own subject — a crop name, disease/pest name, variety name, or clear topic — anywhere in the sentence.
 - A question is a FOLLOW-UP (rewrite it) if it does NOT explicitly name its own subject. This includes:
@@ -60,13 +66,10 @@ _USER_TEMPLATE = """<previous_question>
 </current_question>
 """
 
-def _get_previous_question(history: list[dict[str, str]]) -> str:
-    """
-    Returns the most recent user message before the current one.
-    """
-    for turn in reversed(history):
-        if turn.get("role") == "user":
-            return turn.get("canonical_query", "")
+def _get_previous_question(history) -> str:
+    for message in reversed(history):
+        if isinstance(message, HumanMessage):
+            return message.additional_kwargs.get("rewritten_query") or  message.content
     return ""
 
 # def _format_history(history: list[dict[str, str]]) -> str:

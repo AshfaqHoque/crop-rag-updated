@@ -12,7 +12,7 @@ class QueryUnderstanding(BaseModel):
     )
     sections: list[str] = Field(
         default_factory=list,
-        max_length=10,
+        # max_length=10,
         description="Canonical section values from the supplied registry only.",
     )
 

@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     rrf_k: int = 60
     rerank_top_k: int = 4
     llm_temperature: float = 0.1
-    history_max_turns: int = 6
+    history_max_turns: int = 1
     context_max_chars_per_chunk: int = 3000
 
     # Reranker. FlagEmbedding is loaded lazily only when this is enabled.

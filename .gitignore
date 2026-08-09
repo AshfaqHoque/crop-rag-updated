@@ -20,7 +20,7 @@ __pycache__/
 venv/
 env/
 ENV/
-
+.venv312/
 # Packaging and build artifacts
 build/
 dist/

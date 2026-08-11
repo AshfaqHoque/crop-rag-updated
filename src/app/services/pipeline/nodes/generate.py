@@ -44,28 +44,17 @@ def _answer_language(language: str) -> str:
         return "natural Bangla"
     return "clear English"
 
-
 def _format_context(chunks: list[dict]) -> str:
     if not chunks:
         return "(No relevant agricultural information was retrieved.)"
     max_chars = get_settings().context_max_chars_per_chunk
-    # blocks = []
-    # for index, chunk in enumerate(chunks, start=1):
-    #     metadata = chunk.get("metadata") or {}
-    #     header = (
-    #         f"[{index}] chunk_id={chunk.get('chunk_id', '')}; "
-    #         f"crop={metadata.get('crop_name', '')}; section={metadata.get('section', '')}"
-    #     )
-    #     content = str(chunk.get("content", ""))[:max_chars]
-    #     blocks.append(f"{header}\n{content}")
     return "\n\n".join(str(chunk.get("content", ""))[:max_chars] for chunk in chunks)
 
 
 def generate(state: PipelineState) -> PipelineState:
     history = state.get("history") or []
-    # previous_messages = history
     current_message = f"""<user_message>
-    {state["raw_query"]}
+    {state["normalized_query"]}
     </user_message>
 
     <knowledge_context>
@@ -78,7 +67,7 @@ def generate(state: PipelineState) -> PipelineState:
     messages = [
         SystemMessage(
             content=_SYSTEM_TEMPLATE.format(
-                answer_language=_answer_language(state.get("language", "en"))
+                answer_language=_answer_language(state.get("language", "bn"))
             )
         ),
         *history,

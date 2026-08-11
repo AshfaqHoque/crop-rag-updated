@@ -72,20 +72,11 @@ def _get_previous_question(history) -> str:
             return message.additional_kwargs.get("rewritten_query") or  message.content
     return ""
 
-# def _format_history(history: list[dict[str, str]]) -> str:
-#     if not history:
-#         return "(none)"
-#     max_messages = get_settings().history_max_turns * 2
-#     return "\n".join(
-#         f"{turn.get('role', 'unknown')}: {turn.get('content', '')}"
-#         for turn in history[-max_messages:]
-#     )
-
-
 def rewrite_query(state: PipelineState) -> PipelineState:
-    raw_query = state["raw_query"].strip()
+    query = state["normalized_query"].strip()
     if not state.get("history"):
-        return {**state, "rewritten_query": raw_query, "rewrite_used_history": False}
+        logger.info("rewrite_query used_history=False")
+        return {**state, "rewritten_query": query, "rewrite_used_history": False}
     
     previous = _get_previous_question(state.get("history", []))
     messages = [
@@ -93,14 +84,13 @@ def rewrite_query(state: PipelineState) -> PipelineState:
         HumanMessage(
             content=_USER_TEMPLATE.format(
                 previous=previous or "(none)",
-                current=raw_query,
+                current=query,
             )
         ),
     ]
     result = invoke_structured(QueryRewrite, messages, temperature=0.0)
 
-    rewritten = result.rewritten_query.strip() if result.used_history else raw_query
-    rewritten = rewritten or raw_query
+    rewritten = result.rewritten_query.strip() if result.used_history else query
     logger.info("rewrite_query previous_query=%r used_history=%s rewritten=%r", previous, result.used_history, rewritten)
     return {
         **state,

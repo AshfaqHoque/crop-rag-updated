@@ -179,9 +179,10 @@ def extract_crop_names(query: str) -> list[str]:
 
 
 def extract_crop(state: PipelineState) -> PipelineState:
-    query = state.get("rewritten_query") or state["raw_query"]
+    query = state.get("rewritten_query") or state.get("normalized_query") or state.get("raw_query")
     crops = extract_crop_names(query)
     logger.info("extract_crops query=%r crops=%s", query, crops)
     return {
+        **state,
         "crops": crops
     }

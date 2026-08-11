@@ -69,12 +69,6 @@ def invoke_structured(
 ) -> T:
     try:
         settings = get_settings()
-        # logger.info(
-        #     "Invoking chat model provider=%s model=%s operation=structured schema=%s",
-        #     settings.chat_provider,
-        #     settings.chat_model,
-        #     schema.__name__,
-        # )
         result = get_structured_llm(schema, temperature=temperature).invoke(prompt)
         if not isinstance(result, schema):
             raise LLMGenerationError(f"Model did not return expected schema {schema.__name__}")
@@ -90,11 +84,6 @@ def invoke_structured(
 def invoke_text(prompt: PromptInput, *, temperature: float | None = None) -> str:
     try:
         settings = get_settings()
-        # logger.info(
-        #     "Invoking chat model provider=%s model=%s operation=text",
-        #     settings.chat_provider,
-        #     settings.chat_model,
-        # )
         result = get_chat_llm(temperature).invoke(prompt)
         content = result.content
         if isinstance(content, str):

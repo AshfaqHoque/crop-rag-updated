@@ -8,8 +8,11 @@ class PipelineState(TypedDict, total=False):
     raw_query: str
     history: list[BaseMessage]
 
-    # query understanding
+    #normalize language
+    normalized_query: str
     language: str
+
+    # query understanding
     intent: str
     sections: list[str]  
 

@@ -19,12 +19,12 @@ def route_after_understanding(state: PipelineState) -> str:
 
 def build_chat_graph():
     builder = StateGraph(PipelineState)
+    
     builder.add_node("normalize_language", normalize_language)
     builder.add_node("rewrite_query", rewrite_query)
     builder.add_node("understand_query", understand_query)
     builder.add_node("extract_crop", extract_crop)
     builder.add_node("retrieve", retrieve)
-    # builder.add_node("rerank", rerank)
     builder.add_node("generate", generate)
 
     builder.add_edge(START, "normalize_language")

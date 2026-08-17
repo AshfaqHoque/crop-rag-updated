@@ -1,6 +1,6 @@
 import unicodedata
-import avro 
 
+import avro
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_ollama import ChatOllama
 
@@ -83,12 +83,7 @@ Correct spelling only.
 
     normalized_query = str(response.content).strip()
 
-    logger.info(
-        "language_normalization language=banglish original=%r normalized=%r",
-        raw_query,
-        normalized_query,
-    )
-
+    logger.info("language_normalization language=banglish original=%r normalized=%r", raw_query, normalized_query)  # noqa: E501
     return {
         **state,
         "language": "bn",

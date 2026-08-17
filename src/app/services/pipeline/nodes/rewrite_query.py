@@ -91,7 +91,7 @@ def rewrite_query(state: PipelineState) -> PipelineState:
     result = invoke_structured(QueryRewrite, messages, temperature=0.0)
 
     rewritten = result.rewritten_query.strip() if result.used_history else query
-    logger.info("rewrite_query previous_query=%r used_history=%s rewritten=%r", previous, result.used_history, rewritten)
+    logger.info("rewrite_query previous_query=%r used_history=%s rewritten=%r", previous, result.used_history, rewritten)  # noqa: E501
     return {
         **state,
         "previous_query": previous,

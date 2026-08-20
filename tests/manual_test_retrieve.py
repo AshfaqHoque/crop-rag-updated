@@ -29,7 +29,7 @@ vectorstore = Chroma(
 # tokenize_docs =[tokenize(doc.page_content) for doc in docs]
 
 # bm25 = BM25Okapi(tokenize_docs)
-query = "বোরো ধান ও গম উভয়ের জন্য কোন ধরনের মাটি ভালো?"
+query = "বোরো ধানের কী কী জাত আছে?"
 
 semantic_results = vectorstore.similarity_search_with_score(query, k=20)
 
@@ -49,7 +49,7 @@ reranked = sorted(
 )
 
 print("Reranked Results")
-for doc, score in reranked[:5]:
+for doc, score in reranked[:10]:
     print("=" * 80)
     print(f"Score: {score:.4f}")
     print(f"Chunk: {doc.metadata['chunk_id']}")

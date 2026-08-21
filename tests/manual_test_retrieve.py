@@ -24,26 +24,28 @@ vectorstore = Chroma(
     persist_directory=persist_directory,
 )
 
+# def tokenize(text: str):
+#     return re.findall(r"\w+", text.lower())
 # data = vectorstore.get()
 # docs = [Document(page_content=text, metadata=meta) for text, meta in zip(data["documents"], data["metadatas"])]
 # tokenize_docs =[tokenize(doc.page_content) for doc in docs]
-
 # bm25 = BM25Okapi(tokenize_docs)
+
 query = "বোরো ধানের কী কী জাত আছে?"
 
 semantic_results = vectorstore.similarity_search_with_score(query, k=20)
 
-docs = [doc for doc, _ in semantic_results]
+semantic_docs = [doc for doc, _ in semantic_results]
 
 pairs = [
     (query, doc.page_content)
-    for doc in docs
+    for doc in semantic_docs
 ]
 
 scores = reranker.predict(pairs)
 
 reranked = sorted(
-    zip(docs, scores),
+    zip(semantic_docs, scores),
     key=lambda x: x[1],
     reverse=True,
 )
@@ -64,7 +66,7 @@ for doc, score in reranked[:10]:
 # )
 # best_score = max(bm25_results)
 # threshold = best_score * 0.75
-# for doc, score in results[:5]:
+# for doc, score in results[:10]:
 #     if score < threshold:
 #         continue
 

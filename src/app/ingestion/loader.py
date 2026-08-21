@@ -9,7 +9,7 @@ already used to build your existing collection:
                   "section": "seed", ...}}
 
 Run:
-    python -m app.ingestion.loader --input path/to/chunks.jsonl
+    python -m app.ingestion.loader --input data/chunks.jsonl
 """
 import argparse
 import json

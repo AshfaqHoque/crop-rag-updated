@@ -1,71 +1,113 @@
 """
-Usage:
-    python -m scripts.build_index                     # reads every *.json in data/raw/
-    python -m scripts.build_index --input data/raw/rice.json
-    python -m scripts.build_index --reset              # wipe and rebuild Chroma collection
+Full ingestion entry point: raw crop export -> chunks -> embedded Chroma
+collection.
 
-Run this once after dropping your full crop export(s) into data/raw/,
-and again any time the source data or EMBED_MODEL changes.
+This is intentionally a thin orchestrator. It does not duplicate any
+chunking, embedding, or storage logic -- it just calls the two stages that
+already exist elsewhere in this package, in order:
+
+    1. app.ingestion.prepare_data.chunk_all  -- crop JSON rows -> Chunk objects
+    2. app.ingestion.loader.ingest           -- JSONL chunks -> embedded upserts into Chroma
+
+(html_cleaner.py is used internally by prepare_data.py; you don't call it
+directly here.)
+
+Run:
+    python -m app.ingestion.build_index                        # settings.crop_registry_path -> data/chunks.jsonl -> Chroma
+    python -m app.ingestion.build_index --input data/other.json
+    python -m app.ingestion.build_index --reset                # wipe the collection first
 """
 import argparse
 import json
+from pathlib import Path
 
-import config
-from chunker import chunk_all
-from parser import load_crops, load_crops_from_dir
-from ollama_embedder import OllamaEmbedder
-from bm25_retriever import BM25Retriever
-from crop_matcher import build_crop_index
-from chroma_store import ChromaStore
+from app.core.config import get_settings
+from app.core.logging import configure_logging, get_logger
+from app.ingestion.loader import ingest
+from app.ingestion.prepare_data import chunk_all
+from app.schemas.chunk_schema import Chunk
+from app.services.retrieval.vector_store import get_vector_store
+
+logger = get_logger(__name__)
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--input", type=str, default=None, help="Single JSON file. Defaults to all files in data/raw/.")
-    parser.add_argument("--reset", action="store_true", help="Wipe the existing Chroma collection first.")
+def load_crop_rows(path: Path) -> list[dict]:
+    """Parses the GraphQL-shaped crop export into a flat list of crop dicts.
+
+    Expects the same shape as data/crops.json:
+        {"data": {"getAllCropsFullDetails": {"rows": [ {...crop...}, ... ]}}}
+
+    This mirrors app.services.pipeline.registry.get_known_crops, which reads
+    the same file at query time to build the crop-name registry -- keep the
+    two in sync if the export format ever changes.
+    """
+    with path.open("r", encoding="utf-8") as f:
+        raw = json.load(f)
+
+    if not isinstance(raw, dict):
+        raise ValueError(f"{path}: expected a JSON object at the top level, got {type(raw).__name__}")
+
+    rows = raw.get("data", {}).get("getAllCropsFullDetails", {}).get("rows")
+    if rows is None:
+        raise ValueError(f"{path}: missing data.getAllCropsFullDetails.rows")
+    return rows
+
+
+def write_chunks_jsonl(chunks: list[Chunk], path: Path) -> None:
+    """Dumps chunks for human inspection / debugging chunk boundaries.
+
+    This is also exactly the file format app.ingestion.loader.load_chunks_file
+    expects to read back in, so the same file doubles as the ingest input.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as f:
+        for chunk in chunks:
+            f.write(json.dumps(chunk.to_dict(), ensure_ascii=False) + "\n")
+
+
+def reset_collection() -> None:
+    """Wipes the existing Chroma collection so the next ingest starts clean."""
+    settings = get_settings()
+    store = get_vector_store()
+    try:
+        store.delete_collection()
+        logger.info("Deleted existing collection '%s'", settings.chroma_collection)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Could not delete existing collection '%s': %s", settings.chroma_collection, exc)
+    # get_vector_store() is lru_cache'd; clear it so the next call recreates
+    # the (now-deleted) collection instead of reusing the stale handle.
+    get_vector_store.cache_clear()
+
+
+def main() -> None:
+    configure_logging()
+    settings = get_settings()
+
+    parser = argparse.ArgumentParser(description="Chunk raw crop data and load it into the Chroma vector store.")
+    parser.add_argument("--input", type=Path, default=Path(settings.crop_registry_path), help="Path to the crop JSON export (default: settings.crop_registry_path)")
+    parser.add_argument("--chunks-output", type=Path, default=Path("data/chunks.jsonl"), help="Where to write the inspectable JSONL chunk dump (default: data/chunks.jsonl)")
+    parser.add_argument("--reset", action="store_true", help="Wipe the existing Chroma collection first")
+    parser.add_argument("--batch-size", type=int, default=64)
     args = parser.parse_args()
 
-    config.STORAGE_DIR.mkdir(parents=True, exist_ok=True)
-    config.DATA_PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+    logger.info("Loading crop rows from %s", args.input)
+    crops = load_crop_rows(args.input)
+    logger.info("Loaded %d crop(s)", len(crops))
 
-    print("Loading raw crop data...")
-    if args.input:
-        crops = load_crops(args.input)
-    else:
-        crops = load_crops_from_dir(config.DATA_RAW_DIR)
-    print(f"  loaded {len(crops)} crop(s)")
-
-    print("Chunking...")
+    logger.info("Chunking...")
     chunks = chunk_all(crops)
-    print(f"  produced {len(chunks)} chunk(s)")
+    logger.info("Produced %d chunk(s)", len(chunks))
 
-    # Dump for human inspection / debugging chunk boundaries.
-    with open(config.CHUNKS_JSONL_PATH, "w", encoding="utf-8") as f:
-        for c in chunks:
-            f.write(json.dumps(c.to_dict(), ensure_ascii=False) + "\n")
-    print(f"  wrote inspectable dump to {config.CHUNKS_JSONL_PATH}")
+    write_chunks_jsonl(chunks, args.chunks_output)
+    logger.info("Wrote inspectable dump to %s", args.chunks_output)
 
-    print(f"Embedding {len(chunks)} chunks via Ollama ({config.EMBED_MODEL})...")
-    embedder = OllamaEmbedder()
-    embeddings = embedder.embed_batch([c.text for c in chunks])
-
-    print("Writing to Chroma...")
-    store = ChromaStore()
     if args.reset:
-        store.reset()
-    store.add(chunks, embeddings)
-    print(f"  collection now has {store.count()} vectors")
+        logger.info("Resetting collection '%s'...", settings.chroma_collection)
+        reset_collection()
 
-    print("Building BM25 index...")
-    bm25 = BM25Retriever.build(chunks)
-    bm25.save()
-
-    print("Building crop-name index...")
-    crop_index = build_crop_index(crops)
-    with open(config.CROP_INDEX_PATH, "w", encoding="utf-8") as f:
-        json.dump(crop_index, f, ensure_ascii=False, indent=2)
-
-    print("Done.")
+    logger.info("Embedding and loading into Chroma (collection '%s')...", settings.chroma_collection)
+    count = ingest(args.chunks_output, batch_size=args.batch_size)
+    logger.info("Done. Ingested %d chunk(s) into collection '%s'.", count, settings.chroma_collection)
 
 
 if __name__ == "__main__":

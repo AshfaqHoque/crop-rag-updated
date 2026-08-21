@@ -316,6 +316,60 @@ def chunk_herbicides(crop: dict) -> list[Chunk]:
     return chunks
 
 
+def _chunk_name_list(crop: dict, names: list[str], section_tag: str, label_bn: str) -> Chunk | None:
+    """Builds a single 'index' chunk out of a flat list of names (e.g.
+    crop['children']['varieties']) -- NOT the same as chunk_varieties()/
+    chunk_pesticides()/chunk_herbicides(), which build one detailed chunk
+    per item. This is a lightweight, self-contained answer to "what
+    varieties/pests/herbicides exist for this crop?" without pulling in
+    every variety's/pest's/herbicide's full detail chunk.
+
+    Deliberately does NOT use _header(): a plain "<crop> এর <label> হলো:"
+    opening line is enough for the embedding to identify the crop, and it
+    reads like a direct answer rather than a labeled record.
+    """
+    cleaned = [n.strip() for n in (names or []) if n and n.strip()]
+    if not cleaned:
+        return None
+
+    bn_name = crop.get("crop_bangla_name") or crop.get("crop_name") or ""
+    text = f"{bn_name} এর {label_bn} হলো:\n" + "\n".join(cleaned)
+    return Chunk(
+        chunk_id=f"{_crop_id(crop)}_total_{section_tag}",
+        text=text,
+        metadata={
+            "crop_id": _crop_id(crop),
+            "crop_name": crop.get("crop_name"),
+            "crop_bangla_name": crop.get("crop_bangla_name"),
+            "section": section_tag,
+        },
+    )
+
+
+def chunk_children(crop: dict) -> list[Chunk]:
+    """crop['children'] holds three flat name lists (varieties, pesticides,
+    herbicides) -- summary indexes, distinct from the per-item detail
+    chunks built by chunk_varieties()/chunk_pesticides()/chunk_herbicides().
+    One chunk per non-empty list; empty lists (e.g. no herbicides on record
+    for this crop) are skipped rather than emitting a useless chunk."""
+    children = crop.get("children") or {}
+    chunks = []
+
+    varieties = _chunk_name_list(crop, children.get("varieties"), "varieties", "জাতগুলো")
+    if varieties:
+        chunks.append(varieties)
+
+    pesticides = _chunk_name_list(crop, children.get("pesticides"), "pesticides", "রোগবালাই/পোকামাকড়সমূহ")
+    if pesticides:
+        chunks.append(pesticides)
+
+    herbicides = _chunk_name_list(crop, children.get("herbicides"), "herbicides", "আগাছানাশক সমূহ")
+    if herbicides:
+        chunks.append(herbicides)
+
+    return chunks
+
+
 def chunk_crop(crop: dict) -> list[Chunk]:
     """Entry point: turn one crop dict into its full list of chunks."""
     chunks: list[Chunk] = []
@@ -359,6 +413,7 @@ def chunk_crop(crop: dict) -> list[Chunk]:
     chunks.extend(chunk_varieties(crop))
     chunks.extend(chunk_pesticides(crop))
     chunks.extend(chunk_herbicides(crop))
+    chunks.extend(chunk_children(crop))
 
     return chunks
 

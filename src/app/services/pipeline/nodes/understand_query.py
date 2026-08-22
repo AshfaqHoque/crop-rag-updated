@@ -56,38 +56,38 @@ _USER_TEMPLATE = """<current_message>
 
 
 def understand_query(state: PipelineState) -> PipelineState:
-    messages = [
-        SystemMessage(
-            content=_SYSTEM_TEMPLATE.format(
-                sections=", ".join(SECTIONS),
-            )
-        ),
-        HumanMessage(
-            content=_USER_TEMPLATE.format(
-                # history=_format_history(state.get("history", [])),
-                raw_query=state["raw_query"],
-                standalone_query=state.get("rewritten_query") or state["raw_query"],
-            )
-        ),
-    ]
-    result = invoke_structured(QueryUnderstanding, messages)
+    # messages = [
+    #     SystemMessage(
+    #         content=_SYSTEM_TEMPLATE.format(
+    #             sections=", ".join(SECTIONS),
+    #         )
+    #     ),
+    #     HumanMessage(
+    #         content=_USER_TEMPLATE.format(
+    #             # history=_format_history(state.get("history", [])),
+    #             raw_query=state["raw_query"],
+    #             standalone_query=state.get("rewritten_query") or state["raw_query"],
+    #         )
+    #     ),
+    # ]
+    # result = invoke_structured(QueryUnderstanding, messages)
 
-    valid_sections = set(SECTIONS)
-    kept_sections = list(dict.fromkeys(s for s in result.sections if s in valid_sections))
+    # valid_sections = set(SECTIONS)
+    # kept_sections = list(dict.fromkeys(s for s in result.sections if s in valid_sections))
 
-    dropped_sections = set(result.sections) - valid_sections
-    if dropped_sections:
-        logger.warning("Dropped section(s) not in registry: %s", dropped_sections)
+    # dropped_sections = set(result.sections) - valid_sections
+    # if dropped_sections:
+    #     logger.warning("Dropped section(s) not in registry: %s", dropped_sections)
 
-    logger.info(
-        "understand_query language=%s intent=%s sections=%s",
-        result.language,
-        result.intent,
-        kept_sections,
-    )
+    # logger.info(
+    #     "understand_query language=%s intent=%s sections=%s",
+    #     result.language,
+    #     result.intent,
+    #     kept_sections,
+    # )
     return {
         **state,
-        "language": result.language,
+        "language": "bn",
         "intent": "crop_query", #hardcoded for now 
-        "sections": kept_sections,
+        "sections": [], #hardcoded for now
     }

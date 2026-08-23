@@ -1,12 +1,16 @@
 """State threaded through the LangGraph pipeline."""
-from typing import Any, TypedDict
-from langchain_core.messages import BaseMessage
+from typing import Annotated, Any, TypedDict
+from langchain_core.messages import AnyMessage, BaseMessage
+from langgraph.graph import add_messages
 
 class PipelineState(TypedDict, total=False):
+
+    # Conversation (persisted by checkpointer via thread_id)
+    messages: Annotated[list[AnyMessage], add_messages]
+    
     # input
     session_id: str
     raw_query: str
-    history: list[BaseMessage]
 
     #normalize language
     normalized_query: str

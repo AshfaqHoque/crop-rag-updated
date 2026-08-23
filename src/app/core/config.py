@@ -58,6 +58,12 @@ class Settings(BaseSettings):
     reranker_fail_open: bool = True
     relevance_filter_threshold: float = 0.5
 
+    # Checkpointer
+    checkpoint_backend: str = "memory"  # memory | redis | postgres | sqlite
+    redis_url: str = "redis://localhost:6379/0"
+    checkpoint_postgres_uri: str | None = None
+    checkpoint_sqlite_path: str = "./data/checkpoints.db"
+
     @property
     def supported_languages_list(self) -> list[str]:
         return [lang.strip() for lang in self.supported_languages.split(",") if lang.strip()]

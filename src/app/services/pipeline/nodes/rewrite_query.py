@@ -66,28 +66,32 @@ _USER_TEMPLATE = """<previous_question>
 </current_question>
 """
 
-def _get_previous_question(history) -> str:
-    for message in reversed(history):
+def _get_previous_question(messages) -> str:
+    for message in reversed(messages[:-1]):
         if isinstance(message, HumanMessage):
             return message.additional_kwargs.get("rewritten_query") or  message.content
     return ""
 
 def rewrite_query(state: PipelineState) -> PipelineState:
     query = state["normalized_query"].strip()
-    if not state.get("history"):
+
+    messages = state.get("messages", [])
+    previous = _get_previous_question(messages)
+
+    if not previous:
         logger.info("rewrite_query used_history=False")
-        return {**state, "rewritten_query": query, "rewrite_used_history": False}
-    
-    previous = _get_previous_question(state.get("history", []))
-    messages = [
-        SystemMessage(content=_SYSTEM_PROMPT),
-        HumanMessage(
-            content=_USER_TEMPLATE.format(
-                previous=previous or "(none)",
-                current=query,
-            )
-        ),
-    ]
+        rewritten = query
+        used_history = False
+    else:  
+        messages = [
+            SystemMessage(content=_SYSTEM_PROMPT),
+            HumanMessage(
+                content=_USER_TEMPLATE.format(
+                    previous=previous or "(none)",
+                    current=query,
+                )
+            ),
+        ]
     result = invoke_structured(QueryRewrite, messages, temperature=0.0)
 
     rewritten = result.rewritten_query.strip() if result.used_history else query

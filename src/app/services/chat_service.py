@@ -35,11 +35,18 @@ class ChatService:
 
     @staticmethod
     def _to_response(session_id: str, result: dict, answer: str) -> ChatResponse:
-        ranked = result.get("reranked_chunks") or result.get("retrieved_chunks") or []
+        ranked = (
+            result["filtered_chunks"]
+            if "filtered_chunks" in result
+            else result.get("reranked_chunks") or result.get("retrieved_chunks") or []
+        )
         sources = []
         for chunk in ranked:
             metadata = chunk.get("metadata") or {}
-            score = chunk.get("rerank_score", chunk.get("retrieval_score"))
+            score = chunk.get(
+                "relevance_score",
+                chunk.get("rerank_score", chunk.get("retrieval_score")),
+            )
             sources.append(
                 SourceChunk(
                     chunk_id=str(chunk.get("chunk_id", metadata.get("chunk_id", ""))),

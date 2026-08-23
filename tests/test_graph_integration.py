@@ -38,6 +38,11 @@ def test_full_graph_crop_query_path(monkeypatch):
     monkeypatch.setattr(graph_module, "extract_crop", extract)
     monkeypatch.setattr(graph_module, "rewrite_query", rewrite)
     monkeypatch.setattr(graph_module, "retrieve", retrieve)
+    monkeypatch.setattr(
+        graph_module,
+        "filter_relevant",
+        lambda state: {**state, "filtered_chunks": state["retrieved_chunks"]},
+    )
     monkeypatch.setattr(graph_module, "generate", generate)
 
     result = graph_module.build_chat_graph().invoke(

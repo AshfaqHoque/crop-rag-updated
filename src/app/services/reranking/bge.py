@@ -87,6 +87,55 @@ class BGEReranker:
                 return [dict(chunk) for chunk in chunks[:limit]]
             raise RerankingError(str(exc)) from exc
 
+    def filter_relevant(
+        self,
+        queries: list[str],
+        chunks: list[dict[str, Any]],
+        *,
+        threshold: float,
+    ) -> list[dict[str, Any]]:
+        settings = get_settings()
+        if not chunks or not settings.reranker_enabled:
+            return [dict(chunk) for chunk in chunks]
+
+        active_queries = [query.strip() for query in queries if query and query.strip()]
+        if not active_queries:
+            return [dict(chunk) for chunk in chunks]
+
+        pairs = [
+            [query, str(chunk.get("content", ""))]
+            for chunk in chunks
+            for query in active_queries
+        ]
+        try:
+            raw_scores = self._get_model().compute_score(pairs, normalize=True)
+            if isinstance(raw_scores, (int, float)):
+                raw_scores = [float(raw_scores)]
+            expected_scores = len(chunks) * len(active_queries)
+            if len(raw_scores) != expected_scores:
+                raise RerankingError("Relevance filter returned an invalid score count")
+
+            filtered = []
+            for index, chunk in enumerate(chunks):
+                chunk_scores = raw_scores[
+                    index * len(active_queries):(index + 1) * len(active_queries)
+                ]
+                item = dict(chunk)
+                item["relevance_score"] = max(float(score) for score in chunk_scores)
+                if item["relevance_score"] >= threshold:
+                    filtered.append(item)
+            return filtered
+        except RerankingError:
+            if settings.reranker_fail_open:
+                logger.exception("Relevance filter failed; returning retrieval order")
+                return [dict(chunk) for chunk in chunks]
+            raise
+        except Exception as exc:  # noqa: BLE001
+            if settings.reranker_fail_open:
+                logger.exception("Relevance filter failed; returning retrieval order: %s", exc)
+                return [dict(chunk) for chunk in chunks]
+            raise RerankingError(str(exc)) from exc
+
 
 @lru_cache
 def get_reranker() -> BGEReranker:

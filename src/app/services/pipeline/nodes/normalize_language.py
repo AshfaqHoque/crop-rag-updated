@@ -15,6 +15,7 @@ settings = get_settings()
 _banglish_llm = ChatOllama(
     model=settings.banglish_converter_model,
     temperature=0.0,
+    reasoning=False,
 )
 
 def is_bangla_text(text: str) -> bool:

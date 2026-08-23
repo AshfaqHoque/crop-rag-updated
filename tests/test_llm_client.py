@@ -53,6 +53,7 @@ def test_ollama_chat_client_remains_available(mock_settings, mock_chat_ollama):
     mock_chat_ollama.assert_called_once_with(
         base_url="http://localhost:11434",
         model="gemma3:4b",
+        reasoning=False,
         temperature=0.1,
     )
     get_ollama_chat_llm.cache_clear()

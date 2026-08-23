@@ -25,6 +25,7 @@ def get_ollama_chat_llm(temperature: float | None = None) -> ChatOllama:
     return ChatOllama(
         base_url=settings.ollama_base_url,
         model=settings.ollama_chat_model,
+        reasoning=False,
         temperature=settings.llm_temperature if temperature is None else temperature,
     )
 

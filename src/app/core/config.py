@@ -14,8 +14,8 @@ class Settings(BaseSettings):
 
     # Chat models. Ollama remains the default; Groq can be selected per deployment.
     chat_provider: Literal["ollama", "groq"] = "ollama"
-    ollama_chat_model: str = "gpt-oss:20b-cloud"
-    banglish_converter_model: str = "gemma4:31b-cloud"
+    ollama_chat_model: str = "gemma4:12b"
+    banglish_converter_model: str = "gemma4:12b"
     groq_chat_model: str = "openai/gpt-oss-20b"
     groq_api_key: SecretStr | None = None
 
@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     supported_languages: str = "bn,en"
 
     # Pipeline tuning
-    retrieval_top_k: int = 5
+    retrieval_top_k: int = 10
     dense_candidate_k: int = 20
     bm25_candidate_k: int = 20
     bm25_cache_ttl_seconds: int = 300
@@ -56,6 +56,7 @@ class Settings(BaseSettings):
     reranker_query_max_length: int = 256
     reranker_passage_max_length: int = 512
     reranker_fail_open: bool = True
+    relevance_filter_threshold: float = 0.5
 
     @property
     def supported_languages_list(self) -> list[str]:

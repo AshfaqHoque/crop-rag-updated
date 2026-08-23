@@ -27,6 +27,7 @@ class PipelineState(TypedDict, total=False):
     # retrieval/reranking
     retrieved_chunks: list[dict[str, Any]]
     reranked_chunks: list[dict[str, Any]]
+    filtered_chunks: list[dict[str, Any]]
     retrieval_mode: str
 
     # output

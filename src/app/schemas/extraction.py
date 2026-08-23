@@ -20,3 +20,10 @@ class QueryUnderstanding(BaseModel):
 class QueryRewrite(BaseModel):
     rewritten_query: str
     used_history: bool
+
+
+class RelevantChunks(BaseModel):
+    relevant_indexes: list[int] = Field(
+        default_factory=list,
+        description="Zero-based indexes of chunks that directly help answer the question.",
+    )

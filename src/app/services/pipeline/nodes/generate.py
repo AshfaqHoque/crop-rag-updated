@@ -53,15 +53,17 @@ def _format_context(chunks: list[dict]) -> str:
 
 def generate(state: PipelineState) -> PipelineState:
     history = state.get("history") or []
+    context_chunks = (
+        state["filtered_chunks"]
+        if "filtered_chunks" in state
+        else state.get("reranked_chunks") or state.get("retrieved_chunks", [])
+    )
     current_message = f"""<user_message>
     {state["normalized_query"]}
     </user_message>
 
     <knowledge_context>
-    {_format_context(
-        state.get("reranked_chunks")
-        or state.get("retrieved_chunks", [])
-    )}
+    {_format_context(context_chunks)}
     </knowledge_context>
     """
     messages = [

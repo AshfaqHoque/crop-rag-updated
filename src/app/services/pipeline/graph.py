@@ -3,6 +3,7 @@ from functools import lru_cache
 
 from langgraph.graph import END, START, StateGraph
 
+from app.services.pipeline.checkpointer import make_checkpointer
 from app.services.pipeline.nodes.extract_crop import extract_crop
 from app.services.pipeline.nodes.generate import generate
 from app.services.pipeline.nodes.retrieve import retrieve
@@ -41,7 +42,8 @@ def build_chat_graph():
     builder.add_edge("extract_crop", "retrieve")
     builder.add_edge("retrieve", "generate")
     builder.add_edge("generate", END)
-    return builder.compile()
+
+    return builder.compile(checkpointer=make_checkpointer())
 
 
 @lru_cache

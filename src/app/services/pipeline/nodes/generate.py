@@ -1,5 +1,5 @@
 """Grounded final-answer generation node."""
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
@@ -52,7 +52,8 @@ def _format_context(chunks: list[dict]) -> str:
 
 
 def generate(state: PipelineState) -> PipelineState:
-    history = state.get("history") or []
+    conversation = list(state.get("messages") or [])
+    history = conversation[:-1] if conversation else []
     context_chunks = (
         state["filtered_chunks"]
         if "filtered_chunks" in state
@@ -78,4 +79,8 @@ def generate(state: PipelineState) -> PipelineState:
 
     answer = invoke_text(messages).strip()
     logger.info("generate answer_chars=%d, length of history used=%d", len(answer), len(history))
-    return {**state, "answer": answer}
+    return {
+        **state,
+        "messages": [AIMessage(content=answer)],
+        "answer": answer,
+    }

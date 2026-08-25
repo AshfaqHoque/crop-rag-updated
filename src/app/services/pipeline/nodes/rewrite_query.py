@@ -80,19 +80,23 @@ def rewrite_query(state: PipelineState) -> PipelineState:
 
     if not previous:
         logger.info("rewrite_query used_history=False")
-        rewritten = query
-        used_history = False
-    else:  
-        messages = [
-            SystemMessage(content=_SYSTEM_PROMPT),
-            HumanMessage(
-                content=_USER_TEMPLATE.format(
-                    previous=previous or "(none)",
-                    current=query,
-                )
-            ),
-        ]
-    result = invoke_structured(QueryRewrite, messages, temperature=0.0)
+        return {
+            **state,
+            "previous_query": "",
+            "rewritten_query": query,
+            "rewrite_used_history": False,
+        }
+
+    rewrite_messages = [
+        SystemMessage(content=_SYSTEM_PROMPT),
+        HumanMessage(
+            content=_USER_TEMPLATE.format(
+                previous=previous,
+                current=query,
+            )
+        ),
+    ]
+    result = invoke_structured(QueryRewrite, rewrite_messages, temperature=0.0)
 
     rewritten = result.rewritten_query.strip() if result.used_history else query
     logger.info("rewrite_query previous_query=%r used_history=%s rewritten=%r", previous, result.used_history, rewritten)  # noqa: E501

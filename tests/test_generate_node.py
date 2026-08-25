@@ -1,5 +1,7 @@
 from unittest.mock import patch
 
+from langchain_core.messages import AIMessage, HumanMessage
+
 from app.services.pipeline.nodes.generate import _format_context, generate
 
 MODULE = "app.services.pipeline.nodes.generate"
@@ -39,3 +41,27 @@ def test_generate_writes_answer(mock_invoke):
     prompt = "\n".join(message.content for message in messages)
     assert "<standalone_query>বোরো ধানের" in prompt
     assert "[1] chunk_id=5_seed" in prompt
+
+
+@patch(f"{MODULE}.invoke_text", return_value="Use the recommended rate.")
+def test_generate_uses_and_appends_langgraph_messages(mock_invoke):
+    state = {
+        "messages": [
+            HumanMessage(content="Tell me about Boro rice."),
+            AIMessage(content="Boro rice is a rice crop."),
+            HumanMessage(content="What about its seed rate?"),
+        ],
+        "normalized_query": "What about its seed rate?",
+        "language": "en",
+        "reranked_chunks": [],
+    }
+
+    result = generate(state)
+
+    sent_messages = mock_invoke.call_args.args[0]
+    assert sent_messages[1].content == "Tell me about Boro rice."
+    assert sent_messages[2].content == "Boro rice is a rice crop."
+    assert sent_messages[-1].content.startswith("<user_message>")
+    assert isinstance(result["messages"][0], HumanMessage)
+    assert isinstance(result["messages"][-1], AIMessage)
+    assert result["messages"][-1].content == "Use the recommended rate."

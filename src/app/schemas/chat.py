@@ -18,7 +18,7 @@ class SourceChunk(BaseModel):
     chunk_id: str
     crop_name: str | None = None
     section: str | None = None
-    score: float | None = None
+    distance: float | None = None
 
 
 class ChatResponse(BaseModel):

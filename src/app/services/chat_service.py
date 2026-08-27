@@ -33,15 +33,15 @@ class ChatService:
 
     @staticmethod
     def _to_response(session_id: str, result: dict, answer: str) -> ChatResponse:
-        ranked = (
+        chunks = (
             result["filtered_chunks"]
             if "filtered_chunks" in result
             else result.get("reranked_chunks") or result.get("retrieved_chunks") or []
         )
         sources = []
-        for chunk in ranked:
+        for chunk in chunks:
             metadata = chunk.get("metadata") or {}
-            score = chunk.get(
+            distance = chunk.get(
                 "relevance_score",
                 chunk.get("rerank_score", chunk.get("retrieval_score")),
             )
@@ -50,7 +50,7 @@ class ChatService:
                     chunk_id=str(chunk.get("chunk_id", metadata.get("chunk_id", ""))),
                     crop_name=metadata.get("crop_name"),
                     section=metadata.get("section"),
-                    score=float(score) if score is not None else None,
+                    distance=float(distance) if distance is not None else None,
                 )
             )
 

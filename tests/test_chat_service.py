@@ -39,4 +39,5 @@ async def test_chat_service_loads_and_persists_history():
     assert graph.states[0]["history"][0]["content"] == "old question"
     assert response.answer == "grounded answer [1]"
     assert response.sources[0].chunk_id == "5_seed"
+    assert response.sources[0].distance == 0.91
     assert store.get_history("session")[-1]["content"] == "grounded answer [1]"

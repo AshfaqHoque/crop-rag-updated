@@ -6,7 +6,6 @@ from functools import lru_cache
 from langchain_core.messages import HumanMessage
 from starlette.concurrency import run_in_threadpool
 
-from app.memory.store import InMemoryConversationStore, get_conversation_store
 from app.schemas.chat import ChatRequest, ChatResponse, SourceChunk
 from app.services.pipeline.graph import get_chat_graph
 
@@ -20,7 +19,12 @@ class ChatService:
         # Serializing each session prevents two simultaneous follow-ups from reading
         # the same stale history and being persisted out of order.
         async with self._session_locks[request.session_id]:
-            config = {"configurable": {"thread_id": request.session_id}}
+            config = {
+                "configurable": {"thread_id": request.session_id},
+                "run_name": "crop_rag_chat",
+                "tags": [f"session:{request.session_id}"],
+                "metadata": {"session_id": request.session_id},
+            }
             initial_state = {
                 "messages": [HumanMessage(content=request.message.strip())],
                 "session_id": request.session_id,

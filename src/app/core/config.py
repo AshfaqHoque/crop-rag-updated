@@ -3,6 +3,7 @@ Centralized configuration. Every tunable value in the app is read from
 here so nodes remain deterministic and easy to test.
 """
 from functools import lru_cache
+import os
 from typing import Literal
 
 from pydantic import SecretStr
@@ -58,6 +59,12 @@ class Settings(BaseSettings):
     reranker_fail_open: bool = True
     relevance_filter_threshold: float = 0.5
 
+    # LangSmith tracing
+    langsmith_tracing: bool = True
+    langsmith_api_key: SecretStr | None = None
+    langsmith_project: str = "crop-rag-chatbot"
+    langsmith_endpoint: str = "https://api.smith.langchain.com"
+
     # Checkpointer
     checkpoint_backend: str = "memory"  # memory | redis | postgres | sqlite
     redis_url: str = "redis://localhost:6379/0"
@@ -74,8 +81,22 @@ class Settings(BaseSettings):
             return self.groq_chat_model
         return self.ollama_chat_model
 
+def _apply_langsmith_env(settings: "Settings") -> None:
+    """LangChain/LangGraph read these standard env vars directly (not our
+    Settings object), so mirror the parsed config into os.environ once, before
+    any ChatOllama/ChatGroq/graph instance gets constructed."""
+    if not settings.langsmith_tracing:
+        os.environ["LANGSMITH_TRACING"] = "false"
+        return
+    os.environ["LANGSMITH_TRACING"] = "true"
+    os.environ["LANGSMITH_ENDPOINT"] = settings.langsmith_endpoint
+    os.environ["LANGSMITH_PROJECT"] = settings.langsmith_project
+    if settings.langsmith_api_key:
+        os.environ["LANGSMITH_API_KEY"] = settings.langsmith_api_key.get_secret_value()
 
 @lru_cache
 def get_settings() -> Settings:
     """Settings are cached so the .env file is parsed once per process."""
-    return Settings()
+    settings = Settings()
+    _apply_langsmith_env(settings)
+    return settings

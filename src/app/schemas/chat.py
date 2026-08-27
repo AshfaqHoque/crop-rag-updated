@@ -1,3 +1,4 @@
+from langchain_core.messages import AnyMessage
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -28,3 +29,4 @@ class ChatResponse(BaseModel):
     rewritten_query: str | None = None
     retrieval_mode: str | None = None
     sources: list[SourceChunk] = Field(default_factory=list)
+    messages: list[AnyMessage] = Field(default_factory=list)

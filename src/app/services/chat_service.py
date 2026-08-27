@@ -12,7 +12,7 @@ from app.services.pipeline.graph import get_chat_graph
 
 
 class ChatService:
-    def __init__(self, history_store: InMemoryConversationStore | None = None, graph=None) -> None:
+    def __init__(self, graph=None) -> None:
         self._graph = graph or get_chat_graph()
         self._session_locks: defaultdict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
 
@@ -61,6 +61,7 @@ class ChatService:
             rewritten_query=result.get("raw_query"),
             retrieval_mode=result.get("retrieval_mode"),
             sources=sources,
+            messages=result.get("messages", []),
         )
 
 

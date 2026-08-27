@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+from langchain_core.messages import HumanMessage
 
 from app.main import app
 from app.schemas.chat import ChatResponse
@@ -14,6 +15,7 @@ class FakeChatService:
             rewritten_query=request.message,
             retrieval_mode="dense_filtered",
             sources=[],
+            messages=[HumanMessage(content="seed rate?")],
         )
 
 
@@ -30,3 +32,5 @@ def test_chat_endpoint_uses_service():
     assert response.status_code == 200
     assert response.json()["answer"] == "ok"
     assert response.json()["rewritten_query"] == "seed rate?"
+    assert response.json()["messages"][0]["type"] == "human"
+    assert response.json()["messages"][0]["content"] == "seed rate?"

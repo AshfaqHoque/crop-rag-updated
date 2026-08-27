@@ -27,3 +27,8 @@ class RelevantChunks(BaseModel):
         default_factory=list,
         description="Zero-based indexes of chunks that directly help answer the question.",
     )
+
+class ChunkRelevance(BaseModel):
+    relevant: bool = Field(
+        description="True only if this single chunk contains information needed to answer the current question."
+    )

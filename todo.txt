@@ -1,0 +1,10 @@
+1. test how many chunks per char to decide whether i need to compress them further or not
+2. add streaming mode: messages will appear one by one also it will show users thinking reasoing bla bla
+3. currently rewritten query is done using a long prompt, few shot examples, and the previous question, instead i want to give previous pairs and see if it works well with that or not
+4. RnD on making a router that will decide what to go into the pipeline
+5. test retrieval scores (distance scores) to filter that have lower scores
+6. create docker file and run with docker
+7. run redis and chroma with docker 
+8. run with vllm 
+9. add new collections for qna pairs of soil test, office info, porokh
+10. add images as well 

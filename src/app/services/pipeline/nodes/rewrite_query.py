@@ -10,99 +10,38 @@ from app.services.pipeline.state import PipelineState
 logger = get_logger(__name__)
 
 _SYSTEM_PROMPT = """
-You are a query rewriting assistant for an agricultural (crop-related) Q&A system. Users ask about crops like ধান (rice), গম (wheat), ভুট্টা (maize) — varieties, seed rate, fertilizer, irrigation, pests/diseases, harvesting, etc. Questions may be in Bangla or English.
-
-Return ONLY valid JSON matching the schema.
-The JSON must contain exactly these fields:
-- "rewritten_query": a string containing the standalone query.
-- "used_history": a boolean indicating whether conversation history was needed.
-Never return the rewritten query as plain text.
-
-STRICT RULE — decide first whether the Current Question can stand alone:
-- A question is STANDALONE (do NOT rewrite, return unchanged) if it explicitly names its own subject — a crop name, disease/pest name, variety name, or clear topic — anywhere in the sentence.
-- A question is a FOLLOW-UP (rewrite it) if it does NOT explicitly name its own subject. This includes:
-  (a) questions using a pronoun/reference word — "এর", "এটার", "এটা", "সেটার", "it", "its", "that", "this"
-  (b) questions that drop the subject entirely with no pronoun at all (common in casual Bangla), e.g. "শনাক্তকারী বৈশিষ্ট্যগুলো কী?" (what are the identifying features [of what?]), "দমন ব্যবস্থা কী?" (how to control [what?]), "কখন প্রয়োগ করব?" (when should I apply [it]?)
-  In both cases, the missing subject must be pulled from the Previous Question.
-
-When rewriting a follow-up:
-- Only insert the missing subject (crop name / variety name / disease-pest name / topic) from the Previous Question into the Current Question, in the most natural grammatical position.
-- NEVER blend, merge, or mix phrases/words from the Previous Question's predicate (verb/action part) into the Current Question. Keep the Current Question's own wording and intent fully intact — only the missing subject is added.
-- Keep the same language as the Current Question.
-
-Examples:
-Previous: "বোরো ধানের কোন জাতগুলো ভালো?"
-Current: "এর বীজ হার কত?"
-Output: "বোরো ধানের বীজ হার কত?"
-
-Previous: "গমে প্রথম সেচ কখন দিতে হবে?"
-Current: "ব্লাস্ট রোগের লক্ষণ কী?"
-Output: "ব্লাস্ট রোগের লক্ষণ কী?"
-(Reason: current question already names its own topic "ব্লাস্ট রোগ" — standalone, NOT a follow-up.)
-
-Previous: "ব্রি ধান২৯ এর ফলন কত?"
-Current: "এর রোপণের সময় চারার বয়স কত হওয়া উচিত?"
-Output: "ব্রি ধান২৯ এর রোপণের সময় চারার বয়স কত হওয়া উচিত?"
-
-Previous: "বোরো ধানের সার ব্যবস্থাপনা কী?"
-Current: "ভুট্টা চাষের উপযুক্ত সময় কখন?"
-Output: "ভুট্টা চাষের উপযুক্ত সময় কখন?"
-(Reason: new crop named explicitly — standalone.)
-
-Previous: "ফল আর্মিওয়ার্মের জন্য কোন ওষুধ ভালো?"
-Current: "শনাক্তকারী বৈশিষ্ট্যগুলো কী?"
-Output: "ফল আর্মিওয়ার্মের শনাক্তকারী বৈশিষ্ট্যগুলো কী?"
-(Reason: current question has no subject at all, no pronoun even — must inherit "ফল আর্মিওয়ার্ম" from previous.)
-
-Return ONLY the final question text, nothing else — no explanation, no labels.
+Given the following conversation, rewrite the last user input to reflect what the user is actually asking. Write in Bangla Language.
 """
-
-_USER_TEMPLATE = """<previous_question>
-{previous}
-</previous_question>
-
-<current_question>
-{current}
-</current_question>
-"""
-
-def _get_previous_question(messages) -> str:
-    for message in reversed(messages[:-1]):
-        if isinstance(message, HumanMessage):
-            return message.additional_kwargs.get("rewritten_query") or  message.content
-    return ""
 
 def rewrite_query(state: PipelineState) -> PipelineState:
-    query = state["normalized_query"].strip()
+    query = state.get("normalized_query", "").strip()
+    conversation = list(state.get("messages") or [])
+    history = conversation[:-1] if conversation else [] 
 
-    messages = state.get("messages", [])
-    previous = _get_previous_question(messages)
-
-    if not previous:
+    if not history:
         logger.info("rewrite_query used_history=False")
         return {
             **state,
-            "previous_query": "",
             "rewritten_query": query,
             "rewrite_used_history": False,
         }
 
-    rewrite_messages = [
+    current_message = f"""<user_message>
+    {query}
+    </user_message>
+    """
+    messages = [
         SystemMessage(content=_SYSTEM_PROMPT),
-        HumanMessage(
-            content=_USER_TEMPLATE.format(
-                previous=previous,
-                current=query,
-            )
-        ),
+        *history,
+        HumanMessage(content=current_message,),
     ]
-    result = invoke_structured(QueryRewrite, rewrite_messages, temperature=0.0)
+
+    result = invoke_structured(QueryRewrite, messages, temperature=0.0)
 
     rewritten = result.rewritten_query.strip() if result.used_history else query
-    logger.info("rewrite_query previous_query=%r used_history=%s rewritten=%r", previous, result.used_history, rewritten)  # noqa: E501
+    logger.info("rewrite_query used_history=%s rewritten=%r", result.used_history, rewritten)  # noqa: E501
     return {
         **state,
-        "previous_query": previous,
         "rewritten_query": rewritten,
         "rewrite_used_history": result.used_history,
     }

@@ -1,3 +1,4 @@
+import time 
 from langchain_ollama import ChatOllama
 from langgraph.graph import StateGraph, MessagesState, START, END
 
@@ -16,8 +17,15 @@ graph = builder.compile()
 
 def get_response(user_input: str):
     input = {"messages": [("human", user_input)]}
-    result = graph.invoke(input)
-    return result["messages"][-1].content
+    full_response = ""
+    print("AI: ", end="", flush=True)
+    for chunk, metadata in graph.stream(input, stream_mode="messages"):
+        if chunk.content:
+            print(chunk.content, end="", flush=True)
+            full_response += chunk.content
+            time.sleep(0.10)
+    print()
+    return full_response
 
 if __name__ == "__main__":
     while True:
@@ -25,4 +33,3 @@ if __name__ == "__main__":
         if user_input.lower() in ["exit", "quit"]:
             break
         response = get_response(user_input)
-        print(f"AI: {response}")

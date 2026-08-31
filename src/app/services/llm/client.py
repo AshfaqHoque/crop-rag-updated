@@ -6,6 +6,7 @@ from typing import TypeVar
 from langchain_core.messages import BaseMessage
 from langchain_groq import ChatGroq
 from langchain_ollama import ChatOllama
+from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 from tenacity import retry, stop_after_attempt, wait_exponential
 
@@ -44,10 +45,27 @@ def get_groq_chat_llm(temperature: float | None = None) -> ChatGroq:
 
 
 @lru_cache
-def get_chat_llm(temperature: float | None = None) -> ChatOllama | ChatGroq:
+def get_vllm_chat_llm(temperature: float | None = None) -> ChatOpenAI:
+    settings = get_settings()
+    logger.info("Initializing chat model provider=vllm model=%s", settings.vllm_chat_model)
+    return ChatOpenAI(
+        base_url=settings.vllm_base_url,
+        model=settings.vllm_chat_model,
+        api_key=settings.vllm_api_key,
+        temperature=1.0,
+        top_p=0.95,
+        extra_body={
+            "top_k": 64,
+        },
+    )
+
+@lru_cache
+def get_chat_llm(temperature: float | None = None) -> ChatOllama | ChatGroq | ChatOpenAI:
     settings = get_settings()
     if settings.chat_provider == "groq":
         return get_groq_chat_llm(temperature)
+    if settings.chat_provider == "vllm":
+        return get_vllm_chat_llm(temperature)
     return get_ollama_chat_llm(temperature)
 
 
@@ -58,6 +76,8 @@ def get_structured_llm(schema: type[T], *, temperature: float | None = None):
         # model emits plain text instead of the required tool call. GPT-OSS
         # supports Groq's native JSON Schema response format directly.
         return llm.with_structured_output(schema, method="json_mode")
+    if get_settings().chat_provider == "vllm":
+        return llm.with_structured_output(schema)
     return llm.with_structured_output(schema)
 
 

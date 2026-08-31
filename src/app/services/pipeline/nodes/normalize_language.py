@@ -2,7 +2,9 @@ import unicodedata
 
 import avro
 from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_groq import ChatGroq
 from langchain_ollama import ChatOllama
+from langchain_openai import ChatOpenAI
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
@@ -12,11 +14,30 @@ logger = get_logger(__name__)
 
 settings = get_settings()
 
-_banglish_llm = ChatOllama(
-    model=settings.banglish_converter_model,
-    temperature=0.0,
-    reasoning=False,
-)
+if settings.chat_provider == "vllm":
+    _banglish_llm = ChatOpenAI(
+        base_url=settings.vllm_base_url,
+        model=settings.vllm_chat_model,
+        api_key=settings.vllm_api_key,
+        temperature=1.0,
+        top_p=0.95,
+        extra_body={
+            "top_k": 64,
+        },
+    )
+elif settings.chat_provider == "groq":
+    _banglish_llm = ChatGroq(
+        api_key=settings.groq_api_key.get_secret_value() if settings.groq_api_key else None,
+        model=settings.groq_chat_model,
+        temperature=0.0,
+        max_retries=0,
+    )
+else:
+    _banglish_llm = ChatOllama(
+        model=settings.banglish_converter_model,
+        temperature=0.0,
+        reasoning=False,
+    )
 
 def is_bangla_text(text: str) -> bool:
     has_alpha = False

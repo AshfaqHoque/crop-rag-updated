@@ -13,12 +13,16 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    # Chat models. Ollama remains the default; Groq can be selected per deployment.
-    chat_provider: Literal["ollama", "groq"] = "ollama"
+    # Chat models. vLLM is the OpenAI-compatible local runtime used by this project;
+    # Ollama and Groq remain available for other deployments.
+    chat_provider: Literal["ollama", "groq", "vllm"] = "vllm"
     ollama_chat_model: str = "gemma4:12b"
     banglish_converter_model: str = "gemma4:12b"
     groq_chat_model: str = "openai/gpt-oss-20b"
     groq_api_key: SecretStr | None = None
+    vllm_chat_model: str = "gemma4:12b"
+    vllm_base_url: str = "http://localhost:8091/v1"
+    vllm_api_key: str = "not-needed"
 
     # Ollama chat/embedding server
     ollama_base_url: str = "http://localhost:11434"
@@ -79,6 +83,8 @@ class Settings(BaseSettings):
     def chat_model(self) -> str:
         if self.chat_provider == "groq":
             return self.groq_chat_model
+        if self.chat_provider == "vllm":
+            return self.vllm_chat_model
         return self.ollama_chat_model
 
 def _apply_langsmith_env(settings: "Settings") -> None:

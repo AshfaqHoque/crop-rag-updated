@@ -9,6 +9,7 @@ from app.services.llm.client import (
     get_groq_chat_llm,
     get_ollama_chat_llm,
     get_structured_llm,
+    get_vllm_chat_llm,
     invoke_text,
 )
 
@@ -59,16 +60,56 @@ def test_ollama_chat_client_remains_available(mock_settings, mock_chat_ollama):
     get_ollama_chat_llm.cache_clear()
 
 
+@patch(f"{MODULE}.ChatOpenAI")
+@patch(f"{MODULE}.get_settings")
+def test_vllm_chat_client_uses_openai_compatible_endpoint(mock_settings, mock_chat_openai):
+    mock_settings.return_value = SimpleNamespace(
+        vllm_base_url="http://localhost:8091/v1",
+        vllm_chat_model="gemma4:12b",
+        vllm_api_key="not-needed",
+        llm_temperature=0.1,
+    )
+    get_vllm_chat_llm.cache_clear()
+
+    client = get_vllm_chat_llm()
+
+    assert client is mock_chat_openai.return_value
+    mock_chat_openai.assert_called_once_with(
+        base_url="http://localhost:8091/v1",
+        model="gemma4:12b",
+        api_key="not-needed",
+        temperature=0.1,
+    )
+    get_vllm_chat_llm.cache_clear()
+
+
 @patch(f"{MODULE}.get_ollama_chat_llm")
 @patch(f"{MODULE}.get_groq_chat_llm")
+@patch(f"{MODULE}.get_vllm_chat_llm")
 @patch(f"{MODULE}.get_settings")
-def test_chat_provider_selects_groq(mock_settings, mock_groq, mock_ollama):
+def test_chat_provider_selects_groq(mock_settings, mock_vllm, mock_groq, mock_ollama):
     mock_settings.return_value = SimpleNamespace(chat_provider="groq")
     get_chat_llm.cache_clear()
 
     assert get_chat_llm() is mock_groq.return_value
     mock_groq.assert_called_once_with(None)
     mock_ollama.assert_not_called()
+    mock_vllm.assert_not_called()
+    get_chat_llm.cache_clear()
+
+
+@patch(f"{MODULE}.get_vllm_chat_llm")
+@patch(f"{MODULE}.get_ollama_chat_llm")
+@patch(f"{MODULE}.get_groq_chat_llm")
+@patch(f"{MODULE}.get_settings")
+def test_chat_provider_selects_vllm(mock_settings, mock_groq, mock_ollama, mock_vllm):
+    mock_settings.return_value = SimpleNamespace(chat_provider="vllm")
+    get_chat_llm.cache_clear()
+
+    assert get_chat_llm() is mock_vllm.return_value
+    mock_vllm.assert_called_once_with(None)
+    mock_ollama.assert_not_called()
+    mock_groq.assert_not_called()
     get_chat_llm.cache_clear()
 
 

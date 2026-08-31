@@ -96,12 +96,10 @@ Bengali text to spell-check:
 Correct spelling only.
 """.strip()
 
-    response = _banglish_llm.invoke(
-        [
+    response = _banglish_llm.invoke([
             SystemMessage(content=_SYSTEM_PROMPT),
             HumanMessage(content=user_prompt),
-        ]
-    )
+        ])
 
     normalized_query = str(response.content).strip()
 

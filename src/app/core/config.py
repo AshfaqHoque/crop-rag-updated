@@ -26,7 +26,7 @@ class Settings(BaseSettings):
 
     # Ollama chat/embedding server
     ollama_base_url: str = "http://localhost:11434"
-    embed_model: str = "bge-m3"
+    embed_model: str = "bge-m3:latest"
 
     # Chroma. When chroma_host is empty, embedded/persistent Chroma is used.
     chroma_host: str | None = None

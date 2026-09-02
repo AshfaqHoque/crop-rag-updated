@@ -9,3 +9,4 @@
 9. add new collections for qna pairs of soil test, office info, porokh
 10. add images as well 
 11. send dynamic questions for suggestion
+12. add a simple algorithm on retrieval that will compute mean and std of the distance scores and filter when it sees a big cap (greater than mean+std)

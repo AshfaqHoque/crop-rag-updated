@@ -100,7 +100,7 @@ class SemanticRetriever:
             item = _document_payload(document)
             item.update(
                 {
-                    "retrieval_score": float(distance),
+                    "distance": float(distance),
                     # "retrieval_score": 1.0 / (settings.rrf_k + rank),
                 }
             )
@@ -209,6 +209,6 @@ class SemanticRetriever:
         result = []
         for chunk_id in ranked_ids:
             item = payloads[chunk_id]
-            item["retrieval_score"] = scores[chunk_id]
+            item["distance"] = scores[chunk_id]
             result.append(item)
         return result

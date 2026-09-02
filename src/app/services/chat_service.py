@@ -47,7 +47,7 @@ class ChatService:
             metadata = chunk.get("metadata") or {}
             distance = chunk.get(
                 "relevance_score",
-                chunk.get("rerank_score", chunk.get("retrieval_score")),
+                chunk.get("rerank_score", chunk.get("distance")),
             )
             sources.append(
                 SourceChunk(

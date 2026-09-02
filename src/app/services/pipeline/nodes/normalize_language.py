@@ -54,24 +54,16 @@ def is_bangla_text(text: str) -> bool:
     return has_alpha
 
 _SYSTEM_PROMPT = """
-You are a Bengali spelling corrector for agricultural text.
-
-The Avro output is the source sentence.
-Correct ONLY spelling mistakes in the Avro output.
+You are an expert Bengali spelling corrector for agricultural texts.
+Fix the spelling mistakes in the provided Bengali text. Use the Original Banglish as a phonetic reference.
 
 Rules:
-
-- Keep the same words, meaning, word order, and sentence structure.
-- Do not rewrite, translate, paraphrase, or replace words with different words.
-- Fix misspelled Bengali words into their correct standard spelling.
-- Use the original Banglish only to understand how a misspelled word was intended to be spelled.
-- Use agricultural context when choosing the correct spelling.
-- Preserve correctly written words exactly as they are.
-- Preserve technical terms and abbreviations such as pH, EC, NPK, TSP, GPS, and API.
-- Do not answer the question.
-- Do not add or remove information.
-- Return only the corrected Bengali sentence.
-""".strip()
+- Preserve the original word order, sentence structure, and core meaning exactly.
+- Fix misspelled words into standard agricultural Bengali spellings.
+- Maintain technical terms and English abbreviations (e.g., pH, EC, NPK, TSP, GPS) as they are.
+- Do NOT rewrite, answer, or add any extra text. 
+- Return ONLY the final corrected Bengali sentence.
+"""
 
 def normalize_language(state: PipelineState) -> PipelineState:
     raw_query = state["raw_query"].strip()
@@ -86,15 +78,10 @@ def normalize_language(state: PipelineState) -> PipelineState:
 
     avro_output = avro.parse(raw_query)
 
-    user_prompt = f"""
-Original Banglish:
-{raw_query}
-
-Bengali text to spell-check:
-{avro_output}
-
-Correct spelling only.
-""".strip()
+    user_prompt = (
+        f"Original Banglish:\n{raw_query}\n\n"
+        f"Bengali text to spell-check:\n{avro_output}"
+    )
 
     response = _banglish_llm.invoke([
             SystemMessage(content=_SYSTEM_PROMPT),

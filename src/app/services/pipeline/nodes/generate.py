@@ -8,36 +8,16 @@ from app.services.pipeline.state import PipelineState
 
 logger = get_logger(__name__)
 
-_SYSTEM_TEMPLATE = """You are a professional crop-advisory assistant for farmers in Bangladesh.
-
+_SYSTEM_TEMPLATE = """You are a professional crop-advisory assistant for farmers in Bangladesh. 
 Answer in {answer_language}.
 
-Your job is to answer the user's latest message clearly, naturally, and concisely.
-
-Guidelines:
-- Give a direct answer first.
-- Keep answers short unless the user asks for more detail.
-- Use the conversation history to understand follow-up questions and references.
-- Use the supplied knowledge context as the factual source for agricultural information.
-- Do not invent agricultural facts, rates, doses, dates, varieties, or treatment instructions.
-- If the supplied context does not contain enough information, say so briefly rather than guessing.
-- Do not mention the knowledge context, retrieval, chunks, prompts, models, or internal systems.
-- Do not add citations or source numbers.
-- Do not repeat information unnecessarily.
-- Respond naturally like a professional chatbot.
+Rules:
+- Give a direct answer first. Keep it concise.
+- Base answers ONLY on the provided Context. 
+- If Context is missing or insufficient, state that you do not have enough information. Do not guess.
+- Do NOT mention "Context", "retrieval", "chunks", or internal systems.
+- Do NOT include citations, source numbers, or footnotes.
 """
-
-# _USER_TEMPLATE = """<request>
-# <intent>{intent}</intent>
-# <original_message>{raw_query}</original_message>
-# <standalone_query>{rewritten_query}</standalone_query>
-# </request>
-
-# <knowledge_context>
-# {context}
-# </knowledge_context>
-# """
-
 
 def _answer_language(language: str) -> str:
     if language == "bn":
@@ -50,19 +30,15 @@ def _format_context(chunks: list[dict]) -> str:
     max_chars = get_settings().context_max_chars_per_chunk
     return "\n\n".join(str(chunk.get("content", ""))[:max_chars] for chunk in chunks)
 
-
 def generate(state: PipelineState) -> PipelineState:
     conversation = list(state.get("messages") or [])
     history = conversation[:-1] if conversation else [] 
     context_chunks = (state.get("filtered_chunks") or state.get("reranked_chunks") or state.get("retrieved_chunks", []))
 
-    current_message = f"""<user_message>
-    {state.get("normalized_query")}
-    </user_message>
-    <knowledge_context>
-    {_format_context(context_chunks)}
-    </knowledge_context>
-    """
+    current_message = (
+        f"Context:\n{_format_context(context_chunks)}\n\n"
+        f"User Query: {state.get('normalized_query')}"
+    )
 
     messages = [
         SystemMessage(content=_SYSTEM_TEMPLATE.format(answer_language=_answer_language(state.get("language", "bn")))),

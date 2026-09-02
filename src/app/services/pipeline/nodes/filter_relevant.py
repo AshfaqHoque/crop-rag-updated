@@ -15,9 +15,9 @@ logger = get_logger(__name__)
 
 _SYSTEM_PROMPT = """You are an expert agricultural relevance checker.
 Your job is to determine if a specific Chunk directly helps answer the User Query, considering the Conversation History.
-
+The Chunk must be about the same crop, variety, disease, pest, or agricultural subject asked in the User Query. A matching topic alone is not enough if the subject is different.
 Evaluate the relationship carefully. Output a true or false decision.
-"""
+"""  # noqa: E501
 
 def filter_relevant(state: PipelineState) -> PipelineState:
     chunks = state.get("retrieved_chunks", [])
@@ -41,7 +41,7 @@ def filter_relevant(state: PipelineState) -> PipelineState:
             HumanMessage(content=current_turn_content)
         ]
         try:
-            result = invoke_structured(ChunkRelevance,messages,temperature=0)
+            result = invoke_structured(ChunkRelevance, messages)
             keep = result.relevant
         except Exception: 
             logger.exception("Relevance check failed for chunk_index=%d; keeping it", index)

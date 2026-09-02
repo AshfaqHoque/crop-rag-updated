@@ -19,10 +19,10 @@ if settings.chat_provider == "vllm":
         base_url=settings.vllm_base_url,
         model=settings.vllm_chat_model,
         api_key=settings.vllm_api_key,
-        temperature=1.0,
-        top_p=0.95,
+        temperature=0,
+        top_p=0.9,
         extra_body={
-            "top_k": 64,
+            "top_k": 30,
         },
     )
 elif settings.chat_provider == "groq":

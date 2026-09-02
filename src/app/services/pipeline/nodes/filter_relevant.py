@@ -25,7 +25,7 @@ def filter_relevant(state: PipelineState) -> PipelineState:
         return {**state, "filtered_chunks": []}
 
     conversation = list(state.get("messages") or [])
-    history = conversation[:-1] if conversation else [] 
+    history = conversation[-3:-1] if conversation else [] 
     question = state.get("normalized_query", "")
 
     filtered = []

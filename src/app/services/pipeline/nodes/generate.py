@@ -32,7 +32,7 @@ def _format_context(chunks: list[dict]) -> str:
 
 def generate(state: PipelineState) -> PipelineState:
     conversation = list(state.get("messages") or [])
-    history = conversation[:-1] if conversation else [] 
+    history = conversation[-3:-1] if conversation else [] 
     context_chunks = (state.get("filtered_chunks") or state.get("reranked_chunks") or state.get("retrieved_chunks", []))
 
     current_message = (

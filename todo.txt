@@ -8,3 +8,4 @@
 8. run with vllm 
 9. add new collections for qna pairs of soil test, office info, porokh
 10. add images as well 
+11. send dynamic questions for suggestion

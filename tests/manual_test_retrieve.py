@@ -18,7 +18,7 @@ vectorstore = Chroma(
     persist_directory=persist_directory,
 )
 
-query = "বিনামুগ-১ এর জন্য সার কীভাবে দিতে হবে?"
+query = "বোরো ধানে চারা থেকে চারার দূরত্ব কত?"
 
 semantic_results = vectorstore.similarity_search_with_score(query, k=20)
 

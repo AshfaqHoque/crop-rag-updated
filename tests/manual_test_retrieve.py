@@ -1,3 +1,4 @@
+import httpx
 from langchain_chroma import Chroma
 from langchain_ollama import OllamaEmbeddings
 from sentence_transformers import CrossEncoder
@@ -33,23 +34,42 @@ semantic_results = vectorstore.similarity_search_with_score(query, k=20)
 
 semantic_docs = [doc for doc, _ in semantic_results]
 
-pairs = [
-    (query, doc.page_content)
-    for doc in semantic_docs
-]
+documents = [doc.page_content for doc in semantic_docs]
 
-scores = reranker.predict(pairs)
+payload = {
+    "query": query,
+    "documents": documents,
+}
 
-reranked = sorted(
-    zip(semantic_docs, scores),  # noqa: B905
+response = httpx.post(
+    "http://localhost:8090/rerank",
+    json=payload,
+    timeout=30.0,
+)
+
+response.raise_for_status()
+data = response.json()
+
+reranked = []
+
+for result in data["results"]:
+    index = result["index"]
+    score = result["relevance_score"]
+
+    doc = semantic_docs[index]
+
+    reranked.append(
+        (doc, score)
+    )
+    
+reranked.sort(
     key=lambda x: x[1],
     reverse=True,
 )
 
-print("Reranked Results")
+
 for doc, score in reranked[:10]:
     print("=" * 80)
     print(f"Score: {score:.4f}")
-    print(f"Chunk: {doc.metadata['chunk_id']}")
-    print(doc.page_content[:100])
-
+    print(f"Chunk: {doc.metadata.get('chunk_id')}")
+    print(doc.page_content[:300])

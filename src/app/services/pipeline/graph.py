@@ -7,10 +7,11 @@ from app.services.pipeline.checkpointer import make_checkpointer
 from app.services.pipeline.nodes.extract_crop import extract_crop
 from app.services.pipeline.nodes.filter_relevant import filter_relevant
 from app.services.pipeline.nodes.generate import generate
+from app.services.pipeline.nodes.normalize_language import normalize_language
+from app.services.pipeline.nodes.rerank import rerank
 from app.services.pipeline.nodes.retrieve import retrieve
 from app.services.pipeline.nodes.rewrite_query import rewrite_query
 from app.services.pipeline.nodes.understand_query import understand_query
-from app.services.pipeline.nodes.normalize_language import normalize_language
 from app.services.pipeline.state import PipelineState
 
 
@@ -27,6 +28,7 @@ def build_chat_graph():
     builder.add_node("understand_query", understand_query)
     builder.add_node("extract_crop", extract_crop)
     builder.add_node("retrieve", retrieve)
+    builder.add_node("rerank", rerank)
     builder.add_node("filter_relevant", filter_relevant)
     builder.add_node("generate", generate)
 
@@ -42,7 +44,8 @@ def build_chat_graph():
     #     },
     # )
     builder.add_edge("extract_crop", "retrieve")
-    builder.add_edge("retrieve", "filter_relevant")
+    builder.add_edge("retrieve", "rerank")
+    builder.add_edge("rerank", "filter_relevant")
     builder.add_edge("filter_relevant", "generate")
     builder.add_edge("generate", END)
 

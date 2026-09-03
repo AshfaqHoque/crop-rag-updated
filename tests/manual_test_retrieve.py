@@ -1,11 +1,8 @@
 import httpx
 from langchain_chroma import Chroma
 from langchain_ollama import OllamaEmbeddings
-from sentence_transformers import CrossEncoder
 
 from app.core.config import get_settings
-
-reranker = CrossEncoder("BAAI/bge-reranker-v2-m3")
 
 settings = get_settings()
 
@@ -20,13 +17,6 @@ vectorstore = Chroma(
     embedding_function=embeddings,
     persist_directory=persist_directory,
 )
-
-# def tokenize(text: str):
-#     return re.findall(r"\w+", text.lower())
-# data = vectorstore.get()
-# docs = [Document(page_content=text, metadata=meta) for text, meta in zip(data["documents"], data["metadatas"])]
-# tokenize_docs =[tokenize(doc.page_content) for doc in docs]
-# bm25 = BM25Okapi(tokenize_docs)
 
 query = "বিনামুগ-১ এর জন্য সার কীভাবে দিতে হবে?"
 

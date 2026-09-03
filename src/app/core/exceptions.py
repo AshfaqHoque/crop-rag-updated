@@ -21,11 +21,6 @@ class RetrievalError(AppError):
         super().__init__(message, status_code=502)
 
 
-class RerankingError(AppError):
-    def __init__(self, message: str):
-        super().__init__(message, status_code=502)
-
-
 class LLMGenerationError(AppError):
     def __init__(self, message: str):
         super().__init__(message, status_code=502)

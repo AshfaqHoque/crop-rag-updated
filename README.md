@@ -71,14 +71,15 @@ START
   -> rewrite_query
   -> extract_crop
   -> retrieve
+  -> rerank
+  -> filter_relevant
   -> generate
   -> END
 ```
 
-`understand_query` and `rerank` are registered modules, but they are not
-connected to the compiled graph. The conditional routing code around
-`understand_query` is commented out. Therefore, the current API does not yet
-perform an intent-based small-talk bypass or end-to-end cross-encoder reranking.
+`understand_query` is registered but is not connected to the compiled graph. The
+conditional routing code around it is commented out, so the current API does not
+perform an intent-based small-talk bypass. Reranking is active end to end.
 
 ## 3. End-to-End Request Workflow
 
@@ -253,7 +254,7 @@ they become chunk text.
 | Avro | Banglish transliteration | Provides a deterministic first pass before LLM spelling correction |
 | `bnltk` | Optional Bangla stemming | Helps match inflected Bangla crop names such as `গমের` to `গম` |
 | `rank-bm25` | Lexical retrieval implementation | Provides a tested lexical fallback/fusion path for future activation |
-| FlagEmbedding | Optional BGE reranker | Provides cross-encoder reranking when the graph is wired to use it |
+| HTTPX | Reranker client | Sends retrieved documents to the external reranker service |
 | BeautifulSoup | HTML cleanup | Converts HTML-heavy source fields into readable chunk text |
 | Tenacity | Retry utilities | Supports resilient model/provider calls |
 | Docker Compose | Local multi-service environment | Runs the API, Ollama, Ollama model initialization, and Chroma together |
@@ -306,7 +307,7 @@ Python 3.11 or newer is required.
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-pip install -e ".[dev,reranker]"
+pip install -e ".[dev]"
 ```
 
 ### Linux or macOS
@@ -315,7 +316,7 @@ pip install -e ".[dev,reranker]"
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-pip install -e ".[dev,reranker]"
+pip install -e ".[dev]"
 ```
 
 Start Ollama and download the embedding model plus the selected chat model:
@@ -493,7 +494,7 @@ useful for inspection but should not be treated as calibrated confidence.
   registered but disconnected from the live graph.
 - `extract_crop.py`: deterministic crop-name extraction and optional stemming.
 - `retrieve.py`: calls the active semantic retriever.
-- `rerank.py`: BGE cross-encoder reranking node; currently disconnected.
+- `rerank.py`: calls the external reranker service and orders chunks by relevance.
 - `generate.py`: grounded final-answer generation.
 
 ### Models, retrieval, and memory
@@ -503,7 +504,6 @@ useful for inspection but should not be treated as calibrated confidence.
 - `src/app/services/retrieval/vector_store.py`: Chroma client and similarity search.
 - `src/app/services/retrieval/hybrid.py`: dense retrieval plus dormant BM25/RRF
   helper implementation.
-- `src/app/services/reranking/bge.py`: lazy `BAAI/bge-reranker-v2-m3` wrapper.
 - `src/app/memory/store.py`: in-process conversation history implementation.
 
 ### Tests
@@ -511,7 +511,7 @@ useful for inspection but should not be treated as calibrated confidence.
 The `tests/` directory contains unit tests for nodes, services, ingestion,
 retrieval, reranking, memory, and API/graph integration. Tests generally use
 mocks and doubles, so they do not prove that live Ollama, Groq, Chroma, Avro,
-or FlagEmbedding installations are correctly configured.
+or the external reranker service is correctly configured.
 
 ## 11. Testing and Linting
 
@@ -557,10 +557,9 @@ corpora make lexical retrieval valuable.
 
 ### Reranking
 
-The optional `BAAI/bge-reranker-v2-m3` integration supports lazy loading,
-top-k selection, CPU/GPU configuration, and fail-open behavior. The rerank node
-is not connected to the current graph, so reranking is not active end to end.
-The `RERANKER_*` settings configure a future or separately invoked path.
+The rerank node posts the query and retrieved document text to `RERANKER_URL`,
+maps the returned indexes and relevance scores back to the chunks, sorts them,
+and keeps `RERANK_TOP_K` chunks. It is active immediately after retrieval.
 
 ### Production considerations
 
@@ -568,10 +567,7 @@ The `RERANKER_*` settings configure a future or separately invoked path.
   durable shared store before running multiple replicas.
 - If BM25 is enabled later, consider a versioned prebuilt lexical index for
   larger datasets instead of rebuilding filtered corpora in each process.
-- Keep `RERANKER_USE_FP16=false` on CPU deployments; enable it only on supported
-  GPU environments.
-- Set `RERANKER_FAIL_OPEN=false` when a missing reranker must fail requests rather
-  than silently use dense results.
+- Keep the external reranker service reachable from every API replica.
 - Pin Docker image digests and validate compatible Ollama, Chroma, and model
   versions before production deployment.
 - Treat retrieval scores as ranking signals, not answer confidence.
@@ -590,7 +586,7 @@ The `RERANKER_*` settings configure a future or separately invoked path.
 | In-process session history | Active, not horizontally scalable |
 | Intent-based routing and small-talk bypass | Implemented but disconnected |
 | BM25 and reciprocal-rank fusion | Implemented but dormant |
-| BGE cross-encoder reranking | Implemented but disconnected |
+| External cross-encoder reranking | Active |
 | Citation insertion and answer verification | Not implemented |
 
 ## License and project maturity

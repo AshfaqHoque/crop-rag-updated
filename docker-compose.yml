@@ -16,12 +16,7 @@ services:
       CHROMA_COLLECTION: crop_knowledge_base
       BM25_CACHE_TTL_SECONDS: 300
       CROP_REGISTRY_PATH: /app/data/crops.json
-      RERANKER_ENABLED: "true"
-      RERANKER_MODEL: BAAI/bge-reranker-v2-m3
-      RERANKER_USE_FP16: "false"
-      RERANKER_QUERY_MAX_LENGTH: 256
-      RERANKER_PASSAGE_MAX_LENGTH: 512
-      RERANKER_FAIL_OPEN: "true"
+      RERANKER_URL: ${RERANKER_URL:-http://host.docker.internal:8090/rerank}
     ports:
       - "8000:8000"
     healthcheck:

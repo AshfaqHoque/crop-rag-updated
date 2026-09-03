@@ -5,7 +5,7 @@
 - History-aware query rewriting for follow-up subject resolution
 - Combined rewrite-first LangGraph pipeline
 - Metadata-filtered dense retrieval with no-crop BM25 fallback and reciprocal-rank fusion
-- Lazy `BAAI/bge-reranker-v2-m3` reranking with configurable fail-open behavior
+- HTTP reranking through the external reranker service
 - Grounded generation with numbered source references
 - Session-aware chat service and `POST /api/v1/chat`
 - Node, service, graph, and API tests
@@ -22,4 +22,4 @@
 
 ## Environment limitations during verification
 
-The execution environment could not download the real dependencies because its package mirror returned HTTP 503 responses, and it did not provide a Docker daemon. Therefore, live Ollama, Chroma, FlagEmbedding, full dependency installation, and `docker compose up` were not executed here. The project is configured for those services and includes the commands required to run them in a normal development or deployment environment.
+The execution environment could not download the real dependencies because its package mirror returned HTTP 503 responses, and it did not provide a Docker daemon. Therefore, live Ollama, Chroma, the external reranker, full dependency installation, and `docker compose up` were not executed here. The project is configured for those services and includes the commands required to run them in a normal development or deployment environment.

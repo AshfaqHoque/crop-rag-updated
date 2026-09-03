@@ -16,7 +16,7 @@ COPY src ./src
 COPY data ./data
 
 RUN python -m pip install --upgrade pip \
-    && python -m pip install ".[reranker]"
+    && python -m pip install .
 
 EXPOSE 8000
 

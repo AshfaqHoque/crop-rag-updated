@@ -21,7 +21,7 @@ Output a true or false decision.
 """  # noqa: E501
 
 def filter_relevant(state: PipelineState) -> PipelineState:
-    chunks = state.get("retrieved_chunks", [])
+    chunks = state.get("reranked_chunks", [])
     if not chunks:
         return {**state, "filtered_chunks": []}
 

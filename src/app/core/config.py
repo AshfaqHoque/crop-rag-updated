@@ -2,8 +2,8 @@
 Centralized configuration. Every tunable value in the app is read from
 here so nodes remain deterministic and easy to test.
 """
-from functools import lru_cache
 import os
+from functools import lru_cache
 from typing import Literal
 
 from pydantic import SecretStr
@@ -44,24 +44,18 @@ class Settings(BaseSettings):
     supported_languages: str = "bn,en"
 
     # Pipeline tuning
-    retrieval_top_k: int = 10
-    dense_candidate_k: int = 20
-    bm25_candidate_k: int = 20
-    bm25_cache_ttl_seconds: int = 300
-    rrf_k: int = 60
-    rerank_top_k: int = 4
+    retrieval_top_k: int = 20
+    # dense_candidate_k: int = 20
+    # bm25_candidate_k: int = 20
+    # bm25_cache_ttl_seconds: int = 300
+    # rrf_k: int = 60
+    rerank_top_k: int = 10
     llm_temperature: float = 0.1
     history_max_turns: int = 1
     context_max_chars_per_chunk: int = 3000
 
-    # Reranker. FlagEmbedding is loaded lazily only when this is enabled.
-    reranker_enabled: bool = True
-    reranker_model: str = "BAAI/bge-reranker-v2-m3"
-    reranker_use_fp16: bool = False
-    reranker_query_max_length: int = 256
-    reranker_passage_max_length: int = 512
-    reranker_fail_open: bool = True
-    relevance_filter_threshold: float = 0.5
+    # External reranker service
+    reranker_url: str = "http://localhost:8090/rerank"
 
     # LangSmith tracing
     langsmith_tracing: bool = True

@@ -15,8 +15,9 @@ logger = get_logger(__name__)
 
 _SYSTEM_PROMPT = """You are an expert agricultural relevance checker.
 Your job is to determine if a specific Chunk directly helps answer the User Query, considering the Conversation History.
-The Chunk must be about the same crop, variety, disease, pest, or agricultural subject asked in the User Query. A matching topic alone is not enough if the subject is different.
-Evaluate the relationship carefully. Output a true or false decision.
+The Chunk must be about the same crop, variety, disease, pest, or agricultural subject asked in the User Query. 
+If it is not, you should discard it. If it is, you should keep it.
+Output a true or false decision.
 """  # noqa: E501
 
 def filter_relevant(state: PipelineState) -> PipelineState:

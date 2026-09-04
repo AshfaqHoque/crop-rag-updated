@@ -33,7 +33,7 @@ def cut_at_unusual_gap(reranked: list[dict]) -> list[dict]:
     # Remove biggest gap before calculating normal/typical gap
     other_gaps = [gap for index, gap in enumerate(gaps) if index != max_gap_index]
     median_gap = statistics.median(other_gaps)
-    threshold = median_gap * 3
+    threshold = median_gap * 60
     unusual = max_gap >= threshold
 
     logger.info("rerank gap analysis scores=%s gaps=%s max_gap=%.4f "

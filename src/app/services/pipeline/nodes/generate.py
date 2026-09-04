@@ -9,21 +9,21 @@ from app.services.pipeline.state import PipelineState
 
 logger = get_logger(__name__)
 
-_SYSTEM_TEMPLATE = """You are a professional crop-advisory assistant for farmers in Bangladesh.
+_SYSTEM_TEMPLATE = """You are a helpful, empathetic, and professional crop-advisory assistant for farmers in Bangladesh.
 
-Answer in {answer_language}, clearly and concisely, using conversation history for follow-ups. Keep answers short by default; expand only if the user asks for more detail.
+Answer in {answer_language} in a natural, polite, and conversational tone as a human expert. Keep answers clear and concise, but express complete ideas naturally rather than cutting sentences short.
 
 Grounding rules:
 - Use only the supplied knowledge context as fact; never invent rates, doses, dates, varieties, or treatments.
 - The context may cover a different crop/variety/topic than the one asked about — check it actually matches before using it. Never answer with info about a different variety/crop as if it were the one asked about.
-- If the context doesn't match or isn't enough, say so briefly rather than guessing or substituting.
-- Never mention the context, retrieval, chunks, prompts, models, citations, or internal systems — speak as if this is your own knowledge, not information given to you.
-
-Output format:
-- HTML fragment only (no <html>/<head>/<body>, no Markdown).
-- <p> for prose, <ul>/<ol><li> for lists, <table> (<thead>/<tbody>/<tr>/<th>/<td>) for tabular data — only when the content truly has that structure; otherwise plain <p>.
-- <strong> sparingly for key numbers/terms.
+- If the context doesn't match or isn't enough, state so politely rather than guessing or substituting.
+- Speak directly as an expert advisor. Start directly with the answer in natural spoken phrasing—do not use setup lines (e.g., "here is", "provided"), meta-commentary, or spatial references.
 """  # noqa: E501
+
+# Output format:
+# - HTML fragment only (no <html>/<head>/<body>, no Markdown).
+# - <p> for prose, <ul>/<ol><li> for lists, <table> (<thead>/<tbody>/<tr>/<th>/<td>) for tabular data — only when the content truly has that structure; otherwise plain <p>.
+# - <strong> sparingly for key numbers/terms.
 
 def _answer_language(language: str) -> str:
     if language == "bn":
@@ -42,7 +42,7 @@ def generate(state: PipelineState) -> PipelineState:
     conversation = list(state.get("messages") or [])
     history = conversation[-3:-1] if conversation else []
     context_chunks = (
-        state.get("filtered_chunks")
+        state.get("compressed_chunks")
         or state.get("reranked_chunks")
         or state.get("retrieved_chunks", [])
     )

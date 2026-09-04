@@ -45,8 +45,8 @@ def test_full_graph_crop_query_path(monkeypatch):
     )
     monkeypatch.setattr(
         graph_module,
-        "filter_relevant",
-        lambda state: {**state, "filtered_chunks": state["reranked_chunks"]},
+        "compress_chunk",
+        lambda state: {**state, "compressed_chunks": state["reranked_chunks"]},
     )
     monkeypatch.setattr(graph_module, "generate", generate)
 

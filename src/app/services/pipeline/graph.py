@@ -5,7 +5,7 @@ from langgraph.graph import END, START, StateGraph
 
 from app.services.pipeline.checkpointer import make_checkpointer
 from app.services.pipeline.nodes.extract_crop import extract_crop
-from app.services.pipeline.nodes.filter_relevant import filter_relevant
+from app.services.pipeline.nodes.compress_chunk import compress_chunk
 from app.services.pipeline.nodes.generate import generate
 from app.services.pipeline.nodes.normalize_language import normalize_language
 from app.services.pipeline.nodes.rerank import rerank
@@ -29,7 +29,7 @@ def build_chat_graph():
     builder.add_node("extract_crop", extract_crop)
     builder.add_node("retrieve", retrieve)
     builder.add_node("rerank", rerank)
-    builder.add_node("filter_relevant", filter_relevant)
+    builder.add_node("compress_chunk", compress_chunk)
     builder.add_node("generate", generate)
 
     builder.add_edge(START, "normalize_language")
@@ -45,8 +45,8 @@ def build_chat_graph():
     # )
     builder.add_edge("extract_crop", "retrieve")
     builder.add_edge("retrieve", "rerank")
-    builder.add_edge("rerank", "filter_relevant")
-    builder.add_edge("filter_relevant", "generate")
+    builder.add_edge("rerank", "compress_chunk")
+    builder.add_edge("compress_chunk", "generate")
     builder.add_edge("generate", END)
 
     return builder.compile(checkpointer=make_checkpointer())

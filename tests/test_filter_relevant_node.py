@@ -1,6 +1,6 @@
 from app.schemas.extraction import ChunkRelevance
-from app.services.pipeline.nodes import filter_relevant as filter_module
-from app.services.pipeline.nodes.filter_relevant import filter_relevant
+from app.services.pipeline.nodes import compress_chunk as filter_module
+from app.services.pipeline.nodes.compress_chunk import filter_relevant
 
 
 def test_filter_relevant_uses_reranked_chunks(monkeypatch):
@@ -22,4 +22,4 @@ def test_filter_relevant_uses_reranked_chunks(monkeypatch):
 
     result = filter_relevant(state)
 
-    assert [chunk["chunk_id"] for chunk in result["filtered_chunks"]] == ["relevant"]
+    assert [chunk["chunk_id"] for chunk in result["compressed_chunks"]] == ["relevant"]

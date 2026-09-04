@@ -38,8 +38,8 @@ class ChatService:
     @staticmethod
     def _to_response(session_id: str, result: dict, answer: str) -> ChatResponse:
         chunks = (
-            result["filtered_chunks"]
-            if "filtered_chunks" in result
+            result["compressed_chunks"]
+            if "compressed_chunks" in result
             else result.get("reranked_chunks") or result.get("retrieved_chunks") or []
         )
         sources = []

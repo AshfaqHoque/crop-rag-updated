@@ -72,7 +72,7 @@ START
   -> extract_crop
   -> retrieve
   -> rerank
-  -> filter_relevant
+  -> compress_chunk
   -> generate
   -> END
 ```

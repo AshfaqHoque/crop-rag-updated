@@ -13,7 +13,7 @@ from app.services.pipeline.state import PipelineState
 logger = get_logger(__name__)
 
 # Standard LangChain LLMChainExtractor prompt with your custom rule added
-DEFAULT_EXTRACTION_TEMPLATE = """Given the following question and context, extract any part of the context AS IS that is relevant to answer the question. Preserve context liberally. Return NO_OUTPUT ONLY if the context is completely irrelevant.
+DEFAULT_EXTRACTION_TEMPLATE = """Given the following question and context, extract any part of the context AS IS that is relevant to the entities or topic in the question. Preserve context liberally. Return NO_OUTPUT ONLY if the context is completely irrelevant.
 Remember, DO NOT edit the extracted parts of the context.
 
 Question: {question}
@@ -31,7 +31,7 @@ CUSTOM_DEFAULT_PROMPT = PromptTemplate(
 def get_context_compressor() -> LLMChainExtractor:
     """Create the LangChain LLM context compressor."""
 
-    llm = get_chat_llm(temperature=0.0)
+    llm = get_chat_llm(temperature=0.1)
     # Uses LangChain's default extraction prompt.
     return LLMChainExtractor.from_llm(llm, prompt=CUSTOM_DEFAULT_PROMPT)
 

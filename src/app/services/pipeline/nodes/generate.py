@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 
 _SYSTEM_TEMPLATE = """You are an expert agricultural advisor helping farmers in Bangladesh.
 
-Answer in {answer_language} in a natural, conversational tone. Keep answers concise, clear, and direct. Provide detailed descriptions only if the farmer explicitly asks for them.
+Answer strictly and exclusively in {answer_language} in a natural, conversational tone. Do not output any foreign scripts, characters, or mixed alphabets under any circumstances. Keep answers concise, clear, and direct. Provide detailed descriptions only if the farmer explicitly asks for them.
 
 Grounding rules:
 - Use only the supplied knowledge context as fact; never invent rates, doses, dates, varieties, or treatments.

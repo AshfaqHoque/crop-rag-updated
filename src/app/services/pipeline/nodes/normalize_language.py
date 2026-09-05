@@ -68,31 +68,31 @@ Rules:
 def normalize_language(state: PipelineState) -> PipelineState:
     raw_query = state["raw_query"].strip()
 
-    if is_bangla_text(raw_query):
-        logger.info("language_normalization language=bn")
-        return {
-            **state,
-            "language": "bn",
-            "normalized_query": raw_query
-        }
+    # if is_bangla_text(raw_query):
+    #     logger.info("language_normalization language=bn")
+    #     return {
+    #         **state,
+    #         "language": "bn",
+    #         "normalized_query": raw_query
+    #     }
 
-    avro_output = avro.parse(raw_query)
+    # avro_output = avro.parse(raw_query)
 
-    user_prompt = (
-        f"Original Banglish:\n{raw_query}\n\n"
-        f"Bengali text to spell-check:\n{avro_output}"
-    )
+    # user_prompt = (
+    #     f"Original Banglish:\n{raw_query}\n\n"
+    #     f"Bengali text to spell-check:\n{avro_output}"
+    # )
 
-    response = _banglish_llm.invoke([
-            SystemMessage(content=_SYSTEM_PROMPT),
-            HumanMessage(content=user_prompt),
-        ])
+    # response = _banglish_llm.invoke([
+    #         SystemMessage(content=_SYSTEM_PROMPT),
+    #         HumanMessage(content=user_prompt),
+    #     ])
 
-    normalized_query = str(response.content).strip()
+    # normalized_query = str(response.content).strip()
 
-    logger.info("language_normalization language=banglish original=%r normalized=%r", raw_query, normalized_query)  # noqa: E501
+    # logger.info("language_normalization language=banglish original=%r normalized=%r", raw_query, normalized_query)  # noqa: E501
     return {
         **state,
         "language": "bn",
-        "normalized_query": normalized_query,
+        "normalized_query": raw_query,
     }

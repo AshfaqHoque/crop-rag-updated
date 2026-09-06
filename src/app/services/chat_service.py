@@ -3,6 +3,7 @@ import asyncio
 from collections import defaultdict
 from functools import lru_cache
 
+from langchain_core.documents import Document
 from langchain_core.messages import HumanMessage
 from starlette.concurrency import run_in_threadpool
 
@@ -37,21 +38,19 @@ class ChatService:
 
     @staticmethod
     def _to_response(session_id: str, result: dict, answer: str) -> ChatResponse:
-        chunks = (
-            result["compressed_chunks"]
-            if "compressed_chunks" in result
-            else result.get("reranked_chunks") or result.get("retrieved_chunks") or []
+        documents: list[Document] = (
+            result.get("compressed_documents")
+            or result.get("reranked_documents")
+            or result.get("retrieved_documents")
+            or []
         )
         sources = []
-        for chunk in chunks:
-            metadata = chunk.get("metadata") or {}
-            distance = chunk.get(
-                "relevance_score",
-                chunk.get("rerank_score", chunk.get("distance")),
-            )
+        for document in documents:
+            metadata = document.metadata
+            distance = metadata.get("relevance_score", metadata.get("distance"))
             sources.append(
                 SourceChunk(
-                    chunk_id=str(chunk.get("chunk_id", metadata.get("chunk_id", ""))),
+                    chunk_id=str(metadata.get("chunk_id", "")),
                     crop_name=metadata.get("crop_name"),
                     section=metadata.get("section"),
                     distance=float(distance) if distance is not None else None,
@@ -62,7 +61,7 @@ class ChatService:
             session_id=session_id,
             answer=answer,
             language=result.get("language", "unknown"),
-            rewritten_query=result.get("raw_query"),
+            rewritten_query=result.get("rewritten_query"),
             retrieval_mode=result.get("retrieval_mode"),
             sources=sources,
             messages=result.get("messages", []),

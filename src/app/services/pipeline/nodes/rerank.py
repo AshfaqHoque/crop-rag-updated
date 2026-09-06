@@ -3,6 +3,7 @@
 import statistics
 
 import httpx
+from langchain_core.documents import Document
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
@@ -10,7 +11,7 @@ from app.services.pipeline.state import PipelineState
 
 logger = get_logger(__name__)
 
-def cut_at_unusual_gap(reranked: list[dict]) -> list[dict]:
+def cut_at_unusual_gap(reranked: list[Document]) -> list[Document]:
     """
     Cut reranked chunks when the largest score gap is unusually large.
 
@@ -22,8 +23,8 @@ def cut_at_unusual_gap(reranked: list[dict]) -> list[dict]:
         return reranked
 
     # Scores are already sorted, but keep this function independent
-    reranked.sort(key=lambda chunk: chunk["relevance_score"],reverse=True,)
-    scores = [chunk["relevance_score"] for chunk in reranked]
+    reranked.sort(key=lambda document: document.metadata["relevance_score"], reverse=True)
+    scores = [document.metadata["relevance_score"] for document in reranked]
     gaps = [scores[i] - scores[i + 1] for i in range(len(scores) - 1)]
 
     # Find biggest gap
@@ -56,38 +57,40 @@ def cut_at_unusual_gap(reranked: list[dict]) -> list[dict]:
     return reranked
 
 def rerank(state: PipelineState) -> PipelineState:
-    chunks = state.get("retrieved_chunks", [])
-    if not chunks:
-        return {**state, "reranked_chunks": []}
+    documents = state.get("retrieved_documents", [])
+    if not documents:
+        return {**state, "reranked_documents": []}
 
     query = state.get("rewritten_query") or state["raw_query"]
     response = httpx.post(
         get_settings().reranker_url,
         json={
             "query": query,
-            "documents": [str(chunk.get("content", "")) for chunk in chunks],
+            "documents": [document.page_content for document in documents],
         },
         timeout=30.0,
     )
     response.raise_for_status()
 
-    reranked = []
+    reranked: list[Document] = []
     for result in response.json()["results"]:
-        chunk = dict(chunks[result["index"]])
-        chunk["relevance_score"] = float(result["relevance_score"])
-        reranked.append(chunk)
+        document = documents[result["index"]]
+        metadata = dict(document.metadata)
+        metadata["relevance_score"] = float(result["relevance_score"])
+        reranked.append(Document(page_content=document.page_content, metadata=metadata))
 
-    reranked.sort(key=lambda chunk: chunk["relevance_score"], reverse=True)
+    reranked.sort(key=lambda document: document.metadata["relevance_score"], reverse=True)
+    reranked = reranked[: get_settings().rerank_top_k]
     reranked = cut_at_unusual_gap(reranked)
 
     logger.info(
         "rerank final chunks=%d scores=%s",
         len(reranked),
         [
-            round(chunk["relevance_score"], 4)
-            for chunk in reranked
+            round(document.metadata["relevance_score"], 4)
+            for document in reranked
         ],
     )
 
     logger.info("rerank chunks=%d", len(reranked))
-    return {**state, "reranked_chunks": reranked}
+    return {**state, "reranked_documents": reranked}

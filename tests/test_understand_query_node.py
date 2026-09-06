@@ -1,30 +1,9 @@
 from unittest.mock import patch
 
 from app.schemas.extraction import QueryUnderstanding
-from app.services.pipeline.nodes.understand_query import _format_history, understand_query
+from app.services.pipeline.nodes.understand_query import understand_query
 
 MODULE = "app.services.pipeline.nodes.understand_query"
-
-
-def test_format_history_empty():
-    assert _format_history([]) == "(none)"
-
-
-def test_format_history_formats_recent_turns():
-    history = [
-        {"role": "user", "content": "what is seed rate for aman rice?"},
-        {"role": "assistant", "content": "..."},
-    ]
-    formatted = _format_history(history)
-    assert "user: what is seed rate for aman rice?" in formatted
-    assert "assistant: ..." in formatted
-
-
-def test_format_history_only_keeps_last_four_turns():
-    history = [{"role": "user", "content": f"msg {i}"} for i in range(10)]
-    formatted = _format_history(history)
-    assert "msg 9" in formatted
-    assert "msg 0" not in formatted
 
 
 @patch(f"{MODULE}.invoke_structured")

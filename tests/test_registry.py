@@ -6,7 +6,8 @@ from app.services.pipeline import registry
 
 def _write_crops(tmp_path, crops):
     path = tmp_path / "crops.json"
-    path.write_text(json.dumps(crops), encoding="utf-8")
+    payload = {"data": {"getAllCropsFullDetails": {"rows": crops}}}
+    path.write_text(json.dumps(payload), encoding="utf-8")
     return path
 
 
@@ -36,14 +37,15 @@ def test_get_known_crops_missing_file_returns_empty(tmp_path, monkeypatch):
         registry.get_known_crops.cache_clear()
 
 
-def test_crop_names_and_prompt_formatting(tmp_path, monkeypatch):
+def test_known_crops_expose_names_and_bangla_names(tmp_path, monkeypatch):
     crops = [{"crop_id": "5", "crop_name": "Boro Paddy", "crop_bangla_name": "বোরো ধান"}]
     path = _write_crops(tmp_path, crops)
     monkeypatch.setattr(get_settings(), "crop_registry_path", str(path))
     registry.get_known_crops.cache_clear()
     try:
-        assert registry.crop_names() == ["Boro Paddy"]
-        assert "Boro Paddy (বোরো ধান)" in registry.format_crop_list_for_prompt()
+        result = registry.get_known_crops()
+        assert [crop.crop_name for crop in result] == ["Boro Paddy"]
+        assert result[0].crop_bangla_name == "বোরো ধান"
     finally:
         registry.get_known_crops.cache_clear()
 

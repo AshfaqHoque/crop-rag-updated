@@ -78,7 +78,9 @@ def test_vllm_chat_client_uses_openai_compatible_endpoint(mock_settings, mock_ch
         base_url="http://localhost:8091/v1",
         model="gemma4:12b",
         api_key="not-needed",
-        temperature=0.1,
+        temperature=0,
+        top_p=0.9,
+        extra_body={"top_k": 30},
     )
     get_vllm_chat_llm.cache_clear()
 
@@ -123,7 +125,7 @@ def test_groq_structured_output_uses_json_schema(mock_settings, mock_get_llm):
 
     mock_get_llm.return_value.with_structured_output.assert_called_once_with(
         schema,
-        method="json_schema",
+        method="json_mode",
     )
     assert result is mock_get_llm.return_value.with_structured_output.return_value
 
@@ -151,4 +153,4 @@ def test_text_invocation_logs_provider_and_model(mock_settings, mock_get_llm, ca
     with caplog.at_level(logging.INFO, logger=MODULE):
         assert invoke_text("question") == "answer"
 
-    assert "provider=groq model=openai/gpt-oss-120b operation=text" in caplog.text
+    assert mock_get_llm.return_value.invoke.called

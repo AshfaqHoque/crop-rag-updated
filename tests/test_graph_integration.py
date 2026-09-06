@@ -1,3 +1,5 @@
+from langchain_core.documents import Document
+
 from app.services.pipeline import graph as graph_module
 
 
@@ -26,8 +28,8 @@ def test_full_graph_crop_query_path(monkeypatch):
         visited.append("retrieve")
         return {
             **state,
-            "retrieval_mode": "dense_bm25_rrf",
-            "retrieved_chunks": [{"chunk_id": "x", "content": "rate", "metadata": {}}],
+            "retrieval_mode": "dense_filtered",
+            "retrieved_documents": [Document(page_content="rate", metadata={"chunk_id": "x"})],
         }
 
     def generate(state):
@@ -41,21 +43,22 @@ def test_full_graph_crop_query_path(monkeypatch):
     monkeypatch.setattr(
         graph_module,
         "rerank",
-        lambda state: {**state, "reranked_chunks": state["retrieved_chunks"]},
+        lambda state: {**state, "reranked_documents": state["retrieved_documents"]},
     )
     monkeypatch.setattr(
         graph_module,
         "compress_chunk",
-        lambda state: {**state, "compressed_chunks": state["reranked_chunks"]},
+        lambda state: {**state, "compressed_documents": state["reranked_documents"]},
     )
     monkeypatch.setattr(graph_module, "generate", generate)
 
     result = graph_module.build_chat_graph().invoke(
-        {"session_id": "s", "raw_query": "what about it?", "history": []}
+        {"session_id": "s", "raw_query": "what about it?", "messages": []},
+        {"configurable": {"thread_id": "s"}},
     )
     assert visited == ["rewrite", "understand", "extract", "retrieve", "generate"]
     assert result["answer"] == "answer [1]"
-    assert result["retrieval_mode"] == "dense_bm25_rrf"
+    assert result["retrieval_mode"] == "dense_filtered"
 
 
 def test_full_graph_small_talk_skips_retrieval(monkeypatch):
@@ -87,7 +90,8 @@ def test_full_graph_small_talk_skips_retrieval(monkeypatch):
 
     monkeypatch.setattr(graph_module, "generate", generate)
     result = graph_module.build_chat_graph().invoke(
-        {"session_id": "s", "raw_query": "hello", "history": []}
+        {"session_id": "s", "raw_query": "hello", "messages": []},
+        {"configurable": {"thread_id": "s"}},
     )
     assert visited == ["generate"]
     assert result["answer"] == "hello"

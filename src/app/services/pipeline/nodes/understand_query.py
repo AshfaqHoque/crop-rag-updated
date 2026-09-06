@@ -88,6 +88,6 @@ def understand_query(state: PipelineState) -> PipelineState:
     return {
         **state,
         "language": result.language,
-        "intent": "crop_query", #hardcoded for now 
+        "intent": result.intent,
         "sections": kept_sections,
     }

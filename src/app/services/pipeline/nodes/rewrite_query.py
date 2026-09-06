@@ -20,7 +20,7 @@ Rules:
 """
 
 def rewrite_query(state: PipelineState) -> PipelineState:
-    query = state.get("normalized_query", "").strip()
+    query = (state.get("normalized_query") or state.get("raw_query") or "").strip()
     conversation = list(state.get("messages") or [])
     history = conversation[-3:-1] if conversation else [] 
 
@@ -42,7 +42,8 @@ def rewrite_query(state: PipelineState) -> PipelineState:
 
     result = invoke_structured(QueryRewrite, messages, temperature=0.0)
 
-    rewritten = result.rewritten_query.strip() if result.rewritten_query else query
+    rewritten = result.rewritten_query.strip() if result.rewritten_query else ""
+    rewritten = rewritten or query
     logger.info("rewrite_query used_history=%s rewritten=%r", result.used_history, rewritten)
     return {
         **state,

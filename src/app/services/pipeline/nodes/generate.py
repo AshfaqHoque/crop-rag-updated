@@ -1,5 +1,6 @@
 """Grounded final-answer generation node."""
 
+from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from app.core.config import get_settings
@@ -23,7 +24,7 @@ Grounding rules:
 
 # Output format:
 # - HTML fragment only (no <html>/<head>/<body>, no Markdown).
-# - <p> for prose, <ul>/<ol><li> for lists, <table> (<thead>/<tbody>/<tr>/<th>/<td>) for tabular data — only when the content truly has that structure; otherwise plain <p>.
+# - Use HTML paragraphs and lists only when the answer truly needs structure.
 # - <strong> sparingly for key numbers/terms.
 
 def _answer_language(language: str) -> str:
@@ -32,26 +33,32 @@ def _answer_language(language: str) -> str:
     return "clear English"
 
 
-def _format_context(chunks: list[dict]) -> str:
-    if not chunks:
+def _format_context(documents: list[Document]) -> str:
+    if not documents:
         return "(No relevant agricultural information was retrieved.)"
     max_chars = get_settings().context_max_chars_per_chunk
-    return "\n\n".join(str(chunk.get("content", ""))[:max_chars] for chunk in chunks)
+    formatted = []
+    for index, document in enumerate(documents, start=1):
+        chunk_id = document.metadata.get("chunk_id", "unknown")
+        formatted.append(f"[{index}] chunk_id={chunk_id}\n{document.page_content[:max_chars]}")
+    return "\n\n".join(formatted)
 
 
 def generate(state: PipelineState) -> PipelineState:
     conversation = list(state.get("messages") or [])
     history = conversation[-3:-1] if conversation else []
-    context_chunks = (
-        state.get("compressed_chunks")
-        or state.get("reranked_chunks")
-        or state.get("retrieved_chunks", [])
+    context_documents = (
+        state.get("compressed_documents")
+        or state.get("reranked_documents")
+        or state.get("retrieved_documents", [])
     )
 
-    current_message = (
-        f"Context:\n{_format_context(context_chunks)}\n\n"
-        f"User Query: {state.get('normalized_query')}"
+    query = (
+        state.get("rewritten_query")
+        or state.get("normalized_query")
+        or state.get("raw_query", "")
     )
+    current_message = f"Context:\n{_format_context(context_documents)}\n\nUser Query: {query}"
 
     messages = [
         SystemMessage(

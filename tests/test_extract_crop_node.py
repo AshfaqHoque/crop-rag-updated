@@ -1,9 +1,20 @@
 from unittest.mock import patch
 
+import pytest
+
 from app.services.pipeline.nodes.extract_crop import extract_crop
 from app.services.pipeline.registry import CropInfo
 
 MODULE = "app.services.pipeline.nodes.extract_crop"
+
+
+@pytest.fixture(autouse=True)
+def clear_crop_alias_cache():
+    from app.services.pipeline.nodes.extract_crop import get_crop_aliases
+
+    get_crop_aliases.cache_clear()
+    yield
+    get_crop_aliases.cache_clear()
 
 CROPS = [
     CropInfo(crop_id="5", crop_name="Boro Paddy", crop_bangla_name="বোরো ধান"),

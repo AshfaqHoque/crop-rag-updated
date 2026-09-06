@@ -1,7 +1,10 @@
 """State threaded through the LangGraph pipeline."""
-from typing import Annotated, Any, TypedDict
-from langchain_core.messages import AnyMessage, BaseMessage
+from typing import Annotated, TypedDict
+
+from langchain_core.documents import Document
+from langchain_core.messages import AnyMessage
 from langgraph.graph import add_messages
+
 
 class PipelineState(TypedDict, total=False):
 
@@ -28,9 +31,9 @@ class PipelineState(TypedDict, total=False):
     crops: list[str]
 
     # retrieval/reranking
-    retrieved_chunks: list[dict[str, Any]]
-    reranked_chunks: list[dict[str, Any]]
-    compressed_chunks: list[dict[str, Any]]
+    retrieved_documents: list[Document]
+    reranked_documents: list[Document]
+    compressed_documents: list[Document]
     retrieval_mode: str
 
     # output

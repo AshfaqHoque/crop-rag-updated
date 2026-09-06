@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, HumanMessage
 
 from app.services.pipeline.nodes.generate import _format_context, generate
@@ -8,14 +9,13 @@ MODULE = "app.services.pipeline.nodes.generate"
 
 
 def test_format_context_numbers_sources():
-    chunks = [
-        {
-            "chunk_id": "5_seed",
-            "content": "বীজের হার ১২০ কেজি",
-            "metadata": {"crop_name": "Boro Paddy", "section": "seed"},
-        }
+    documents = [
+        Document(
+            page_content="বীজের হার ১২০ কেজি",
+            metadata={"chunk_id": "5_seed", "crop_name": "Boro Paddy", "section": "seed"},
+        )
     ]
-    formatted = _format_context(chunks)
+    formatted = _format_context(documents)
     assert "[1] chunk_id=5_seed" in formatted
     assert "বীজের হার" in formatted
 
@@ -27,19 +27,18 @@ def test_generate_writes_answer(mock_invoke):
         "rewritten_query": "বোরো ধানের বীজের হার কত?",
         "language": "bn",
         "intent": "crop_query",
-        "reranked_chunks": [
-            {
-                "chunk_id": "5_seed",
-                "content": "বীজের হার ১২০ কেজি",
-                "metadata": {"crop_name": "Boro Paddy", "section": "seed"},
-            }
+        "reranked_documents": [
+            Document(
+                page_content="বীজের হার ১২০ কেজি",
+                metadata={"chunk_id": "5_seed", "crop_name": "Boro Paddy", "section": "seed"},
+            )
         ],
     }
     result = generate(state)
     assert result["answer"] == "প্রতি হেক্টরে ১২০ কেজি [1]"
     messages = mock_invoke.call_args.args[0]
     prompt = "\n".join(message.content for message in messages)
-    assert "<standalone_query>বোরো ধানের" in prompt
+    assert "User Query: বোরো ধানের বীজের হার কত?" in prompt
     assert "[1] chunk_id=5_seed" in prompt
 
 
@@ -53,7 +52,7 @@ def test_generate_uses_and_appends_langgraph_messages(mock_invoke):
         ],
         "normalized_query": "What about its seed rate?",
         "language": "en",
-        "reranked_chunks": [],
+        "reranked_documents": [],
     }
 
     result = generate(state)
@@ -61,7 +60,7 @@ def test_generate_uses_and_appends_langgraph_messages(mock_invoke):
     sent_messages = mock_invoke.call_args.args[0]
     assert sent_messages[1].content == "Tell me about Boro rice."
     assert sent_messages[2].content == "Boro rice is a rice crop."
-    assert sent_messages[-1].content.startswith("<user_message>")
-    assert isinstance(result["messages"][0], HumanMessage)
-    assert isinstance(result["messages"][-1], AIMessage)
-    assert result["messages"][-1].content == "Use the recommended rate."
+    assert sent_messages[-1].content.startswith("Context:")
+    assert len(result["messages"]) == 1
+    assert isinstance(result["messages"][0], AIMessage)
+    assert result["messages"][0].content == "Use the recommended rate."

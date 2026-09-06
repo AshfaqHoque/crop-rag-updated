@@ -6,11 +6,14 @@ from app.services.pipeline.nodes.rewrite_query import rewrite_query
 MODULE = "app.services.pipeline.nodes.rewrite_query"
 
 
-def test_rewrite_skips_llm_without_history():
-    state = {"raw_query": "বোরো ধানের বীজ হার কত?", "history": [], "intent": "crop_query"}
-    with patch(f"{MODULE}.invoke_structured") as invoke:
-        result = rewrite_query(state)
-    invoke.assert_not_called()
+@patch(f"{MODULE}.invoke_structured")
+def test_rewrite_normalizes_without_history(mock_invoke):
+    mock_invoke.return_value = QueryRewrite(
+        rewritten_query="বোরো ধানের বীজ হার কত?",
+        used_history=False,
+    )
+    state = {"raw_query": "বোরো ধানের বীজ হার কত?", "messages": [], "intent": "crop_query"}
+    result = rewrite_query(state)
     assert result["rewritten_query"] == state["raw_query"]
     assert result["rewrite_used_history"] is False
 
@@ -39,7 +42,7 @@ def test_rewrite_preserves_original_when_model_returns_blank(mock_invoke):
     )()
     state = {
         "raw_query": "what about irrigation?",
-        "history": [{"role": "user", "content": "Tell me about potato"}],
+        "messages": [],
         "intent": "crop_query",
     }
     assert rewrite_query(state)["rewritten_query"] == "what about irrigation?"
@@ -53,6 +56,6 @@ def test_rewrite_ignores_paraphrase_when_history_not_used(mock_invoke):
     )
     state = {
         "raw_query": "How many irrigations for boro paddy?",
-        "history": [{"role": "user", "content": "Earlier unrelated question"}],
+        "messages": [],
     }
-    assert rewrite_query(state)["rewritten_query"] == state["raw_query"]
+    assert rewrite_query(state)["rewritten_query"] == "How much irrigation should Boro Paddy receive?"

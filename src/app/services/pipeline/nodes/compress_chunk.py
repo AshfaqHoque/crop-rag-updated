@@ -58,64 +58,73 @@ def _metadata_prefix(metadata: dict) -> str:
 def compress_chunk(state: PipelineState) -> PipelineState:
     """Extract only query-relevant content from reranked chunks."""
 
-    chunks = state.get("reranked_chunks", []) or state.get("retrieved_chunks", [])
+    documents = state.get("reranked_documents", []) or state.get("retrieved_documents", [])
 
-    if not chunks:
-        return {**state,"compressed_chunks": [],}
+    if not documents:
+        return {**state, "compressed_documents": []}
 
     query = ( state.get("rewritten_query") or state.get("normalized_query")or state.get("raw_query", ""))
-    documents: list[Document] = []
+    compression_inputs: list[Document] = []
 
-    for index, chunk in enumerate(chunks):
-        content = str(chunk.get("content", "")).strip()
+    for index, document in enumerate(documents):
+        content = document.page_content.strip()
 
         if not content:
             continue
 
-        documents.append(Document(page_content=content,metadata={"_chunk_index": index,},))
+        metadata = dict(document.metadata)
+        metadata["_source_index"] = index
+        compression_inputs.append(Document(page_content=content, metadata=metadata))
 
     try:
         compressor = get_context_compressor()
-        compressed_documents = compressor.compress_documents(documents=documents, query=query,)
-        compressed_chunks = []
+        compressed_documents = compressor.compress_documents(
+            documents=compression_inputs,
+            query=query,
+        )
+        output_documents = []
 
-        for document in compressed_documents:
-            content = document.page_content.strip()
+        for compressed_document in compressed_documents:
+            content = compressed_document.page_content.strip()
 
             if not content:
                 continue
 
-            index = document.metadata["_chunk_index"]
-            chunk = dict(chunks[index])
+            index = compressed_document.metadata["_source_index"]
+            source_document = documents[index]
+            metadata = dict(source_document.metadata)
+            prefix = _metadata_prefix(metadata)
 
-            prefix = _metadata_prefix(chunk.get("metadata", {}))
             if prefix:
                 content = f"{prefix}{content}"
 
-            chunk["content"] = content
-            compressed_chunks.append(chunk)
-
+            output_documents.append(
+                Document(
+                    page_content=content,
+                    metadata=metadata,
+                )
+            )
     except Exception:
         logger.exception("Context compression failed; using reranked chunks")
-        compressed_chunks = [dict(chunk) for chunk in chunks]
+        output_documents = list(documents)
 
     original_chars = sum(
-        len(str(chunk.get("content", "")))
-        for chunk in chunks
+        len(document.page_content)
+        for document in documents
     )
 
     compressed_chars = sum(
-        len(str(chunk.get("content", "")))
-        for chunk in compressed_chunks
+        len(document.page_content)
+        for document in output_documents
     )
 
     logger.info(
         "context_compression chunks_before=%d chunks_after=%d "
         "chars_before=%d chars_after=%d",
-        len(chunks),
-        len(compressed_chunks),
+        len(documents),
+        len(output_documents),
         original_chars,
         compressed_chars,
     )
 
-    return { **state,"compressed_chunks": compressed_chunks, }
+    return {**state, "compressed_documents": output_documents}

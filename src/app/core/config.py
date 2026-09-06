@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     # bm25_cache_ttl_seconds: int = 300
     # rrf_k: int = 60
     rerank_top_k: int = 10
-    llm_temperature: float = 0.1
+    llm_temperature: float = 0
     history_max_turns: int = 1
     context_max_chars_per_chunk: int = 3000
 

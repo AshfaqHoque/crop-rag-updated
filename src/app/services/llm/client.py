@@ -52,10 +52,11 @@ def get_vllm_chat_llm(temperature: float | None = None) -> ChatOpenAI:
         base_url=settings.vllm_base_url,
         model=settings.vllm_chat_model,
         api_key=settings.vllm_api_key,
-        temperature=0,
+        temperature=(settings.llm_temperature if temperature is None else temperature),
         top_p=0.9,
         extra_body={
             "top_k": 30,
+            "chat_template_kwargs": {"enable_thinking": False},
         },
     )
 

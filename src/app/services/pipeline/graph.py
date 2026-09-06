@@ -10,20 +10,18 @@ from app.services.pipeline.nodes.generate import generate
 from app.services.pipeline.nodes.rerank import rerank
 from app.services.pipeline.nodes.retrieve import retrieve
 from app.services.pipeline.nodes.rewrite_query import rewrite_query
-from app.services.pipeline.nodes.understand_query import understand_query
+from app.services.pipeline.nodes.route import route
 from app.services.pipeline.state import PipelineState
 
 
-def route_after_understanding(state: PipelineState) -> str:
-    is_crop_query = state.get("intent") == "crop_query"
-    is_supported = state.get("language") != "unsupported"
-    return "extract_crop" if is_crop_query and is_supported else "generate"
+def route_after_route(state: PipelineState) -> str:
+    return "extract_crop" if state.get("intent") == "crop_query" else "generate"
 
 def build_chat_graph():
     builder = StateGraph(PipelineState)
     
     builder.add_node("rewrite_query", rewrite_query)
-    builder.add_node("understand_query", understand_query)
+    builder.add_node("route", route)
     builder.add_node("extract_crop", extract_crop)
     builder.add_node("retrieve", retrieve)
     builder.add_node("rerank", rerank)
@@ -31,15 +29,15 @@ def build_chat_graph():
     builder.add_node("generate", generate)
 
     builder.add_edge(START, "rewrite_query")
-    builder.add_edge("rewrite_query", "extract_crop")
-    # builder.add_conditional_edges(
-    #     "understand_query",
-    #     route_after_understanding,
-    #     {
-    #         "extract_crop": "extract_crop",
-    #         "generate": "generate",
-    #     },
-    # )
+    builder.add_edge("rewrite_query", "route")
+    builder.add_conditional_edges(
+        "route",
+        route_after_route,
+        {
+            "extract_crop": "extract_crop",
+            "generate": "generate",
+        },
+    )
     builder.add_edge("extract_crop", "retrieve")
     builder.add_edge("retrieve", "rerank")
     builder.add_edge("rerank", "compress_chunk")

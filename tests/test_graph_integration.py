@@ -6,14 +6,12 @@ from app.services.pipeline import graph as graph_module
 def test_full_graph_crop_query_path(monkeypatch):
     visited = []
 
-    def understand(state):
-        visited.append("understand")
+    def route(state):
+        visited.append("route")
         return {
             **state,
-            "language": "en",
             "intent": "crop_query",
             "crops": [],
-            "sections": ["seed"],
         }
 
     def extract(state):
@@ -36,7 +34,7 @@ def test_full_graph_crop_query_path(monkeypatch):
         visited.append("generate")
         return {**state, "answer": "answer [1]"}
 
-    monkeypatch.setattr(graph_module, "understand_query", understand)
+    monkeypatch.setattr(graph_module, "route", route)
     monkeypatch.setattr(graph_module, "extract_crop", extract)
     monkeypatch.setattr(graph_module, "rewrite_query", rewrite)
     monkeypatch.setattr(graph_module, "retrieve", retrieve)
@@ -56,18 +54,18 @@ def test_full_graph_crop_query_path(monkeypatch):
         {"session_id": "s", "raw_query": "what about it?", "messages": []},
         {"configurable": {"thread_id": "s"}},
     )
-    assert visited == ["rewrite", "understand", "extract", "retrieve", "generate"]
+    assert visited == ["rewrite", "route", "extract", "retrieve", "generate"]
     assert result["answer"] == "answer [1]"
     assert result["retrieval_mode"] == "dense_filtered"
 
 
-def test_full_graph_small_talk_skips_retrieval(monkeypatch):
+def test_full_graph_chitchat_skips_retrieval(monkeypatch):
     visited = []
 
     monkeypatch.setattr(
         graph_module,
-        "understand_query",
-        lambda state: {**state, "language": "en", "intent": "small_talk"},
+        "route",
+        lambda state: {**state, "language": "en", "intent": "chitchat"},
     )
     monkeypatch.setattr(
         graph_module,

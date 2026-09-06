@@ -1,58 +1,39 @@
 from unittest.mock import patch
 
 from app.schemas.extraction import QueryUnderstanding
-from app.services.pipeline.nodes.understand_query import understand_query
+from app.services.pipeline.nodes.route import route
 
-MODULE = "app.services.pipeline.nodes.understand_query"
+MODULE = "app.services.pipeline.nodes.route"
 
 
 @patch(f"{MODULE}.invoke_structured")
-def test_understand_query_keeps_valid_extractions(mock_invoke):
-    mock_invoke.return_value = QueryUnderstanding(
-        language="bn", intent="crop_query", sections=["seed"]
-    )
+def test_route_returns_intent_only(mock_invoke):
+    mock_invoke.return_value = QueryUnderstanding(intent="crop_query")
     state = {"raw_query": "বোরো ধানের বীজ হার কত?", "history": []}
 
-    result = understand_query(state)
+    result = route(state)
 
-    assert result["language"] == "bn"
     assert result["intent"] == "crop_query"
-    assert result["sections"] == ["seed"]
+    assert "sections" not in result
     assert result["raw_query"] == "বোরো ধানের বীজ হার কত?"
 
 
 @patch(f"{MODULE}.invoke_structured")
-def test_understand_query_drops_hallucinated_section(mock_invoke):
-    mock_invoke.return_value = QueryUnderstanding(
-        language="en", intent="crop_query", sections=["marketing"]
-    )
+def test_route_does_not_detect_sections(mock_invoke):
+    mock_invoke.return_value = QueryUnderstanding(intent="crop_query")
     state = {"raw_query": "some query", "history": []}
 
-    result = understand_query(state)
+    result = route(state)
 
-    assert result["sections"] == []
+    assert result["intent"] == "crop_query"
+    assert "sections" not in result
 
 
 @patch(f"{MODULE}.invoke_structured")
-def test_understand_query_small_talk(mock_invoke):
-    mock_invoke.return_value = QueryUnderstanding(
-        language="en", intent="small_talk", sections=[]
-    )
+def test_route_chitchat(mock_invoke):
+    mock_invoke.return_value = QueryUnderstanding(intent="chitchat")
     state = {"raw_query": "hi there", "history": []}
 
-    result = understand_query(state)
+    result = route(state)
 
-    assert result["intent"] == "small_talk"
-    assert result["sections"] == []
-
-
-@patch(f"{MODULE}.invoke_structured")
-def test_understand_query_unsupported_language(mock_invoke):
-    mock_invoke.return_value = QueryUnderstanding(
-        language="unsupported", intent="crop_query", sections=[]
-    )
-    state = {"raw_query": "ami dhan chas korte chai", "history": []}
-
-    result = understand_query(state)
-
-    assert result["language"] == "unsupported"
+    assert result["intent"] == "chitchat"

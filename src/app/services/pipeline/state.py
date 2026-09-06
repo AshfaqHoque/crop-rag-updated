@@ -16,9 +16,8 @@ class PipelineState(TypedDict, total=False):
     raw_query: str
     language_type: str
 
-    # query understanding
+    # query routing
     intent: str
-    sections: list[str]  
 
     # subject resolution
     rewritten_query: str

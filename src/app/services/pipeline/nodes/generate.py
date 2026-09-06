@@ -27,8 +27,8 @@ Grounding rules:
 # - Use HTML paragraphs and lists only when the answer truly needs structure.
 # - <strong> sparingly for key numbers/terms.
 
-def _answer_language(language: str) -> str:
-    if language == "bn":
+def _answer_language(language_type: str) -> str:
+    if language_type == "bangla":
         return "natural Bangla"
     return "clear English"
 
@@ -55,7 +55,6 @@ def generate(state: PipelineState) -> PipelineState:
 
     query = (
         state.get("rewritten_query")
-        or state.get("normalized_query")
         or state.get("raw_query", "")
     )
     current_message = f"Context:\n{_format_context(context_documents)}\n\nUser Query: {query}"
@@ -63,7 +62,7 @@ def generate(state: PipelineState) -> PipelineState:
     messages = [
         SystemMessage(
             content=_SYSTEM_TEMPLATE.format(
-                answer_language=_answer_language(state.get("language", "bn"))
+                answer_language=_answer_language(state.get("language_type", "english"))
             )
         ),
         *history,

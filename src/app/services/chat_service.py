@@ -30,6 +30,7 @@ class ChatService:
                 "messages": [HumanMessage(content=request.message.strip())],
                 "session_id": request.session_id,
                 "raw_query": request.message.strip(),
+                "language_type": request.language_type,
             }
             result = await run_in_threadpool(self._graph.invoke, initial_state, config)
             answer = result.get("answer", "").strip()
@@ -60,7 +61,7 @@ class ChatService:
         return ChatResponse(
             session_id=session_id,
             answer=answer,
-            language=result.get("language", "unknown"),
+            language=result.get("language_type", "unknown"),
             rewritten_query=result.get("rewritten_query"),
             retrieval_mode=result.get("retrieval_mode"),
             sources=sources,

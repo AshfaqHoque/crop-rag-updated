@@ -36,9 +36,12 @@ async def test_chat_service_uses_langgraph_thread_state():
     graph = FakeGraph()
     service = ChatService(graph=graph)
 
-    response = await service.chat(ChatRequest(session_id="session", message="follow up"))
+    response = await service.chat(
+        ChatRequest(session_id="session", message="follow up", language_type="english")
+    )
 
     assert graph.states[0]["messages"][0].content == "follow up"
+    assert graph.states[0]["language_type"] == "english"
     assert response.answer == "grounded answer [1]"
     assert response.sources[0].chunk_id == "5_seed"
     assert response.sources[0].distance == 0.91

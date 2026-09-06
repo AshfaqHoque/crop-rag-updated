@@ -58,3 +58,6 @@ Thumbs.db
 Desktop.ini
 
 crop-rag-updated.zip
+.pytest-cache-local/
+.pytest-tmp/
+newnewnew.zip

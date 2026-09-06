@@ -25,7 +25,7 @@ def test_generate_writes_answer(mock_invoke):
     state = {
         "raw_query": "বীজের হার কত?",
         "rewritten_query": "বোরো ধানের বীজের হার কত?",
-        "language": "bn",
+        "language_type": "bangla",
         "intent": "crop_query",
         "reranked_documents": [
             Document(
@@ -50,8 +50,7 @@ def test_generate_uses_and_appends_langgraph_messages(mock_invoke):
             AIMessage(content="Boro rice is a rice crop."),
             HumanMessage(content="What about its seed rate?"),
         ],
-        "normalized_query": "What about its seed rate?",
-        "language": "en",
+        "language_type": "english",
         "reranked_documents": [],
     }
 

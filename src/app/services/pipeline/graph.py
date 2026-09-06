@@ -4,10 +4,9 @@ from functools import lru_cache
 from langgraph.graph import END, START, StateGraph
 
 from app.services.pipeline.checkpointer import make_checkpointer
-from app.services.pipeline.nodes.extract_crop import extract_crop
 from app.services.pipeline.nodes.compress_chunk import compress_chunk
+from app.services.pipeline.nodes.extract_crop import extract_crop
 from app.services.pipeline.nodes.generate import generate
-from app.services.pipeline.nodes.normalize_language import normalize_language
 from app.services.pipeline.nodes.rerank import rerank
 from app.services.pipeline.nodes.retrieve import retrieve
 from app.services.pipeline.nodes.rewrite_query import rewrite_query
@@ -23,7 +22,6 @@ def route_after_understanding(state: PipelineState) -> str:
 def build_chat_graph():
     builder = StateGraph(PipelineState)
     
-    builder.add_node("normalize_language", normalize_language)
     builder.add_node("rewrite_query", rewrite_query)
     builder.add_node("understand_query", understand_query)
     builder.add_node("extract_crop", extract_crop)
@@ -32,8 +30,7 @@ def build_chat_graph():
     builder.add_node("compress_chunk", compress_chunk)
     builder.add_node("generate", generate)
 
-    builder.add_edge(START, "normalize_language")
-    builder.add_edge("normalize_language", "rewrite_query")
+    builder.add_edge(START, "rewrite_query")
     builder.add_edge("rewrite_query", "extract_crop")
     # builder.add_conditional_edges(
     #     "understand_query",

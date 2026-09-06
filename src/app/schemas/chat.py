@@ -1,3 +1,5 @@
+from typing import Literal
+
 from langchain_core.messages import AnyMessage
 from pydantic import BaseModel, Field, field_validator
 
@@ -5,6 +7,7 @@ from pydantic import BaseModel, Field, field_validator
 class ChatRequest(BaseModel):
     session_id: str = Field(..., min_length=1, max_length=200)
     message: str = Field(..., min_length=1, max_length=2000)
+    language_type: Literal["bangla", "english"]
 
     @field_validator("session_id", "message")
     @classmethod

@@ -14,10 +14,7 @@ class PipelineState(TypedDict, total=False):
     # input
     session_id: str
     raw_query: str
-
-    #normalize language
-    normalized_query: str
-    language: str
+    language_type: str
 
     # query understanding
     intent: str

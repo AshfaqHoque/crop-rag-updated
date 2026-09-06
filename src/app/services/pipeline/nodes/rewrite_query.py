@@ -20,7 +20,7 @@ Rules:
 """
 
 def rewrite_query(state: PipelineState) -> PipelineState:
-    query = (state.get("normalized_query") or state.get("raw_query") or "").strip()
+    query = (state.get("raw_query") or "").strip()
     conversation = list(state.get("messages") or [])
     history = conversation[-3:-1] if conversation else [] 
 

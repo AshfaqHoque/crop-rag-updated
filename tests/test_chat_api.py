@@ -11,7 +11,7 @@ class FakeChatService:
         return ChatResponse(
             session_id=request.session_id,
             answer="ok",
-            language="en",
+            language="english",
             rewritten_query=request.message,
             retrieval_mode="dense_filtered",
             sources=[],
@@ -24,7 +24,7 @@ def test_chat_endpoint_uses_service():
     try:
         response = TestClient(app).post(
             "/api/v1/chat",
-            json={"session_id": "s1", "message": "seed rate?"},
+            json={"session_id": "s1", "message": "seed rate?", "language_type": "english"},
         )
     finally:
         app.dependency_overrides.clear()
@@ -34,3 +34,12 @@ def test_chat_endpoint_uses_service():
     assert response.json()["rewritten_query"] == "seed rate?"
     assert response.json()["messages"][0]["type"] == "human"
     assert response.json()["messages"][0]["content"] == "seed rate?"
+
+
+def test_chat_endpoint_rejects_unsupported_language_type():
+    response = TestClient(app).post(
+        "/api/v1/chat",
+        json={"session_id": "s1", "message": "seed rate?", "language_type": "hindi"},
+    )
+
+    assert response.status_code == 422

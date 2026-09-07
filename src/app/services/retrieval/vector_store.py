@@ -15,10 +15,13 @@ logger = get_logger(__name__)
 
 
 @lru_cache
-def get_vector_store() -> Chroma:
+def get_vector_store(collection_name: str | None = None) -> Chroma:
+    """Returns a Chroma handle for the given collection (default: the crop
+    collection). lru_cache keys on collection_name, so each collection gets
+    its own cached client -- existing no-arg callers are unaffected."""
     settings = get_settings()
     kwargs: dict[str, Any] = {
-        "collection_name": settings.chroma_collection,
+        "collection_name": collection_name or settings.chroma_collection,
         "embedding_function": get_embeddings(),
     }
     if settings.chroma_host:

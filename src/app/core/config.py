@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     chroma_ssl: bool = False
     chroma_persist_dir: str = "./data/chroma"
     chroma_collection: str = "crop_knowledge_base"
+    chroma_company_collection: str = "company_knowledge_base"
+
 
     # Knowledge registry
     crop_registry_path: str = "./data/crops.json"

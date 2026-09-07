@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 
 class QueryUnderstanding(BaseModel):
-    intent: Literal["chitchat", "companyinfo", "crop_query", "meaningless"] = Field(
+    intent: Literal["chitchat", "company_query", "crop_query", "meaningless"] = Field(
         description="The conversational intent of the current message."
     )
 

@@ -57,11 +57,16 @@ def similarity_search(
     k: int = 8,
     crops: list[str] | None = None,
     sections: list[str] | None = None,
+    collection_name: str | None = None,
 ) -> list[tuple[Document, float]]:
     """Return (document, distance) pairs after metadata pre-filtering."""
     try:
         where = build_metadata_filter(crops, sections)
-        return get_vector_store().similarity_search_with_score(query, k=k, filter=where)
+        return get_vector_store(collection_name).similarity_search_with_score(
+            query,
+            k=k,
+            filter=where,
+        )
     except Exception as exc:  # noqa: BLE001
         logger.error("Vector search failed: %s", exc)
         raise RetrievalError(str(exc)) from exc

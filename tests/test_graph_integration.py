@@ -93,3 +93,49 @@ def test_full_graph_chitchat_skips_retrieval(monkeypatch):
     )
     assert visited == ["generate"]
     assert result["answer"] == "hello"
+
+
+def test_full_graph_company_query_skips_crop_pipeline(monkeypatch):
+    visited = []
+
+    monkeypatch.setattr(
+        graph_module,
+        "rewrite_query",
+        lambda state: {**state, "rewritten_query": "what does Aunkur do?"},
+    )
+    monkeypatch.setattr(
+        graph_module,
+        "route",
+        lambda state: {**state, "intent": "company_query"},
+    )
+    monkeypatch.setattr(
+        graph_module,
+        "retrieve_company",
+        lambda state: (
+            visited.append("retrieve_company")
+            or {
+                **state,
+                "retrieval_mode": "company_dense",
+                "retrieved_documents": [Document(page_content="company fact") for _ in range(3)],
+            }
+        ),
+    )
+    monkeypatch.setattr(
+        graph_module,
+        "rerank",
+        lambda state: (_ for _ in ()).throw(AssertionError("rerank should be skipped")),
+    )
+    monkeypatch.setattr(
+        graph_module,
+        "generate_company",
+        lambda state: visited.append("generate_company") or {**state, "answer": "company answer"},
+    )
+
+    result = graph_module.build_chat_graph().invoke(
+        {"session_id": "s", "raw_query": "what does Aunkur do?", "messages": []},
+        {"configurable": {"thread_id": "s"}},
+    )
+
+    assert visited == ["retrieve_company", "generate_company"]
+    assert result["answer"] == "company answer"
+    assert result["retrieval_mode"] == "company_dense"

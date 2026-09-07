@@ -46,3 +46,21 @@ def test_dense_retrieval_preserves_document_metadata_and_score():
     assert calls["dense"]["sections"] == ["seed"]
     lexical = next(document for document in documents if document.metadata["chunk_id"] == "lexical")
     assert lexical.metadata["distance"] == 0.3
+
+
+def test_retriever_can_target_company_collection():
+    calls = {}
+
+    def dense(query, **kwargs):
+        calls["dense"] = kwargs
+        return [(_doc("company", "company information"), 0.1)]
+
+    documents, mode = SemanticRetriever(
+        dense,
+        collection_name="company_knowledge_base",
+    ).retrieve("what does Aunkur do?", top_k=3)
+
+    assert mode == "dense_filtered"
+    assert len(documents) == 1
+    assert calls["dense"]["collection_name"] == "company_knowledge_base"
+    assert calls["dense"]["k"] == 3

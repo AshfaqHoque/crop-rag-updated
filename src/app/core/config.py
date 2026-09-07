@@ -47,6 +47,7 @@ class Settings(BaseSettings):
 
     # Pipeline tuning
     retrieval_top_k: int = 20
+    company_retrieval_top_k: int = 3
     # dense_candidate_k: int = 20
     # bm25_candidate_k: int = 20
     # bm25_cache_ttl_seconds: int = 300

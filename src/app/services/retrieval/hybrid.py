@@ -17,8 +17,10 @@ class SemanticRetriever:
     def __init__(
         self,
         dense_search: Callable[..., list[tuple[Document, float]]] = similarity_search,
+        collection_name: str | None = None,
     ) -> None:
         self._dense_search = dense_search
+        self._collection_name = collection_name
 
     def retrieve(
         self,
@@ -32,12 +34,14 @@ class SemanticRetriever:
         limit = top_k or settings.retrieval_top_k
 
         try:
-            dense_results = self._dense_search(
-                query,
-                k=limit,
-                crops=crops,
-                sections=sections,
-            )
+            search_kwargs = {
+                "k": limit,
+                "crops": crops,
+                "sections": sections,
+            }
+            if self._collection_name:
+                search_kwargs["collection_name"] = self._collection_name
+            dense_results = self._dense_search(query, **search_kwargs)
         except RetrievalError:
             logger.exception("Dense retrieval failed")
             raise

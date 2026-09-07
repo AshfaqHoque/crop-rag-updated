@@ -7,15 +7,21 @@ from app.services.pipeline.checkpointer import make_checkpointer
 from app.services.pipeline.nodes.compress_chunk import compress_chunk
 from app.services.pipeline.nodes.extract_crop import extract_crop
 from app.services.pipeline.nodes.generate import generate
+from app.services.pipeline.nodes.generate_company import generate_company
 from app.services.pipeline.nodes.rerank import rerank
 from app.services.pipeline.nodes.retrieve import retrieve
+from app.services.pipeline.nodes.retrieve_company import retrieve_company
 from app.services.pipeline.nodes.rewrite_query import rewrite_query
 from app.services.pipeline.nodes.route import route
 from app.services.pipeline.state import PipelineState
 
 
 def route_after_route(state: PipelineState) -> str:
-    return "extract_crop" if state.get("intent") == "crop_query" else "generate"
+    if state.get("intent") == "crop_query":
+        return "extract_crop"
+    if state.get("intent") == "company_query":
+        return "retrieve_company"
+    return "generate"
 
 def build_chat_graph():
     builder = StateGraph(PipelineState)
@@ -24,9 +30,11 @@ def build_chat_graph():
     builder.add_node("route", route)
     builder.add_node("extract_crop", extract_crop)
     builder.add_node("retrieve", retrieve)
+    builder.add_node("retrieve_company", retrieve_company)
     builder.add_node("rerank", rerank)
     builder.add_node("compress_chunk", compress_chunk)
     builder.add_node("generate", generate)
+    builder.add_node("generate_company", generate_company)
 
     builder.add_edge(START, "rewrite_query")
     builder.add_edge("rewrite_query", "route")
@@ -35,14 +43,17 @@ def build_chat_graph():
         route_after_route,
         {
             "extract_crop": "extract_crop",
+            "retrieve_company": "retrieve_company",
             "generate": "generate",
         },
     )
     builder.add_edge("extract_crop", "retrieve")
+    builder.add_edge("retrieve_company", "generate_company")
     builder.add_edge("retrieve", "rerank")
     builder.add_edge("rerank", "compress_chunk")
     builder.add_edge("compress_chunk", "generate")
     builder.add_edge("generate", END)
+    builder.add_edge("generate_company", END)
 
     return builder.compile(checkpointer=make_checkpointer())
 

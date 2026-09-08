@@ -142,7 +142,7 @@ def ask_backend(message: str, language_type: str, session_id: str) -> tuple[str 
         "language_type": language_type,
     }
     try:
-        response = requests.post(API_URL, json=payload, timeout=60)
+        response = requests.post(API_URL, json=payload, timeout=120)
         response.raise_for_status()
         return response.json()["answer"], None
     except requests.exceptions.ConnectionError:

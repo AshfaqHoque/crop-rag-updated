@@ -8,6 +8,7 @@ from app.services.pipeline.nodes.compress_chunk import compress_chunk
 from app.services.pipeline.nodes.extract_crop import extract_crop
 from app.services.pipeline.nodes.generate import generate
 from app.services.pipeline.nodes.generate_company import generate_company
+from app.services.pipeline.nodes.generate_chitchat import generate_chitchat
 from app.services.pipeline.nodes.rerank import rerank
 from app.services.pipeline.nodes.retrieve import retrieve
 from app.services.pipeline.nodes.retrieve_company import retrieve_company
@@ -17,6 +18,8 @@ from app.services.pipeline.state import PipelineState
 
 
 def route_after_route(state: PipelineState) -> str:
+    if state.get("intent") == "chitchat":
+        return "generate_chitchat"
     if state.get("intent") == "crop_query":
         return "extract_crop"
     if state.get("intent") == "company_query":
@@ -35,6 +38,7 @@ def build_chat_graph():
     builder.add_node("compress_chunk", compress_chunk)
     builder.add_node("generate", generate)
     builder.add_node("generate_company", generate_company)
+    builder.add_node("generate_chitchat", generate_chitchat)
 
     builder.add_edge(START, "rewrite_query")
     builder.add_edge("rewrite_query", "route")
@@ -44,6 +48,7 @@ def build_chat_graph():
         {
             "extract_crop": "extract_crop",
             "retrieve_company": "retrieve_company",
+            "generate_chitchat": "generate_chitchat",
             "generate": "generate",
         },
     )
@@ -54,6 +59,7 @@ def build_chat_graph():
     builder.add_edge("compress_chunk", "generate")
     builder.add_edge("generate", END)
     builder.add_edge("generate_company", END)
+    builder.add_edge("generate_chitchat", END)
 
     return builder.compile(checkpointer=make_checkpointer())
 

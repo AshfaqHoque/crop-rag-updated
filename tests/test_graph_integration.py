@@ -82,16 +82,16 @@ def test_full_graph_chitchat_skips_retrieval(monkeypatch):
         "extract_crop",
         lambda state: (_ for _ in ()).throw(AssertionError("crop extraction should be skipped")),
     )
-    def generate(state):
-        visited.append("generate")
+    def generate_chitchat(state):
+        visited.append("generate_chitchat")
         return {**state, "answer": "hello"}
 
-    monkeypatch.setattr(graph_module, "generate", generate)
+    monkeypatch.setattr(graph_module, "generate_chitchat", generate_chitchat)
     result = graph_module.build_chat_graph().invoke(
         {"session_id": "s", "raw_query": "hello", "messages": []},
         {"configurable": {"thread_id": "s"}},
     )
-    assert visited == ["generate"]
+    assert visited == ["generate_chitchat"]
     assert result["answer"] == "hello"
 
 

@@ -184,5 +184,5 @@ def extract_crop(state: PipelineState) -> PipelineState:
     logger.info("extract_crops query=%r crops=%s", query, crops)
     return {
         **state,
-        "crops": crops
+        "crops": [],
     }

@@ -95,6 +95,43 @@ def test_full_graph_chitchat_skips_retrieval(monkeypatch):
     assert result["answer"] == "hello"
 
 
+def test_full_graph_meaningless_skips_retrieval(monkeypatch):
+    visited = []
+
+    monkeypatch.setattr(
+        graph_module,
+        "route",
+        lambda state: {**state, "language": "en", "intent": "meaningless"},
+    )
+    monkeypatch.setattr(
+        graph_module,
+        "rewrite_query",
+        lambda state: {**state, "rewritten_query": state["raw_query"]},
+    )
+    monkeypatch.setattr(
+        graph_module,
+        "retrieve",
+        lambda state: (_ for _ in ()).throw(AssertionError("retrieve should be skipped")),
+    )
+    monkeypatch.setattr(
+        graph_module,
+        "extract_crop",
+        lambda state: (_ for _ in ()).throw(AssertionError("crop extraction should be skipped")),
+    )
+
+    def generate_meaningless(state):
+        visited.append("generate_meaningless")
+        return {**state, "answer": "Please ask a clear question."}
+
+    monkeypatch.setattr(graph_module, "generate_meaningless", generate_meaningless)
+    result = graph_module.build_chat_graph().invoke(
+        {"session_id": "s", "raw_query": "asdf", "messages": []},
+        {"configurable": {"thread_id": "s"}},
+    )
+    assert visited == ["generate_meaningless"]
+    assert result["answer"] == "Please ask a clear question."
+
+
 def test_full_graph_company_query_skips_crop_pipeline(monkeypatch):
     visited = []
 

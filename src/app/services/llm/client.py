@@ -4,6 +4,7 @@ from functools import lru_cache
 from typing import TypeVar
 
 from langchain_core.messages import BaseMessage
+from langchain_core.output_parsers import StrOutputParser
 from langchain_groq import ChatGroq
 from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
@@ -83,12 +84,7 @@ def get_structured_llm(schema: type[T], *, temperature: float | None = None):
 
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=0.5, max=4), reraise=True)
-def invoke_structured(
-    schema: type[T],
-    prompt: PromptInput,
-    *,
-    temperature: float | None = None,
-) -> T:
+def invoke_structured(schema: type[T], prompt: PromptInput, *, temperature: float | None = None,) -> T:
     try:
         settings = get_settings()
         result = get_structured_llm(schema, temperature=temperature).invoke(prompt)
@@ -106,17 +102,7 @@ def invoke_structured(
 def invoke_text(prompt: PromptInput, *, temperature: float | None = None) -> str:
     try:
         settings = get_settings()
-        result = get_chat_llm(temperature).invoke(prompt)
-        content = result.content
-        if isinstance(content, str):
-            text = content.strip()
-        elif isinstance(content, list):
-            text = "".join(
-                str(part.get("text", "")) if isinstance(part, dict) else str(part)
-                for part in content
-            ).strip()
-        else:
-            text = str(content or "").strip()
+        text = (get_chat_llm(temperature) | StrOutputParser()).invoke(prompt).strip()
         if not text:
             raise LLMGenerationError("Model returned an empty response")
         return text

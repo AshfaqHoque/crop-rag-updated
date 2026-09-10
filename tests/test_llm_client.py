@@ -10,7 +10,7 @@ from app.services.llm.client import (
     get_ollama_chat_llm,
     get_structured_llm,
     get_vllm_chat_llm,
-    invoke_text,
+    invoke_chain,
 )
 
 MODULE = "app.services.llm.client"
@@ -143,14 +143,10 @@ def test_ollama_structured_output_keeps_default_method(mock_settings, mock_get_l
 
 @patch(f"{MODULE}.get_chat_llm")
 @patch(f"{MODULE}.get_settings")
-def test_text_invocation_logs_provider_and_model(mock_settings, mock_get_llm, caplog):
+def test_chain_invocation_returns_chain_result(mock_settings, mock_get_llm):
     mock_settings.return_value = SimpleNamespace(
         chat_provider="groq",
         chat_model="openai/gpt-oss-120b",
     )
-    mock_get_llm.return_value.invoke.return_value = SimpleNamespace(content="answer")
-
-    with caplog.at_level(logging.INFO, logger=MODULE):
-        assert invoke_text("question") == "answer"
-
-    assert mock_get_llm.return_value.invoke.called
+    chain = SimpleNamespace(invoke=lambda value: "answer")
+    assert invoke_chain(chain, "question") == "answer"

@@ -1,8 +1,9 @@
 """Generate grounded answers from company knowledge."""
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from app.core.logging import get_logger
-from app.services.llm.client import invoke_text
+from app.services.llm.client import get_text_chain, invoke_chain
 from app.services.pipeline.nodes.generate import _answer_language, _format_context
 from app.services.pipeline.state import PipelineState
 
@@ -21,17 +22,20 @@ def generate_company(state: PipelineState) -> PipelineState:
     query = state.get("rewritten_query") or state.get("raw_query", "")
     current_message = f"Context:\n{_format_context(context_documents)}\n\nUser Query: {query}"
 
-    messages = [
-        SystemMessage(
-            content=_SYSTEM_TEMPLATE.format(
-                answer_language=_answer_language(state.get("language_type", "english"))
-            )
-        ),
-        *history,
-        HumanMessage(content=current_message),
-    ]
-
-    answer = invoke_text(messages).strip()
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", _SYSTEM_TEMPLATE),
+        MessagesPlaceholder("history"),
+        ("human", "{current_message}"),
+    ])
+    chain = prompt | get_text_chain()
+    answer = invoke_chain(
+        chain,
+        {
+            "answer_language": _answer_language(state.get("language_type", "english")),
+            "history": history,
+            "current_message": current_message,
+        },
+    ).strip()
     logger.info("generate_company answer_chars=%d, history_used=%d", len(answer), len(history))
     return {
         **state,

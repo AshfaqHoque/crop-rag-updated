@@ -1,11 +1,12 @@
 """Grounded final-answer generation node."""
 
 from langchain_core.documents import Document
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
-from app.services.llm.client import invoke_text
+from app.services.llm.client import get_text_chain, invoke_chain
 from app.services.pipeline.state import PipelineState
 
 logger = get_logger(__name__)
@@ -51,17 +52,20 @@ def generate(state: PipelineState) -> PipelineState:
     query = (state.get("rewritten_query") or state.get("raw_query", ""))
     current_message = f"Context:\n{_format_context(context_documents)}\n\nUser Query: {query}"
 
-    messages = [
-        SystemMessage(
-            content=_SYSTEM_TEMPLATE.format(
-                answer_language=_answer_language(state.get("language_type", "english"))
-            )
-        ),
-        *history,
-        HumanMessage(content=current_message),
-    ]
-
-    answer = invoke_text(messages).strip()
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", _SYSTEM_TEMPLATE),
+        MessagesPlaceholder("history"),
+        ("human", "{current_message}"),
+    ])
+    chain = prompt | get_text_chain()
+    answer = invoke_chain(
+        chain,
+        {
+            "answer_language": _answer_language(state.get("language_type", "english")),
+            "history": history,
+            "current_message": current_message,
+        },
+    ).strip()
     logger.info("generate answer_chars=%d, length of history used=%d", len(answer), len(history))
     return {
         **state,

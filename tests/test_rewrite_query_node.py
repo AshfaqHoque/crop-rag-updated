@@ -6,7 +6,7 @@ from app.services.pipeline.nodes.rewrite_query import rewrite_query
 MODULE = "app.services.pipeline.nodes.rewrite_query"
 
 
-@patch(f"{MODULE}.invoke_structured")
+@patch(f"{MODULE}.invoke_chain")
 def test_rewrite_normalizes_without_history(mock_invoke):
     mock_invoke.return_value = QueryRewrite(
         rewritten_query="বোরো ধানের বীজ হার কত?",
@@ -18,7 +18,7 @@ def test_rewrite_normalizes_without_history(mock_invoke):
     assert result["rewrite_used_history"] is False
 
 
-@patch(f"{MODULE}.invoke_structured")
+@patch(f"{MODULE}.invoke_chain")
 def test_rewrite_resolves_subject_from_history(mock_invoke):
     mock_invoke.return_value = QueryRewrite(
         rewritten_query="বোরো ধানে কতবার সেচ দিতে হয়?",
@@ -34,7 +34,7 @@ def test_rewrite_resolves_subject_from_history(mock_invoke):
     assert result["rewrite_used_history"] is True
 
 
-@patch(f"{MODULE}.invoke_structured")
+@patch(f"{MODULE}.invoke_chain")
 def test_rewrite_preserves_original_when_model_returns_blank(mock_invoke):
     # Pydantic disallows a blank at construction, so simulate a model-like object.
     mock_invoke.return_value = type(
@@ -48,7 +48,7 @@ def test_rewrite_preserves_original_when_model_returns_blank(mock_invoke):
     assert rewrite_query(state)["rewritten_query"] == "what about irrigation?"
 
 
-@patch(f"{MODULE}.invoke_structured")
+@patch(f"{MODULE}.invoke_chain")
 def test_rewrite_ignores_paraphrase_when_history_not_used(mock_invoke):
     mock_invoke.return_value = QueryRewrite(
         rewritten_query="How much irrigation should Boro Paddy receive?",

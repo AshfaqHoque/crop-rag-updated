@@ -8,7 +8,7 @@ from app.services.pipeline.nodes.route import route
 MODULE = "app.services.pipeline.nodes.route"
 
 
-@patch(f"{MODULE}.invoke_structured")
+@patch(f"{MODULE}.invoke_chain")
 def test_route_returns_intent_only(mock_invoke):
     mock_invoke.return_value = QueryUnderstanding(intent="crop_query")
     state = {"raw_query": "বোরো ধানের বীজ হার কত?", "history": []}
@@ -20,7 +20,7 @@ def test_route_returns_intent_only(mock_invoke):
     assert result["raw_query"] == "বোরো ধানের বীজ হার কত?"
 
 
-@patch(f"{MODULE}.invoke_structured")
+@patch(f"{MODULE}.invoke_chain")
 def test_route_does_not_detect_sections(mock_invoke):
     mock_invoke.return_value = QueryUnderstanding(intent="crop_query")
     state = {"raw_query": "some query", "history": []}
@@ -31,7 +31,7 @@ def test_route_does_not_detect_sections(mock_invoke):
     assert "sections" not in result
 
 
-@patch(f"{MODULE}.invoke_structured")
+@patch(f"{MODULE}.invoke_chain")
 def test_route_chitchat(mock_invoke):
     mock_invoke.return_value = QueryUnderstanding(intent="chitchat")
     state = {"raw_query": "hi there", "history": []}
@@ -41,7 +41,7 @@ def test_route_chitchat(mock_invoke):
     assert result["intent"] == "chitchat"
 
 
-@patch(f"{MODULE}.invoke_structured")
+@patch(f"{MODULE}.invoke_chain")
 def test_route_uses_raw_query_and_history(mock_invoke):
     mock_invoke.return_value = QueryUnderstanding(intent="crop_query")
     state = {
@@ -55,7 +55,7 @@ def test_route_uses_raw_query_and_history(mock_invoke):
 
     route(state)
 
-    routed_messages = mock_invoke.call_args.args[1]
-    assert routed_messages[1].content == "বোরো ধানে কীভাবে চাষ করব?"
-    assert routed_messages[2].content == state["raw_query"]
-    assert all("must not be sent to routing" not in message.content for message in routed_messages)
+    chain_input = mock_invoke.call_args.args[1]
+    assert chain_input["history"][0].content == "বোরো ধানে কীভাবে চাষ করব?"
+    assert chain_input["query"] == state["raw_query"]
+    assert "must not be sent to routing" not in chain_input["query"]

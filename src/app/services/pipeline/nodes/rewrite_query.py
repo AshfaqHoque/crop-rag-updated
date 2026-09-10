@@ -1,9 +1,9 @@
 """History-aware query rewriting for subject/coreference resolution."""
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from app.core.logging import get_logger
 from app.schemas.extraction import QueryRewrite
-from app.services.llm.client import invoke_structured
+from app.services.llm.client import get_structured_chain, invoke_chain
 from app.services.pipeline.state import PipelineState
 
 logger = get_logger(__name__)
@@ -32,15 +32,17 @@ def rewrite_query(state: PipelineState) -> PipelineState:
     #         "rewrite_used_history": False,
     #     }
 
-    current_message = f"New Query to Evaluate:\n{query}"
-    
-    messages = [
-        SystemMessage(content=_SYSTEM_PROMPT),
-        *history,
-        HumanMessage(content=current_message,),
-    ]
-
-    result = invoke_structured(QueryRewrite, messages, temperature=0.0)
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", _SYSTEM_PROMPT),
+        MessagesPlaceholder("history"),
+        ("human", "New Query to Evaluate:\n{query}"),
+    ])
+    chain = prompt | get_structured_chain(QueryRewrite, temperature=0.0)
+    result = invoke_chain(
+        chain,
+        {"history": history, "query": query},
+        expected_type=QueryRewrite,
+    )
 
     rewritten = result.rewritten_query.strip() if result.rewritten_query else ""
     rewritten = rewritten or query

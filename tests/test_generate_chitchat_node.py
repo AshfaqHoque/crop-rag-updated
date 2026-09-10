@@ -8,7 +8,7 @@ from app.services.pipeline.nodes.generate_chitchat import generate_chitchat
 MODULE = "app.services.pipeline.nodes.generate_chitchat"
 
 
-@patch(f"{MODULE}.invoke_text", return_value="Hello! I am doing well. Want to explore agriculture together?")
+@patch(f"{MODULE}.invoke_chain", return_value="Hello! I am doing well. Want to explore agriculture together?")
 def test_generate_chitchat_writes_casual_answer(mock_invoke):
     state = {
         "raw_query": "How are you?",
@@ -20,7 +20,6 @@ def test_generate_chitchat_writes_casual_answer(mock_invoke):
 
     assert result["answer"].endswith("agriculture together?")
     assert isinstance(result["messages"][0], AIMessage)
-    sent_messages = mock_invoke.call_args.args[0]
-    assert sent_messages[1].content == "Hi"
-    assert sent_messages[-1].content == "How are you?"
-    assert "a little funny" in sent_messages[0].content
+    chain_input = mock_invoke.call_args.args[1]
+    assert chain_input["history"][0].content == "Hi"
+    assert chain_input["query"] == "How are you?"

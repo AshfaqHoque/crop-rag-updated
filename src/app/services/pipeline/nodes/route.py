@@ -1,9 +1,9 @@
 """Route user queries before running agricultural retrieval."""
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from app.core.logging import get_logger
 from app.schemas.extraction import QueryUnderstanding
-from app.services.llm.client import invoke_structured
+from app.services.llm.client import get_structured_chain, invoke_chain
 from app.services.pipeline.state import PipelineState
 
 logger = get_logger(__name__)
@@ -28,12 +28,17 @@ greetings or thanks with no farming content.
 def route(state: PipelineState) -> PipelineState:
     conversation = list(state.get("messages") or [])
     history = conversation[-3:-1] if conversation else []
-    messages = [
-        SystemMessage(content=_SYSTEM_TEMPLATE),
-        *history,
-        HumanMessage(content=state["raw_query"]),
-    ]
-    result = invoke_structured(QueryUnderstanding, messages)
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", _SYSTEM_TEMPLATE),
+        MessagesPlaceholder("history"),
+        ("human", "{query}"),
+    ])
+    chain = prompt | get_structured_chain(QueryUnderstanding)
+    result = invoke_chain(
+        chain,
+        {"history": history, "query": state["raw_query"]},
+        expected_type=QueryUnderstanding,
+    )
 
     logger.info("route intent=%s", result.intent)
     return {

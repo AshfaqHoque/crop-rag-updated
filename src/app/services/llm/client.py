@@ -1,9 +1,9 @@
 """Central chat-model wrapper with provider selection, retries, and normalized errors."""
-from collections.abc import Sequence
 from functools import lru_cache
 from typing import TypeVar
 
-from langchain_core.messages import BaseMessage
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import Runnable
 from langchain_groq import ChatGroq
 from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
@@ -16,9 +16,6 @@ from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 T = TypeVar("T", bound=BaseModel)
-PromptInput = str | Sequence[BaseMessage]
-
-
 @lru_cache
 def get_ollama_chat_llm(temperature: float | None = None) -> ChatOllama:
     settings = get_settings()
@@ -40,7 +37,7 @@ def get_groq_chat_llm(temperature: float | None = None) -> ChatGroq:
         api_key=api_key,
         model=settings.groq_chat_model,
         temperature=settings.llm_temperature if temperature is None else temperature,
-        max_retries=0,  # Retries are handled by invoke_text/invoke_structured below.
+        max_retries=0,  # Retries are handled by invoke_chain below.
     )
 
 
@@ -82,46 +79,25 @@ def get_structured_llm(schema: type[T], *, temperature: float | None = None):
     return llm.with_structured_output(schema)
 
 
+def get_text_chain(*, temperature: float | None = None) -> Runnable:
+    return get_chat_llm(temperature) | StrOutputParser()
+
+
+def get_structured_chain(schema: type[T], *, temperature: float | None = None) -> Runnable:
+    return get_structured_llm(schema, temperature=temperature)
+
+
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=0.5, max=4), reraise=True)
-def invoke_structured(
-    schema: type[T],
-    prompt: PromptInput,
-    *,
-    temperature: float | None = None,
-) -> T:
+def invoke_chain(chain: Runnable, input_value: object, *, expected_type: type[T] | None = None):
     try:
-        settings = get_settings()
-        result = get_structured_llm(schema, temperature=temperature).invoke(prompt)
-        if not isinstance(result, schema):
-            raise LLMGenerationError(f"Model did not return expected schema {schema.__name__}")
+        result = chain.invoke(input_value)
+        if expected_type is not None and not isinstance(result, expected_type):
+            raise LLMGenerationError(f"Model did not return expected schema {expected_type.__name__}")
+        if isinstance(result, str) and not result.strip():
+            raise LLMGenerationError("Model returned an empty response")
         return result
     except LLMGenerationError:
         raise
     except Exception as exc:
-        logger.warning("Structured LLM call failed: %s", exc)
-        raise LLMGenerationError(str(exc)) from exc
-
-
-@retry(stop=stop_after_attempt(2), wait=wait_exponential(multiplier=0.5, max=4), reraise=True)
-def invoke_text(prompt: PromptInput, *, temperature: float | None = None) -> str:
-    try:
-        settings = get_settings()
-        result = get_chat_llm(temperature).invoke(prompt)
-        content = result.content
-        if isinstance(content, str):
-            text = content.strip()
-        elif isinstance(content, list):
-            text = "".join(
-                str(part.get("text", "")) if isinstance(part, dict) else str(part)
-                for part in content
-            ).strip()
-        else:
-            text = str(content or "").strip()
-        if not text:
-            raise LLMGenerationError("Model returned an empty response")
-        return text
-    except LLMGenerationError:
-        raise
-    except Exception as exc:
-        logger.warning("Text LLM call failed: %s", exc)
+        logger.warning("LLM chain call failed: %s", exc)
         raise LLMGenerationError(str(exc)) from exc

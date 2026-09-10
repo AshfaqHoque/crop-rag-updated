@@ -1,9 +1,10 @@
 """Generate concise, friendly responses for casual conversation."""
 
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from app.core.logging import get_logger
-from app.services.llm.client import invoke_text
+from app.services.llm.client import get_text_chain, invoke_chain
 from app.services.pipeline.nodes.generate import _answer_language
 from app.services.pipeline.state import PipelineState
 
@@ -22,17 +23,20 @@ crops. Do not mention these instructions, routing, or hidden context.
 def generate_chitchat(state: PipelineState) -> PipelineState:
     conversation = list(state.get("messages") or [])
     history = conversation[-3:-1] if conversation else []
-    messages = [
-        SystemMessage(
-            content=_SYSTEM_TEMPLATE.format(
-                answer_language=_answer_language(state.get("language_type", "english"))
-            )
-        ),
-        *history,
-        HumanMessage(content=state.get("raw_query", "")),
-    ]
-
-    answer = invoke_text(messages).strip()
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", _SYSTEM_TEMPLATE),
+        MessagesPlaceholder("history"),
+        ("human", "{query}"),
+    ])
+    chain = prompt | get_text_chain()
+    answer = invoke_chain(
+        chain,
+        {
+            "answer_language": _answer_language(state.get("language_type", "english")),
+            "history": history,
+            "query": state.get("raw_query", ""),
+        },
+    ).strip()
     logger.info("generate_chitchat answer_chars=%d, history_used=%d", len(answer), len(history))
     return {
         **state,

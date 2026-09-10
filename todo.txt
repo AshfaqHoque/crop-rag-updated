@@ -20,3 +20,4 @@
 17. statistically analysis how many chars each chunk contains, avg min max etc
 18. decide how calculations would be done if toools needed or normal context passing will work
 19. set another threshold on reranker when the unsual gap is false, remove chunks that has less score then the first one (70 is the threshold)
+20. skip scores in metadata prefix

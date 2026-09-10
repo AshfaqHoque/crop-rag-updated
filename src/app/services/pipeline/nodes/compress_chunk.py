@@ -42,7 +42,7 @@ def _metadata_prefix(metadata: dict) -> str:
     """
 
     # Drop fields that are pure plumbing, not identity.
-    skip = {"_chunk_index", "crop_id", "variety_id", "chunk_id"}
+    skip = {"_chunk_index", "crop_id", "variety_id", "chunk_id", "relevance_score", "distance", "crop_bangla_name"}
 
     pairs = [
         f"{key}: {value}"

@@ -1,12 +1,22 @@
 1. test how many chunks per char to decide whether i need to compress them further or not
 2. add streaming mode: messages will appear one by one also it will show users thinking reasoing bla bla
 3. currently rewritten query is done using a long prompt, few shot examples, and the previous question, instead i want to give previous pairs and see if it works well with that or not
-4. RnD on making a router that will decide what to go into the pipeline
-5. test retrieval scores (distance scores) to filter that have lower scores
+4. RnD on making a router that will decide what to go into the pipeline #done
+5. test retrieval scores (distance scores) to filter that have lower scores #done
 6. create docker file and run with docker
 7. run redis and chroma with docker 
-8. run with vllm 
-9. add new collections for qna pairs of soil test, office info, porokh
+8. run with vllm #done
+9. add new collections for qna pairs of soil test, office info, porokh #done for office info
 10. add images as well 
 11. send dynamic questions for suggestion
-12. add a simple algorithm on retrieval that will compute mean and std of the distance scores and filter when it sees a big cap (greater than mean+std)
+12. add a simple algorithm on retrieval that will compute mean and std of the distance scores and filter when it sees a big cap (greater than mean+std) #done in different way
+
+
+
+13. chemical infos need to be added in pesticides chunks
+14. additional cost info chunk is not added yet
+15. test with multiple questions to verify rewritten query or raw query should be passed to generator
+16. add a layer that will decide if previous history/compressed chunk is enough to answer the correct question or not 
+17. statistically analysis how many chars each chunk contains, avg min max etc
+18. decide how calculations would be done if toools needed or normal context passing will work
+19. set another threshold on reranker when the unsual gap is false, remove chunks that has less score then the first one (70 is the threshold)

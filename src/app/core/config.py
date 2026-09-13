@@ -15,8 +15,8 @@ class Settings(BaseSettings):
 
     # Chat models. vLLM is the OpenAI-compatible local runtime used by this project;
     # Ollama and Groq remain available for other deployments.
-    chat_provider: Literal["ollama", "groq", "vllm"] = "vllm"
-    ollama_chat_model: str = "gemma4:12b"
+    chat_provider: Literal["ollama", "groq", "vllm"] = "ollama"
+    ollama_chat_model: str = "gemma4:31b-cloud"
     banglish_converter_model: str = "gemma4:12b"
     groq_chat_model: str = "openai/gpt-oss-20b"
     groq_api_key: SecretStr | None = None

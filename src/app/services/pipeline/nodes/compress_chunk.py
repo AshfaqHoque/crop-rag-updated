@@ -30,8 +30,8 @@ CUSTOM_DEFAULT_PROMPT = PromptTemplate(
 @lru_cache
 def get_context_compressor() -> LLMChainExtractor:
     """Create the LangChain LLM context compressor."""
-
-    llm = get_chat_llm(temperature=0.1).bind(max_tokens=1000)
+    #for vllm it is max_tokens=1000, for ollama it is num_predict=1000
+    llm = get_chat_llm(temperature=0.1)
     # Uses LangChain's default extraction prompt.
     return LLMChainExtractor.from_llm(llm, prompt=CUSTOM_DEFAULT_PROMPT)
 

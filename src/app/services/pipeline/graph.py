@@ -27,7 +27,6 @@ def route_after_route(state: PipelineState) -> str:
         return "extract_crop"
     if state.get("intent") == "company_query":
         return "retrieve_company"
-    return "generate"
 
 def build_chat_graph():
     builder = StateGraph(PipelineState)
@@ -59,8 +58,8 @@ def build_chat_graph():
     )
     builder.add_edge("extract_crop", "retrieve")
     builder.add_edge("retrieve_company", "generate_company")
-    builder.add_edge("retrieve", "rerank")
-    builder.add_edge("rerank", "compress_chunk")
+    # builder.add_edge("retrieve", "rerank")
+    builder.add_edge("retrieve", "compress_chunk")
     builder.add_edge("compress_chunk", "generate")
     builder.add_edge("generate", END)
     builder.add_edge("generate_company", END)

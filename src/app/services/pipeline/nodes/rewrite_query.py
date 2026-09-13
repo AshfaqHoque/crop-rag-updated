@@ -16,7 +16,11 @@ Rules:
 1. If the New Query relies on history (e.g., "how to cure it?", "oita kemne bhalo korbo?"), rewrite it into a single, fully independent agricultural search query. Set used_history to true.
 2. If the New Query is already self-contained, rewrite/transcribe it into a clean search query. Set used_history to false.
 3. ALWAYS output the final query in native Bangla script (বাংলা লিপি), even if the input is in English or Banglish.
-4. Do NOT answer the question. Output ONLY the standalone search query in clear Bangla script.
+4. Do NOT answer the question.
+
+The JSON object MUST contain exactly these two fields:
+   "rewritten_query": string
+   "used_history": boolean
 """
 
 def rewrite_query(state: PipelineState) -> PipelineState:

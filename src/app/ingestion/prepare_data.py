@@ -101,6 +101,68 @@ def _simple_section(crop: dict, key: str, section_label: str, section_tag: str,
     )
 
 
+def chunk_climate(crop: dict) -> Chunk | None:
+    """Crop-level climate and environmental requirements.
+    Includes temperature, rainfall, pH, humidity, EC, salinity,
+    land type, soil texture, and general climate-related guidance.
+    """
+    obj = crop.get("climate")
+    if not obj:
+        return None
+
+    parts = []
+
+    temperature_start = obj.get("climate_temperature_start")
+    temperature_end = obj.get("climate_temperature_end")
+    if is_meaningful(temperature_start) and is_meaningful(temperature_end):
+        parts.append(f"উপযুক্ত তাপমাত্রা: {temperature_start}°C থেকে {temperature_end}°C")
+
+    rainfall_start = obj.get("climate_rainfall_start")
+    rainfall_end = obj.get("climate_rainfall_end")
+    if is_meaningful(rainfall_start) and is_meaningful(rainfall_end):
+        parts.append(f"উপযুক্ত বৃষ্টিপাত: {rainfall_start} থেকে {rainfall_end} মিমি")
+
+    ph_start = obj.get("climate_ph_start")
+    ph_end = obj.get("climate_ph_end")
+    if is_meaningful(ph_start) and is_meaningful(ph_end):
+        parts.append(f"উপযুক্ত pH: {ph_start} থেকে {ph_end}")
+
+    humidity_start = obj.get("climate_humidity")
+    humidity_end = obj.get("climate_humidity_end")
+    if is_meaningful(humidity_start) and is_meaningful(humidity_end):
+        parts.append(f"উপযুক্ত আর্দ্রতা: {humidity_start}% থেকে {humidity_end}%")
+
+    ec_start = obj.get("climate_ec_start")
+    ec_end = obj.get("climate_ec_end")
+    if is_meaningful(ec_start) and is_meaningful(ec_end):
+        parts.append(f"উপযুক্ত EC: {ec_start} থেকে {ec_end} dS/m")
+
+    salinity_start = obj.get("salinity_start")
+    salinity_end = obj.get("salinity_end")
+    if is_meaningful(salinity_start) and is_meaningful(salinity_end):
+        parts.append(f"সহনীয় লবণাক্ততা: {salinity_start} থেকে {salinity_end}")
+
+    general_info = clean_html(obj.get("general_info"))
+    if is_meaningful(general_info):
+        parts.append("জলবায়ু ও পরিবেশ সংক্রান্ত সাধারণ তথ্য:\n" + general_info)
+
+    if not parts:
+        return None
+
+    text = _header(crop, "জলবায়ু ও পরিবেশ / Climate & Environment") + "\n\n".join(parts)
+
+    return Chunk(
+        chunk_id=f"{_crop_id(crop)}_climate",
+        text=text,
+        metadata={
+            "crop_id": _crop_id(crop),
+            "crop_name": crop.get("crop_name"),
+            "crop_bangla_name": crop.get("crop_bangla_name"),
+            "section": "climate",
+        },
+    )
+
+
 def chunk_fertilizer(crop: dict) -> Chunk | None:
     obj = crop.get("fertilizer")
     if not obj:
@@ -119,6 +181,7 @@ def chunk_fertilizer(crop: dict) -> Chunk | None:
             "section": "fertilizer",
         },
     )
+
 
 
 def chunk_seed(crop: dict) -> Chunk | None:
@@ -140,13 +203,13 @@ def chunk_seed(crop: dict) -> Chunk | None:
     seedbed = clean_html(obj.get("seedbed"))
     if is_meaningful(seedbed):
         parts.append("বীজতলা তৈরি (Seedbed preparation):\n" + seedbed)
-    showing = clean_html(obj.get("showing_method"))
-    if is_meaningful(showing):
-        parts.append("রোপণ পদ্ধতি (Sowing/transplanting method):\n" + showing)
-
+    showing_method = clean_html(obj.get("showing_method"))
+    if is_meaningful(showing_method):
+        parts.append("রোপণ পদ্ধতি (Sowing/transplanting method):\n" + showing_method)
     if not parts:
         return None
-    text = _header(crop, "বীজ (সাধারণ) / Seed (crop-level, not variety-specific)") + "\n\n".join(parts)
+    text = _header(crop, "বীজ / Seed") + "\n\n".join(parts)
+
     return Chunk(
         chunk_id=f"{_crop_id(crop)}_seed",
         text=text,
@@ -159,26 +222,37 @@ def chunk_seed(crop: dict) -> Chunk | None:
     )
 
 
-# def chunk_cost(crop: dict) -> Chunk | None:
-#     items = crop.get("cropAdditionalCostInfo") or []
-#     if not items:
-#         return None
-#     lines = []
-#     for item in items:
-#         unit = (item.get("unitInfo") or {}).get("unit_name", "")
-#         lines.append(f"- {item.get('cost_type')}: {item.get('amount')} টাকা/{unit}")
-#     text = _header(crop, "উৎপাদন খরচ / Additional cost breakdown") + "\n".join(lines)
-#     return Chunk(
-#         chunk_id=f"{_crop_id(crop)}_cost",
-#         text=text,
-#         metadata={
-#             "crop_id": _crop_id(crop),
-#             "crop_name": crop.get("crop_name"),
-#             "crop_bangla_name": crop.get("crop_bangla_name"),
-#             "section": "cost",
-#         },
-#     )
+def chunk_cost(crop: dict) -> Chunk | None:
+    """Crop-level additional production costs, grouped into one chunk."""
+    costs = crop.get("cropAdditionalCostInfo")
+    if not costs:
+        return None
+    parts = []
+    for cost in costs:
+        cost_type = (cost.get("cost_type") or "").strip()
+        amount = cost.get("amount")
+        unit_name = (cost.get("unitInfo") or {}).get("unit_name", "")
+        if not is_meaningful(cost_type) or not is_meaningful(amount):
+            continue
+        label = cost_type.replace("_", " ").strip().title()
+        if is_meaningful(unit_name):
+            parts.append(f"{label}: {amount} {unit_name}")
+        else:
+            parts.append(f"{label}: {amount}")
+    if not parts:
+        return None
+    text = _header(crop, "খরচ / Cost") + "\n\n".join(parts)
 
+    return Chunk(
+        chunk_id=f"{_crop_id(crop)}_cost",
+        text=text,
+        metadata={
+            "crop_id": _crop_id(crop),
+            "crop_name": crop.get("crop_name"),
+            "crop_bangla_name": crop.get("crop_bangla_name"),
+            "section": "cost",
+        },
+    )
 
 def chunk_varieties(crop: dict) -> list[Chunk]:
     """ONE chunk per variety. This is the key isolation mechanism: a
@@ -190,31 +264,22 @@ def chunk_varieties(crop: dict) -> list[Chunk]:
         lines = [f"জাতের নাম (Variety): {name}"]
         if v.get("company_name"):
             lines.append(f"উদ্ভাবক/কোম্পানি (Company): {v['company_name'].strip()}")
-        # if v.get("duration_start") or v.get("duration_end"):
-        #     lines.append(
-        #         f"জীবনকাল (Duration): {v.get('duration_start')}-{v.get('duration_end')} দিন"
-        #     )
-        # if v.get("avg_expected_yield"):
-        #     lines.append(
-        #         f"গড় প্রত্যাশিত ফলন (Avg expected yield): {v['avg_expected_yield']} "
-        #         f"মণ/একর অথবা প্রাসঙ্গিক একক (unit as per source)"
-        #     )
+        if v.get("duration_start") or v.get("duration_end"):
+            lines.append(f"জীবনকাল (Duration): {v.get('duration_start')}-{v.get('duration_end')} দিন")
+        if v.get("avg_expected_yield"):
+            lines.append(f"গড় প্রত্যাশিত ফলন (Average expected yield): {v['avg_expected_yield']} ")
         if v.get("seed_rate"):
-            unit = (v.get("seedRateUnit") or {}).get("unit_name", "")
-            lines.append(f"এই জাতের বীজ হার (This variety's seed rate): {v['seed_rate']} {unit}")
+            lines.append(f"এই জাতের বীজ হার (This variety's seed rate): {v['seed_rate']}")
         if v.get("price"):
             lines.append(f"মূল্য (Price): {v['price']}")
         if v.get("rating") is not None:
             lines.append(f"রেটিং (Rating): {v['rating']}/5")
-
         special = clean_html(v.get("special_character"))
         if is_meaningful(special):
             lines.append("বিস্তারিত বৈশিষ্ট্য (Detailed characteristics):\n" + special)
-
         body = "\n".join(lines)
         if not is_meaningful(body):
             continue
-
         text = _header(crop, f"জাত / Variety -- {name}") + body
         chunks.append(
             Chunk(
@@ -234,72 +299,81 @@ def chunk_varieties(crop: dict) -> list[Chunk]:
 
 
 def chunk_pesticides(crop: dict) -> list[Chunk]:
-    """ONE chunk per disease/pest entry, chemicals folded in as text
-    (chemicals are few enough per entry that splitting them further
-    would hurt more than help -- they're only meaningful alongside the
-    disease they treat)."""
+    """ONE chunk per pest/disease entry, with all recommended chemicals
+    included in the same chunk so their relationship is preserved.
+    """
     chunks = []
     for p in crop.get("pesticide") or []:
-        disease = p.get("disease_name") or "Unknown pest/disease"
-        dtype = p.get("disease_type") or ""
-        lines = [f"রোগ/পোকা (Pest/Disease): {disease} ({dtype})"]
-
-        symptoms = clean_html(p.get("damage_control"))
-        if is_meaningful(symptoms):
-            lines.append("লক্ষণ ও ক্ষতি (Symptoms/damage):\n" + symptoms)
-        control = clean_html(p.get("control_measure"))
-        if is_meaningful(control):
-            lines.append("দমন ব্যবস্থাপনা (Control measures):\n" + control)
-
-        chem_lines = []
-        for c in p.get("chemical") or []:
-            dose_unit = (c.get("applicationDoseUnitInfo") or {}).get("unit_name", "")
-            chem_lines.append(
-                f"- {c.get('trade_name', '').strip()} (generic: {c.get('generic_name', '').strip()}): "
-                f"মাত্রা {c.get('application_dose')} {dose_unit} প্রতি {c.get('pesticide_amount')} "
-                f"{(c.get('pesticideAmountUnitInfo') or {}).get('unit_name', '')} পানিতে, "
-                f"মূল্য প্রায় {c.get('price')} টাকা"
-            )
-        if chem_lines:
-            lines.append("সুপারিশকৃত কীটনাশক/ছত্রাকনাশক (Recommended chemicals):\n" + "\n".join(chem_lines))
-
+        disease_name = p.get("disease_name") or "Unknown pest/disease"
+        lines = [
+            f"বালাই/রোগের নাম (Pest/Disease name): {p.get('disease_name', '').strip()}",
+            f"বালাই/রোগের ধরন (Pest/Disease type): {p.get('disease_type', '').strip()}",
+        ]
+        favorable_environment = clean_html(p.get("favorable_environment"))
+        if is_meaningful(favorable_environment):
+            lines.append("অনুকূল পরিবেশ (Favorable environment): " + favorable_environment)
+        damage_control = clean_html(p.get("damage_control"))
+        if is_meaningful(damage_control):
+            lines.append("ক্ষতির লক্ষণ (Damage symptoms): "+ damage_control)
+        control_measure = clean_html(p.get("control_measure"))
+        if is_meaningful(control_measure):
+            lines.append("দমন ব্যবস্থাপনা (Control measures): "+ control_measure)
+        # Recommended chemicals/pesticides
+        chemicals = p.get("chemical") or []
+        for c in chemicals:
+            chemical_lines = [
+                f"ট্রেড নাম (Trade name): {c.get('trade_name', '').strip()}",
+                f"জেনেরিক নাম (Generic name): {c.get('generic_name', '').strip()}",
+                f"কোম্পানির নাম (Company name): {c.get('company_name', '').strip()}",
+                f"কীটনাশকের প্রয়োগ মাত্রা (Applicable Amount of Herbicide): {c.get('application_dose', '').strip()}",
+                f"পানির প্রয়োগ মাত্রা (Applicable Amount of Water): {c.get('pesticide_amount', '').strip()}",
+                f"মূল্য (Price): {c.get('price', '').strip()}",
+                f"রেটিং (Rating): {c.get('rating', '')}",
+            ]
+            guide = clean_html(c.get("application_guide"))
+            if is_meaningful(guide):
+                chemical_lines.append("প্রয়োগ নির্দেশিকা (Application guide):\n" + guide)
+            lines.append("প্রস্তাবিত কীটনাশক (Recommended pesticide):\n" + "\n".join(chemical_lines))
         body = "\n".join(lines)
-        text = _header(crop, f"রোগবালাই / Pest-Disease -- {disease}") + body
+
+        text = (_header(crop, f"কীটনাশক / Pesticide -- {disease_name}")+ body)
+
         chunks.append(
             Chunk(
-                chunk_id=f"{_crop_id(crop)}_pest_{p.get('id')}",
+                chunk_id=f"{_crop_id(crop)}_pesticide_{p.get('id')}",
                 text=text,
                 metadata={
                     "crop_id": _crop_id(crop),
                     "crop_name": crop.get("crop_name"),
                     "crop_bangla_name": crop.get("crop_bangla_name"),
                     "section": "pesticide",
-                    "disease_name": disease,
-                    "disease_type": dtype,
+                    "disease_name": disease_name,
+                    "disease_type": p.get("disease_type"),
                 },
             )
         )
-    return chunks
 
+    return chunks
 
 def chunk_herbicides(crop: dict) -> list[Chunk]:
     chunks = []
     for h in crop.get("herbicide") or []:
-        target = h.get("pesticide_name") or "Unknown weed target"
+        weed_name = h.get("pesticide_name") or "Unknown weed"
         lines = [
-            f"আগাছা/লক্ষ্য (Weed target): {target}",
+            f"আগাছার নাম (Weed name): {weed_name}",
             f"ট্রেড নাম (Trade name): {h.get('trade_name', '').strip()}",
             f"জেনেরিক নাম (Generic name): {h.get('generic_name', '').strip()}",
+            f"কোম্পানির নাম (Company name): {h.get('company_name', '').strip()}",
+            f"আগাছানাশকের প্রয়োগ মাত্রা (Applicable Amount of Herbicide): {h.get('application_dose', '').strip()}",
+            f"পানির প্রয়োগ মাত্রা (Applicable Amount of Water): {h.get('pesticide_amount', '').strip()}",
+            f"মূল্য (Price): {h.get('price', '').strip()}",
+            f"রেটিং (Rating): {h.get('rating', '')}",
         ]
-        # if h.get("application_dose"):
-        #     unit = (h.get("applicationDoseUnitInfo") or {}).get("unit_name", "")
-        #     lines.append(f"প্রয়োগ মাত্রা (Application dose): {h['application_dose']} {unit}")
         guide = clean_html(h.get("application_guide"))
         if is_meaningful(guide):
             lines.append("প্রয়োগ নির্দেশিকা (Application guide):\n" + guide)
-
         body = "\n".join(lines)
-        text = _header(crop, f"আগাছানাশক / Herbicide -- {target}") + body
+        text = _header(crop, f"আগাছানাশক / Herbicide -- {weed_name}") + body
         chunks.append(
             Chunk(
                 chunk_id=f"{_crop_id(crop)}_herbicide_{h.get('id')}",
@@ -309,7 +383,7 @@ def chunk_herbicides(crop: dict) -> list[Chunk]:
                     "crop_name": crop.get("crop_name"),
                     "crop_bangla_name": crop.get("crop_bangla_name"),
                     "section": "herbicide",
-                    "weed_target": target,
+                    "weed_name": weed_name,
                 },
             )
         )
@@ -382,7 +456,7 @@ def chunk_crop(crop: dict) -> list[Chunk]:
     if seed:
         chunks.append(seed)
 
-    climate = _simple_section(crop, "climate", "জলবায়ু ও মাটি / Climate & soil", "climate", text_field="general_info")
+    climate = chunk_climate(crop)
     if climate:
         chunks.append(climate)
 
@@ -406,9 +480,9 @@ def chunk_crop(crop: dict) -> list[Chunk]:
     if fertilizer:
         chunks.append(fertilizer)
 
-    # cost = chunk_cost(crop)
-    # if cost:
-    #     chunks.append(cost)
+    cost = chunk_cost(crop)
+    if cost:
+        chunks.append(cost)
 
     chunks.extend(chunk_varieties(crop))
     chunks.extend(chunk_pesticides(crop))

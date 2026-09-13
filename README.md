@@ -117,6 +117,7 @@ CHROMA_PERSIST_DIR=./data/chroma
 CHROMA_COLLECTION=crop_knowledge_base
 CHROMA_COMPANY_COLLECTION=company_knowledge_base
 CROP_REGISTRY_PATH=./data/crops.json
+GRAPHQL_ENDPOINT=https://your-crop-service.example/graphql
 RETRIEVAL_TOP_K=20
 COMPANY_RETRIEVAL_TOP_K=3
 RERANK_TOP_K=6
@@ -194,6 +195,15 @@ preserve Ollama models, Chroma data, and the Hugging Face cache.
 ## Build the Knowledge Indexes
 
 ### Crop knowledge
+
+Refresh the local crop registry from the GraphQL endpoint:
+
+```bash
+python -m app.ingestion.fetch_crops
+python -m app.ingestion.fetch_crops --updated-within-days 7
+```
+
+The response is written to `data/crops.json` only after a successful request.
 
 Build fact-unit chunks from `data/crops.json`, write `data/chunks.jsonl`, and
 load the crop collection:

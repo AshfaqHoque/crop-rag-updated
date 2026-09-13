@@ -39,7 +39,7 @@ class Settings(BaseSettings):
 
     # Knowledge registry
     crop_registry_path: str = "./data/crops.json"
-
+    graphql_endpoint: str = "https://aunkur-backend-311104304042.us-central1.run.app/graphql"
     # App
     app_env: str = "dev"
     log_level: str = "INFO"

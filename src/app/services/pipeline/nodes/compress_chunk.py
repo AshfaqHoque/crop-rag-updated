@@ -13,7 +13,7 @@ from app.services.pipeline.state import PipelineState
 logger = get_logger(__name__)
 
 # Standard LangChain LLMChainExtractor prompt with your custom rule added
-DEFAULT_EXTRACTION_TEMPLATE = """Given the following question and context, extract any part of the context AS IS that is directly useful for answering the question. Preserve context liberally. Return NO_OUTPUT ONLY if the context is completely irrelevant.
+DEFAULT_EXTRACTION_TEMPLATE = """Given the following question and context, extract any part of the context AS IS that is directly useful for answering the question. Preserve context liberally. Return NO_OUTPUT only if the context is completely irrelevant.
 Remember, DO NOT edit the extracted parts of the context.
 
 Question: {question}

@@ -45,7 +45,7 @@ from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-MAX_CHUNK_SIZE = 4000
+MAX_CHUNK_SIZE = 5000
 
 def safe_str(val: Any) -> str:
     """Safely convert None, int, float, or string values to a stripped string."""
@@ -502,7 +502,7 @@ def chunk_crop(crop: dict) -> list[Chunk]:
     return chunks
 
 _LLM_SPLIT_PROMPT = """
-Split the following agricultural knowledge into two-three semantically coherent chunks.
+Split the following agricultural knowledge into exactly two semantically coherent chunks.
 
 Rules:
 - Preserve all information exactly.
@@ -511,6 +511,9 @@ Rules:
 - Do not add or remove information.
 - Split only at a natural semantic boundary.
 - Keep related information together.
+
+You MUST return ONLY a valid JSON object with a single key "chunks" containing a list of 2 strings:
+     {{"chunks": ["chunk 1 text", "chunk 2 text"]}}
 
 Text:
 {text}
@@ -524,7 +527,7 @@ def llm_splitter(chunks: list[Chunk]) -> list[Chunk]:
             continue
         prompt = _LLM_SPLIT_PROMPT.format(text=chunk.text)
         logger.info("Splitting chunk %s (size %d): ", chunk.chunk_id, len(chunk.text))
-        result = invoke_structured(prompt,LLMSplitResult,)
+        result = invoke_structured(LLMSplitResult, prompt)
         for i, text in enumerate(result.chunks, start=1):
             logger.info("Created chunk %s (size %d): ", f"{chunk.chunk_id}_{i}", len(text))            
             updated_chunks.append(

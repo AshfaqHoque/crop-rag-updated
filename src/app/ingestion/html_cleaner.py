@@ -42,4 +42,6 @@ def clean_html(raw: str | None) -> str:
 
 def is_meaningful(text: str, min_len: int = 3) -> bool:
     """Guards against emitting chunks that are empty or just punctuation."""
+    if isinstance(text, (int, float)):
+        return True
     return bool(text) and len(text.strip()) >= min_len

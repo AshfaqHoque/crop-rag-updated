@@ -24,3 +24,6 @@ class ChunkRelevance(BaseModel):
     relevant: bool = Field(
         description="True only if this single chunk contains information needed to answer the current question."
     )
+
+class LLMSplitResult(BaseModel):
+    chunks: list[str]

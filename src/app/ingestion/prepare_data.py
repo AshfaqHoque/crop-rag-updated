@@ -39,7 +39,19 @@ from typing import Any
 
 from app.schemas.chunk_schema import Chunk
 from app.ingestion.html_cleaner import clean_html, is_meaningful
+from app.schemas.extraction import LLMSplitResult
+from app.services.llm.client import invoke_structured
+from app.core.logging import get_logger
 
+logger = get_logger(__name__)
+
+MAX_CHUNK_SIZE = 4000
+
+def safe_str(val: Any) -> str:
+    """Safely convert None, int, float, or string values to a stripped string."""
+    if val is None:
+        return ""
+    return str(val).strip()
 
 def _header(crop: dict, section_label: str) -> str:
     name = crop.get("crop_name") or ""
@@ -306,8 +318,9 @@ def chunk_pesticides(crop: dict) -> list[Chunk]:
     for p in crop.get("pesticide") or []:
         disease_name = p.get("disease_name") or "Unknown pest/disease"
         lines = [
-            f"বালাই/রোগের নাম (Pest/Disease name): {p.get('disease_name', '').strip()}",
-            f"বালাই/রোগের ধরন (Pest/Disease type): {p.get('disease_type', '').strip()}",
+            f"বালাই/রোগের নাম (Pest/Disease name): {safe_str(p.get('disease_name'))}",
+            f"বালাই/রোগের ধরন (Pest/Disease type): {safe_str(p.get('disease_type'))}",
+            f"রোগজীবাণুর নাম (Disease-causing organism): {safe_str(p.get('disease_germs'))}",
         ]
         favorable_environment = clean_html(p.get("favorable_environment"))
         if is_meaningful(favorable_environment):
@@ -322,12 +335,12 @@ def chunk_pesticides(crop: dict) -> list[Chunk]:
         chemicals = p.get("chemical") or []
         for c in chemicals:
             chemical_lines = [
-                f"ট্রেড নাম (Trade name): {c.get('trade_name', '').strip()}",
-                f"জেনেরিক নাম (Generic name): {c.get('generic_name', '').strip()}",
-                f"কোম্পানির নাম (Company name): {c.get('company_name', '').strip()}",
-                f"কীটনাশকের প্রয়োগ মাত্রা (Applicable Amount of Herbicide): {c.get('application_dose', '').strip()}",
-                f"পানির প্রয়োগ মাত্রা (Applicable Amount of Water): {c.get('pesticide_amount', '').strip()}",
-                f"মূল্য (Price): {c.get('price', '').strip()}",
+                f"ট্রেড নাম (Trade name): {safe_str(c.get('trade_name'))}",
+                f"জেনেরিক নাম (Generic name): {safe_str(c.get('generic_name'))}",
+                f"কোম্পানির নাম (Company name): {safe_str(c.get('company_name'))}",
+                f"কীটনাশকের প্রয়োগ মাত্রা (Applicable Amount of Pesticide): {safe_str(c.get('application_dose'))}",
+                f"পানির প্রয়োগ মাত্রা (Applicable Amount of Water): {safe_str(c.get('pesticide_amount'))}",
+                f"মূল্য (Price): {safe_str(c.get('price'))}",
                 f"রেটিং (Rating): {c.get('rating', '')}",
             ]
             guide = clean_html(c.get("application_guide"))
@@ -361,12 +374,12 @@ def chunk_herbicides(crop: dict) -> list[Chunk]:
         weed_name = h.get("pesticide_name") or "Unknown weed"
         lines = [
             f"আগাছার নাম (Weed name): {weed_name}",
-            f"ট্রেড নাম (Trade name): {h.get('trade_name', '').strip()}",
-            f"জেনেরিক নাম (Generic name): {h.get('generic_name', '').strip()}",
-            f"কোম্পানির নাম (Company name): {h.get('company_name', '').strip()}",
-            f"আগাছানাশকের প্রয়োগ মাত্রা (Applicable Amount of Herbicide): {h.get('application_dose', '').strip()}",
-            f"পানির প্রয়োগ মাত্রা (Applicable Amount of Water): {h.get('pesticide_amount', '').strip()}",
-            f"মূল্য (Price): {h.get('price', '').strip()}",
+            f"ট্রেড নাম (Trade name): {safe_str(h.get('trade_name'))}",
+            f"জেনেরিক নাম (Generic name): {safe_str(h.get('generic_name'))}",
+            f"কোম্পানির নাম (Company name): {safe_str(h.get('company_name'))}",
+            f"আগাছানাশকের প্রয়োগ মাত্রা (Applicable Amount of Herbicide): {safe_str(h.get('application_dose'))}",
+            f"পানির প্রয়োগ মাত্রা (Applicable Amount of Water): {safe_str(h.get('pesticide_amount'))}",
+            f"মূল্য (Price): {safe_str(h.get('price'))}",
             f"রেটিং (Rating): {h.get('rating', '')}",
         ]
         guide = clean_html(h.get("application_guide"))
@@ -428,15 +441,12 @@ def chunk_children(crop: dict) -> list[Chunk]:
     for this crop) are skipped rather than emitting a useless chunk."""
     children = crop.get("children") or {}
     chunks = []
-
     varieties = _chunk_name_list(crop, children.get("varieties"), "varieties", "জাতগুলো")
     if varieties:
         chunks.append(varieties)
-
     pesticides = _chunk_name_list(crop, children.get("pesticides"), "pesticides", "রোগবালাই/পোকামাকড়সমূহ")
     if pesticides:
         chunks.append(pesticides)
-
     herbicides = _chunk_name_list(crop, children.get("herbicides"), "herbicides", "আগাছানাশক সমূহ")
     if herbicides:
         chunks.append(herbicides)
@@ -491,9 +501,45 @@ def chunk_crop(crop: dict) -> list[Chunk]:
 
     return chunks
 
+_LLM_SPLIT_PROMPT = """
+Split the following agricultural knowledge into two-three semantically coherent chunks.
+
+Rules:
+- Preserve all information exactly.
+- Do not summarize.
+- Do not rewrite.
+- Do not add or remove information.
+- Split only at a natural semantic boundary.
+- Keep related information together.
+
+Text:
+{text}
+"""
+def llm_splitter(chunks: list[Chunk]) -> list[Chunk]:
+    """Split chunks larger than MAX_CHUNK_SIZE words into two semantic chunks."""
+    updated_chunks = []
+    for chunk in chunks:
+        if len(chunk.text) <= MAX_CHUNK_SIZE:
+            updated_chunks.append(chunk)
+            continue
+        prompt = _LLM_SPLIT_PROMPT.format(text=chunk.text)
+        logger.info("Splitting chunk %s (size %d): ", chunk.chunk_id, len(chunk.text))
+        result = invoke_structured(prompt,LLMSplitResult,)
+        for i, text in enumerate(result.chunks, start=1):
+            logger.info("Created chunk %s (size %d): ", f"{chunk.chunk_id}_{i}", len(text))            
+            updated_chunks.append(
+                Chunk(
+                    chunk_id=f"{chunk.chunk_id}_{i}",
+                    text=text,
+                    metadata=chunk.metadata,
+                )
+            )
+
+    return updated_chunks
+
 
 def chunk_all(crops: list[dict]) -> list[Chunk]:
     all_chunks: list[Chunk] = []
     for crop in crops:
         all_chunks.extend(chunk_crop(crop))
-    return all_chunks
+    return llm_splitter(all_chunks)

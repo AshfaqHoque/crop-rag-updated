@@ -1,260 +1,217 @@
+import json
 import uuid
 
 import requests
 import streamlit as st
 
-API_URL = "http://localhost:8000/api/v1/chat"
+
+API_URL = "http://localhost:8000/api/v1/chat/stream"
+REQUEST_TIMEOUT = 120
+
+AVATARS = {
+    "user": "🧑",
+    "assistant": "🌱",
+}
+
+
+# ---------------------------------------------------------------------------
+# Page config
+# ---------------------------------------------------------------------------
 
 st.set_page_config(
     page_title="AUNKUR AI",
     page_icon="🌱",
-    layout="wide",
+    layout="centered",
 )
 
-# --- Custom styling ---
-st.markdown(
-    """
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-        html, body, [class*="css"] {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
+# ---------------------------------------------------------------------------
+# Session state
+# ---------------------------------------------------------------------------
 
-        #MainMenu, footer, header {visibility: hidden;}
+def init_session_state():
+    defaults = {
+        "conversations": {},
+        "active_session_id": str(uuid.uuid4()),
+        "language_type": "english",
+    }
+    for key, value in defaults.items():
+        if key not in st.session_state:
+            st.session_state[key] = value
 
-        .block-container {
-            max-width: 800px;
-            padding-top: 2.5rem;
-            padding-bottom: 7rem;
-        }
-
-        section[data-testid="stSidebar"] {
-            background-color: #171717;
-            border-right: 1px solid #2a2a2a;
-        }
-        section[data-testid="stSidebar"] * {
-            color: #e5e5e5;
-        }
-
-        section[data-testid="stSidebar"] button {
-            background-color: transparent !important;
-            border: 1px solid transparent !important;
-            text-align: left !important;
-            font-weight: 400 !important;
-            font-size: 0.88rem !important;
-            border-radius: 8px !important;
-            transition: background-color 0.15s ease;
-        }
-        section[data-testid="stSidebar"] button:hover {
-            background-color: #2a2a2a !important;
-            border-color: #2a2a2a !important;
-        }
-        section[data-testid="stSidebar"] button[kind="primary"] {
-            background-color: #2f2f2f !important;
-            border-color: #2f2f2f !important;
-            font-weight: 500 !important;
-        }
-        section[data-testid="stSidebar"] div[data-testid="stButton"]:first-of-type button {
-            border: 1px solid #3d3d3d !important;
-            font-weight: 500 !important;
-        }
-
-        .sidebar-brand {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 1.05rem;
-            font-weight: 600;
-            color: #ffffff;
-            margin-bottom: 1.25rem;
-        }
-        .sidebar-section-label {
-            font-size: 0.72rem;
-            font-weight: 600;
-            letter-spacing: 0.05em;
-            color: #8a8a8a;
-            margin: 1rem 0 0.4rem 0.25rem;
-            text-transform: uppercase;
-        }
-        .sidebar-empty {
-            font-size: 0.82rem;
-            color: #6b6b6b;
-            padding: 0.4rem 0.25rem;
-            font-style: italic;
-        }
-
-        [data-testid="stChatMessage"] {
-            padding: 0.6rem 0.75rem;
-            margin-bottom: 0.25rem;
-        }
-        [data-testid="stChatMessageContent"] p {
-            font-size: 0.95rem;
-            line-height: 1.6;
-        }
-
-        .empty-state {
-            text-align: center;
-            margin-top: 14vh;
-        }
-        .empty-state .icon {
-            font-size: 2.5rem;
-            margin-bottom: 0.75rem;
-        }
-        .empty-state h2 {
-            font-size: 1.4rem;
-            font-weight: 600;
-            color: #1a1a1a;
-            margin-bottom: 0.35rem;
-        }
-        .empty-state p {
-            color: #6b7280;
-            font-size: 0.92rem;
-        }
-
-        .footer-note {
-            text-align: center;
-            font-size: 0.75rem;
-            color: #9ca3af;
-            margin-top: 0.5rem;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-# --- Session state setup ---
-# conversations only holds chats that have completed at least one exchange
-if "conversations" not in st.session_state:
-    st.session_state.conversations = {}  # {session_id: {"title": str, "messages": [...]}}
-
-if "language_type" not in st.session_state:
-    st.session_state.language_type = "english"
-
-if "active_session_id" not in st.session_state:
-    st.session_state.active_session_id = str(uuid.uuid4())
+init_session_state()
 
 
-def ask_backend(message: str, language_type: str, session_id: str) -> tuple[str | None, str | None]:
+# ---------------------------------------------------------------------------
+# Backend
+# ---------------------------------------------------------------------------
+
+def stream_backend(message: str,language_type: str,session_id: str,):
+    """Stream assistant response from the backend."""
+
     payload = {
         "session_id": session_id,
         "message": message,
         "language_type": language_type,
     }
-    try:
-        response = requests.post(API_URL, json=payload, timeout=120)
+    with requests.post(API_URL,json=payload,stream=True,timeout=REQUEST_TIMEOUT,) as response:
         response.raise_for_status()
-        return response.json()["answer"], None
-    except requests.exceptions.ConnectionError:
-        return None, "⚠️ Can't reach the backend. Is `uvicorn app.main:app` running on port 8000?"
-    except requests.exceptions.Timeout:
-        return None, "⚠️ The backend took too long to respond. Try again, or check the server logs."
-    except requests.exceptions.HTTPError as e:
-        status = e.response.status_code
+        for line in response.iter_lines(decode_unicode=True):
+            if not line or not line.startswith("data: "):
+                continue
+            data = line[6:]
+            if data == "[DONE]":
+                break
+            chunk = json.loads(data)
+            content = chunk.get("content")
+            if content:
+                yield content
+
+def get_backend_error(error: Exception) -> str:
+    """Convert backend exceptions into user-friendly messages."""
+
+    if isinstance(error, requests.exceptions.ConnectionError):
+        return "⚠️ Can't reach the backend. Is the API server running?"
+    if isinstance(error, requests.exceptions.Timeout):
+        return "⚠️ The backend took too long to respond. Please try again."
+    if isinstance(error, requests.exceptions.HTTPError):
+        status = error.response.status_code
         if status == 422:
-            return None, "⚠️ The request was rejected — check the message isn't empty or too long."
-        return None, f"⚠️ Backend error ({status}). Check the server logs for details."
-    except (KeyError, ValueError):
-        return None, "⚠️ Got an unexpected response format from the backend."
+            return "⚠️ The request was rejected. Please check your message."
+        return f"⚠️ Backend error ({status}). Check the server logs."
+    if isinstance(error, (json.JSONDecodeError, KeyError)):
+        return "⚠️ Received an unexpected response from the backend."
+    return "⚠️ Something went wrong. Please try again."
 
 
-# --- Sidebar ---
+# ---------------------------------------------------------------------------
+# Conversation helpers
+# ---------------------------------------------------------------------------
+
+def create_new_chat():
+    st.session_state.active_session_id = str(uuid.uuid4())
+
+def get_active_conversation():
+    return st.session_state.conversations.get(
+        st.session_state.active_session_id
+    )
+
+def save_message_pair(user_message: str, assistant_message: str):
+    session_id = st.session_state.active_session_id
+    conversation = get_active_conversation()
+    messages = [
+        {
+            "role": "user",
+            "content": user_message,
+        },
+        {
+            "role": "assistant",
+            "content": assistant_message,
+        },
+    ]
+    if conversation:
+        conversation["messages"].extend(messages)
+        return
+    title = user_message[:40].strip()
+    if len(user_message) > 40:
+        title += "..."
+    st.session_state.conversations[session_id] = {
+        "title": title,
+        "messages": messages,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Sidebar
+# ---------------------------------------------------------------------------
+
 with st.sidebar:
-    st.markdown('<div class="sidebar-brand">🌱 &nbsp;AUNKUR AI</div>', unsafe_allow_html=True)
+    st.title("🌱 AUNKUR AI")
 
-    if st.button("＋  New chat", use_container_width=True):
-        st.session_state.active_session_id = str(uuid.uuid4())
+    if st.button("＋ New chat",use_container_width=True,):
+        create_new_chat()
         st.rerun()
 
-    st.markdown('<div class="sidebar-section-label">Chats</div>', unsafe_allow_html=True)
+    st.divider()
+    st.caption("CHATS")
 
     if not st.session_state.conversations:
-        st.markdown('<div class="sidebar-empty">No conversations yet</div>', unsafe_allow_html=True)
+        st.caption("No conversations yet.")
     else:
-        for session_id in reversed(list(st.session_state.conversations.keys())):
-            convo = st.session_state.conversations[session_id]
-            is_active = session_id == st.session_state.active_session_id
-
-            col1, col2 = st.columns([5, 1])
-            with col1:
+        for session_id, conversation in reversed(list(st.session_state.conversations.items())):
+            is_active = (session_id == st.session_state.active_session_id)
+            col_chat, col_delete = st.columns([5, 1])
+            with col_chat:
                 if st.button(
-                    convo["title"],
-                    key=f"select_{session_id}",
+                    conversation["title"],
+                    key=f"chat_{session_id}",
                     use_container_width=True,
                     type="primary" if is_active else "secondary",
                 ):
                     st.session_state.active_session_id = session_id
                     st.rerun()
-            with col2:
-                if st.button("×", key=f"delete_{session_id}"):
+
+            with col_delete:
+                if st.button("🗑️",key=f"delete_{session_id}",):
                     del st.session_state.conversations[session_id]
-                    if session_id == st.session_state.active_session_id:
-                        st.session_state.active_session_id = str(uuid.uuid4())
+                    if is_active:
+                        create_new_chat()
                     st.rerun()
 
-    st.markdown('<div class="sidebar-section-label">Settings</div>', unsafe_allow_html=True)
+    st.divider()
+    st.caption("LANGUAGE")
     st.session_state.language_type = st.radio(
-        "Language",
-        options=["english", "bangla"],
-        index=["english", "bangla"].index(st.session_state.language_type),
+        "Response language",
+        ["english", "bangla"],
         horizontal=True,
         label_visibility="collapsed",
     )
 
-# --- Main chat area ---
-AVATARS = {"user": "🧑", "assistant": "🌱"}
-active_session_id = st.session_state.active_session_id
-active_convo = st.session_state.conversations.get(active_session_id)
-existing_messages = active_convo["messages"] if active_convo else []
 
-if not existing_messages:
-    st.markdown(
-        """
-        <div class="empty-state">
-            <div class="icon">🌱</div>
-            <h2>Crop Advisory AI</h2>
-            <p>Ask about crops, fertilizers, pests, or farming practices — in English or Bangla.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+# ---------------------------------------------------------------------------
+# Main chat
+# ---------------------------------------------------------------------------
+
+conversation = get_active_conversation()
+if conversation:
+    for message in conversation["messages"]:
+        with st.chat_message(message["role"],avatar=AVATARS[message["role"]],):
+            st.markdown(message["content"])
 else:
-    for msg in existing_messages:
-        with st.chat_message(msg["role"], avatar=AVATARS.get(msg["role"])):
-            st.markdown(msg["content"])
+    st.title("Crop Advisory AI")
+    st.write("Ask about crops, fertilizers, pests, diseases, or farming practices.")
+
+
+# ---------------------------------------------------------------------------
+# New message
+# ---------------------------------------------------------------------------
 
 user_input = st.chat_input("Message Crop Advisory AI...")
 
 if user_input:
+    # Show user message immediately.
     with st.chat_message("user", avatar=AVATARS["user"]):
         st.markdown(user_input)
-
+    # Stream assistant response.
     with st.chat_message("assistant", avatar=AVATARS["assistant"]):
-        with st.spinner("Thinking..."):
-            answer, error = ask_backend(user_input, st.session_state.language_type, active_session_id)
-
-        if error:
-            st.error(error)
+        try:
+            answer = st.write_stream(
+                stream_backend(message=user_input,language_type=st.session_state.language_type,session_id=st.session_state.active_session_id,)
+            )
+        except Exception as error:
+            st.error(get_backend_error(error))
             answer = None
-        else:
-            st.markdown(answer)
-
-    if answer is not None:
-        updated_messages = existing_messages + [
-            {"role": "user", "content": user_input},
-            {"role": "assistant", "content": answer},
-        ]
-        if active_convo:
-            active_convo["messages"] = updated_messages
-        else:
-            title = user_input[:36] + ("..." if len(user_input) > 36 else "")
-            st.session_state.conversations[active_session_id] = {
-                "title": title,
-                "messages": updated_messages,
-            }
+    # Persist completed exchange.
+    if answer:
+        save_message_pair(user_input, answer)
         st.rerun()
 
-st.markdown(
-    '<div class="footer-note">Crop Advisory AI can make mistakes. Verify important farming decisions.</div>',
-    unsafe_allow_html=True,
+
+# ---------------------------------------------------------------------------
+# Footer
+# ---------------------------------------------------------------------------
+
+st.caption(
+    "Crop Advisory AI can make mistakes. "
+    "Verify important farming decisions."
 )

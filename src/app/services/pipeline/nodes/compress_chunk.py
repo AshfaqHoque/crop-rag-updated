@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 
 # Standard LangChain LLMChainExtractor prompt with your custom rule added
 DEFAULT_EXTRACTION_TEMPLATE = """Given the following question and context, extract any part of the context AS IS that is directly useful for answering the question. Preserve context liberally. Return NO_OUTPUT only if the context is completely irrelevant.
-Remember, DO NOT edit the extracted parts of the context.
+Remember, DO NOT edit the extracted parts of the context. If the question asks about multiple items (e.g. a comparison) and the context only contains information about one of them, still extract that item's full content as-is — do not return NO_OUTPUT just because the other item is missing.
 
 Question: {question}
 Context:

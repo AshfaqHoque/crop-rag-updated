@@ -21,8 +21,8 @@ Intent:
 - meaningless: pure gibberish, random keyboard mashing, unintelligible input or semantically impossible/nonsensical farming queries.
 
 If the message contains any crop or farming intent in Bangla, Banglish, or English,
-including a single agriculture-related word, classify it as crop_query. When uncertain,
-prefer crop_query. Use meaningless only for pure gibberish, and chitchat only for clear
+including a single agriculture-related word, regardless of any other keywords present (including pH, EC, soil test, etc.), classify it as crop_query. 
+When uncertain, prefer crop_query. Use meaningless only for pure gibberish, and chitchat only for clear
 greetings or thanks with no farming content.
 """
 

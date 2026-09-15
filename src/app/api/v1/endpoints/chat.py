@@ -1,3 +1,5 @@
+"""Chat and streaming endpoints for the crop advisory API."""
+
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 

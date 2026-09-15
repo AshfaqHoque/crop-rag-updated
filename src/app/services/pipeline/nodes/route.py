@@ -27,7 +27,7 @@ greetings or thanks with no farming content.
 
 def route(state: PipelineState) -> PipelineState:
     conversation = list(state.get("messages") or [])
-    history = conversation[-3:-1] if conversation else []
+    history = conversation[-3:-1] if conversation else []  
     messages = [
         SystemMessage(content=_SYSTEM_TEMPLATE),
         *history,

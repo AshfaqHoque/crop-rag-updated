@@ -1,3 +1,5 @@
+"""Streamlit interface for the crop advisory chatbot."""
+
 import json
 import uuid
 

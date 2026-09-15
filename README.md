@@ -1,72 +1,71 @@
 # Crop RAG Chatbot
 
-A retrieval-augmented chatbot for crop-advisory questions in Bangladesh. The
-project exposes a FastAPI endpoint, a Streamlit chat UI, a LangGraph workflow,
-and Chroma-backed knowledge indexes for crop and company information.
+This repository contains a crop-advisory chat application for Bangla and English queries. It exposes a FastAPI API, a Streamlit interface, a LangGraph orchestration pipeline, and Chroma-backed retrieval over crop and company knowledge.
 
-The application accepts Bangla and English requests. It can answer questions
-about crops, varieties, cultivation, fertilizer, pests, diseases, harvesting,
-and the indexed company knowledge base. Answers are generated from retrieved
-context, but should still be checked before important farming or business
-decisions are made.
+The application answers questions about crop production, pests, diseases, fertilizer, irrigation, climate, and company information using grounded retrieval and LLM generation. The generated answer should still be reviewed before making important agronomic or business decisions.
 
-## Features
+## What the project does
 
-- FastAPI API with typed request and response models.
-- Streamlit chat interface with multiple local conversations.
-- LangGraph routing for crop questions, company questions, chitchat, and
-  meaningless input.
-- Dense multilingual retrieval with Chroma and `bge-m3` embeddings.
-- External reranking and context compression for crop questions.
-- Follow-up query rewriting using LangGraph checkpointed session state.
-- Separate crop and company knowledge collections.
-- JSONL ingestion commands for pre-built chunks and source data.
+- Serves a chat API at `POST /api/v1/chat` and a streaming endpoint at `POST /api/v1/chat/stream`
+- Uses a LangGraph pipeline to rewrite follow-up questions, route intent, retrieve documents, rerank, compress, and generate answers
+- Supports `crop_query`, `company_query`, `chitchat`, and `meaningless` intents
+- Stores crop and company knowledge in separate Chroma collections
+- Reuses the same session ID as the LangGraph thread ID for multi-turn context
+- Runs a Streamlit UI for local testing and demos
+- Loads crop/company data from JSON, Markdown, and JSONL ingestion stages
 
 ## Architecture
 
 ```text
-POST /api/v1/chat
-        |
-        v
-  rewrite_query
-        |
-       route
-    /    |       |          \
-   /     |        |           \
-crop  company  chitchat  meaningless
-  |       |        |           |
-extract  retrieve  direct      direct
-  |       |        |           |
-retrieve  generate  generate    generate
-  |
-rerank -> compress -> generate
+HTTP client
+   |
+   v
+FastAPI app (/api/v1/chat)
+   |
+   v
+LangGraph workflow
+   |
+   +--> rewrite_query
+   |
+   +--> route
+          |
+          +--> crop_query -> extract_crop -> retrieve -> compress_chunk -> generate
+          +--> company_query -> retrieve_company -> generate_company
+          +--> chitchat -> generate_chitchat
+          +--> meaningless -> generate_meaningless
 ```
 
-The compiled graph starts with query rewriting and then routes by intent:
+The graph is assembled in `src/app/services/pipeline/graph.py` and uses `session_id` as the LangGraph thread key. The default checkpoint is an in-memory `MemorySaver`, with Redis support available when configured.
 
-- `crop_query`: extract crop information, retrieve from the crop collection,
-  call the external reranker, compress context, and generate an answer.
-- `company_query`: retrieve from `company_knowledge_base` and generate an
-  answer without the crop reranker/compressor path.
-- `chitchat`: generate a conversational response without retrieval.
-- `meaningless`: generate a clarification response without retrieval.
+## Runtime stack
 
-The graph uses `session_id` as its LangGraph `thread_id`. The default
-`MemorySaver` checkpoint is process-local; use a shared checkpoint backend
-before running multiple API replicas.
+- Python 3.11+
+- FastAPI for the HTTP API
+- Streamlit for the local web UI
+- LangGraph for orchestration
+- LangChain components for model wrappers, structured output, embeddings, and document compression
+- Chroma for vector search
+- Ollama for local embeddings and optional chat generation
+- vLLM or Groq as alternative LLM providers
+- External reranker service for crop Q&A ranking
 
-## Requirements
+## Project structure
 
-- Python 3.11 or newer.
-- Chroma, either embedded locally or reachable as an HTTP service.
-- An Ollama server for embeddings using `bge-m3`.
-- A chat provider: vLLM, Ollama, or Groq.
-- An HTTP reranker for crop questions at `RERANKER_URL`.
+```text
+src/app/main.py                     FastAPI application and health endpoint
+src/app/api/v1/router.py           API router registration
+src/app/api/v1/endpoints/chat.py   Chat and streaming endpoints
+src/app/core/config.py             Environment-backed settings
+src/app/services/chat_service.py   API-to-graph orchestration layer
+src/app/services/pipeline/         LangGraph pipeline and retrieval nodes
+src/app/services/retrieval/        Chroma and hybrid retrieval helpers
+src/app/ingestion/                 Crop and company indexing scripts
+data/                             Local data and vector store storage
+ui/streamlit_app.py                Streamlit front-end
+tests/                            Unit and integration tests
+```
 
-The default Python settings use an OpenAI-compatible vLLM server at
-`http://localhost:8091/v1`. Docker Compose overrides this and uses Ollama.
-
-## Installation
+## Local setup
 
 From the repository root:
 
@@ -88,36 +87,31 @@ python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
 ```
 
-The Streamlit UI uses `requests`. If it is not already present in the local
-environment, install it with:
-
-```bash
-python -m pip install requests
-```
+If you want to run the Streamlit app in isolation, install the UI dependency set from the project package metadata or the generated requirements file.
 
 ## Configuration
 
-Create a `.env` file in the repository root when changing defaults. Important
-settings and their current defaults are:
+Create a `.env` file in the repository root to override the defaults. The project reads settings from `src/app/core/config.py`.
 
 ```dotenv
 APP_ENV=dev
-CHAT_PROVIDER=vllm
+CHAT_PROVIDER=ollama
+OLLAMA_CHAT_MODEL=gemma4:31b-cloud
+OLLAMA_BASE_URL=http://localhost:11434
+BANGFISH_CONVERTER_MODEL=gemma4:12b
 VLLM_CHAT_MODEL=gemma4:12b
 VLLM_BASE_URL=http://localhost:8091/v1
 VLLM_API_KEY=not-needed
-OLLAMA_CHAT_MODEL=gemma4:12b
-OLLAMA_BASE_URL=http://localhost:11434
-EMBED_MODEL=bge-m3:latest
 GROQ_CHAT_MODEL=openai/gpt-oss-20b
 GROQ_API_KEY=
+EMBED_MODEL=bge-m3:latest
 CHROMA_HOST=
 CHROMA_PORT=8000
 CHROMA_PERSIST_DIR=./data/chroma
 CHROMA_COLLECTION=crop_knowledge_base
 CHROMA_COMPANY_COLLECTION=company_knowledge_base
 CROP_REGISTRY_PATH=./data/crops.json
-GRAPHQL_ENDPOINT=https://your-crop-service.example/graphql
+GRAPHQL_ENDPOINT=https://aunkur-backend-311104304042.us-central1.run.app/graphql
 RETRIEVAL_TOP_K=20
 COMPANY_RETRIEVAL_TOP_K=3
 RERANK_TOP_K=6
@@ -125,134 +119,46 @@ RERANKER_URL=http://localhost:8090/rerank
 HISTORY_MAX_TURNS=1
 CONTEXT_MAX_CHARS_PER_CHUNK=3000
 LLM_TEMPERATURE=0
+LANGSMITH_TRACING=true
+LANGSMITH_PROJECT=crop-rag-chatbot
 CHECKPOINT_BACKEND=memory
+REDIS_URL=redis://localhost:6379/0
 ```
 
-Allowed `CHAT_PROVIDER` values are `vllm`, `ollama`, and `groq`. Groq requires
-`GROQ_API_KEY`; embeddings still use Ollama. LangSmith tracing is enabled by
-default in the settings and can be controlled with `LANGSMITH_TRACING` and
-the related LangSmith settings.
+Accepted values for `CHAT_PROVIDER` are `ollama`, `groq`, and `vllm`. The default project setup is `ollama`, with embeddings served through Ollama and an optional external reranker used by cropping queries.
 
-The checkpoint implementation currently supports Redis when configured and
-otherwise falls back to in-memory state. The `postgres` and `sqlite` values
-listed in the configuration comments are not currently implemented.
+## Run the API locally
 
-## Run Locally
-
-Start the required model services first. For Ollama, for example:
-
-```bash
-ollama pull bge-m3
-ollama pull gemma4:12b
-```
-
-Start the API from the repository root:
+Start the backing services first, especially Ollama and Chroma if they are not already running.
 
 ```bash
 uvicorn app.main:app --reload --app-dir src
 ```
 
-The API runs at `http://localhost:8000`.
+The API listens on `http://localhost:8000`.
 
 - Swagger UI: `http://localhost:8000/docs`
-- Health: `http://localhost:8000/health`
+- Health check: `http://localhost:8000/health`
 
-Example health request:
+Example health check:
 
 ```bash
 curl http://localhost:8000/health
 ```
 
-Start the optional web UI in a second terminal:
+## Run the Streamlit UI
+
+In a second terminal:
 
 ```bash
 streamlit run ui/streamlit_app.py
 ```
 
-The UI currently sends requests to the hardcoded API URL
-`http://localhost:8000/api/v1/chat`.
+The UI posts to `http://localhost:8000/api/v1/chat/stream` by default.
 
-## Docker Compose
-
-```bash
-docker compose up --build
-```
-
-Compose starts:
-
-- `app` on host port `8000`;
-- `ollama` on host port `11434`;
-- `ollama-init`, which downloads `gemma3:4b` and `bge-m3`;
-- `chroma` on host port `8001`.
-
-The Compose app uses Ollama, `gemma3:4b`, Chroma at `chroma:8000`, and the
-reranker URL `http://host.docker.internal:8090/rerank` unless overridden with
-`RERANKER_URL`. Compose does not start the Streamlit UI or a reranker service.
-
-The host `data` directory is mounted into the app container. Named volumes
-preserve Ollama models, Chroma data, and the Hugging Face cache.
-
-## Build the Knowledge Indexes
-
-### Crop knowledge
-
-Refresh the local crop registry from the GraphQL endpoint:
-
-```bash
-python -m app.ingestion.fetch_crops
-python -m app.ingestion.fetch_crops --updated-within-days 7
-```
-
-The response is written to `data/crops.json` only after a successful request.
-
-Build fact-unit chunks from `data/crops.json`, write `data/chunks.jsonl`, and
-load the crop collection:
-
-```bash
-python -m app.ingestion.build_index
-```
-
-Reset the crop collection first or inspect all options with:
-
-```bash
-python -m app.ingestion.build_index --reset
-python -m app.ingestion.build_index --help
-```
-
-To load an existing JSONL file directly:
-
-```bash
-crop-rag-ingest --input data/chunks.jsonl
-```
-
-Each non-empty JSONL record must contain `chunk_id` and `text`. Metadata is
-optional and is sanitized before being written to Chroma. Existing IDs are
-upserted.
-
-### Company knowledge
-
-Build the separate company collection from the Markdown source:
-
-```bash
-python -m app.ingestion.load_company_data
-```
-
-The default input is `data/aunkur_company_info.md`; the command writes
-`data/company_chunks.jsonl` and loads `company_knowledge_base`. Use `--help`
-for input, reset, and other command options.
-
-For Compose, run ingestion inside the app container:
-
-```bash
-docker compose exec app python -m app.ingestion.loader \
-  --input /app/data/chunks.jsonl
-```
-
-## API Usage
+## API contract
 
 ### Request
-
-`POST /api/v1/chat` requires all three fields:
 
 ```json
 {
@@ -262,23 +168,7 @@ docker compose exec app python -m app.ingestion.loader \
 }
 ```
 
-`language_type` must be `english` or `bangla`. `session_id` must be 1-200
-characters and `message` must be 1-2,000 characters after trimming.
-
-```bash
-curl -X POST http://localhost:8000/api/v1/chat \
-  -H "Content-Type: application/json" \
-  -d '{"session_id":"farmer-123","message":"What is the seed rate for Boro Paddy?","language_type":"english"}'
-```
-
-Use the same `session_id` for follow-up questions so the rewrite/checkpoint
-logic can use the previous conversation context:
-
-```bash
-curl -X POST http://localhost:8000/api/v1/chat \
-  -H "Content-Type: application/json" \
-  -d '{"session_id":"farmer-123","message":"How many times should it be irrigated?","language_type":"english"}'
-```
+`language_type` must be either `english` or `bangla`.
 
 ### Response
 
@@ -301,59 +191,62 @@ curl -X POST http://localhost:8000/api/v1/chat \
 }
 ```
 
-`distance` is a retrieval ranking value, not calibrated confidence. Chitchat
-and meaningless requests may return no sources. The API also exposes
-`GET /health` with the active chat model, embedding model, and environment.
+## Build and ingest data
 
-## Tests and Linting
+### Crop registry
 
-The tests are primarily unit and mocked integration tests and do not require
-live model servers:
+Refresh the local crop registry from the upstream GraphQL endpoint:
+
+```bash
+python -m app.ingestion.fetch_crops
+python -m app.ingestion.fetch_crops --updated-within-days 7
+```
+
+Build the crop chunks and load the crop Chroma collection:
+
+```bash
+python -m app.ingestion.build_index
+```
+
+To reset the crop collection before rebuild:
+
+```bash
+python -m app.ingestion.build_index --reset
+```
+
+You can also ingest an existing JSONL dump directly:
+
+```bash
+crop-rag-ingest --input data/chunks.jsonl
+```
+
+### Company knowledge
+
+Build the separate company collection from the Markdown file:
+
+```bash
+python -m app.ingestion.load_company_data
+```
+
+The default source is `data/aunkur_company_info.md`, which produces `data/company_chunks.jsonl` and loads the company Chroma collection.
+
+## Validation
+
+Run the project test suite from the repository root:
 
 ```bash
 pytest -q
+```
+
+Optional linting:
+
+```bash
 ruff check .
 ```
 
-Live Ollama, vLLM, Groq, Chroma, Docker, and reranker connectivity should be
-validated separately in the target deployment environment.
+## Notes
 
-## Repository Layout
-
-```text
-src/app/main.py                         FastAPI application and health route
-src/app/api/v1/endpoints/chat.py        Chat endpoint
-src/app/schemas/chat.py                 API contracts
-src/app/core/config.py                  Environment-backed settings
-src/app/services/chat_service.py        API-to-graph service layer
-src/app/services/pipeline/graph.py     LangGraph assembly and routing
-src/app/services/pipeline/nodes/        Query, retrieval, and generation nodes
-src/app/services/retrieval/             Chroma and retrieval helpers
-src/app/ingestion/                      Crop and company indexing commands
-data/crops.json                          Crop registry/source data
-data/aunkur_company_info.md             Company knowledge source
-data/chunks.jsonl                        Crop chunks
-data/company_chunks.jsonl                Company chunks
-ui/streamlit_app.py                     Streamlit client
-tests/                                   Unit and integration tests
-```
-
-## Current Limitations
-
-- The default in-memory checkpoint is not shared across processes or replicas.
-- Crop questions require a reachable external reranker.
-- Crop extraction currently computes matches but returns an empty crop list in
-  the live node, so crop metadata filtering is not currently effective.
-- BM25 and reciprocal-rank fusion helpers exist but are dormant; active crop
-  retrieval is dense Chroma retrieval followed by reranking.
-- The API does not add enforced citations, calibrated confidence, or a
-  separate answer-verification pass.
-- Romanized crop-name matching is not guaranteed by the deterministic matcher.
-- The repository does not currently declare a license.
-
-## Project Status
-
-The core API, graph routing, ingestion workflows, retrieval components, and
-UI are implemented. Production deployment still requires selecting and
-operating compatible model services, a reranker, durable checkpoint storage,
-and a deployment-specific validation process.
+- The default checkpoint is process-local memory and is not shared across multiple API instances.
+- Crop retrieval depends on a reachable reranker service at `RERANKER_URL`.
+- This project is designed for a local or self-hosted deployment and should be validated against the target model and vector store environment before production use.
+- The app currently has no license metadata declared in the repository.

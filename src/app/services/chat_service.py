@@ -1,4 +1,5 @@
-"""Application service that joins session history, LangGraph, and API schemas."""
+"""Service layer that orchestrates LangGraph chat requests and API response formatting."""
+
 import asyncio
 from collections import defaultdict
 from functools import lru_cache

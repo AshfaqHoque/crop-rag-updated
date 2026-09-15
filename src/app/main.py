@@ -1,3 +1,5 @@
+"""FastAPI application entry point for the crop advisory chatbot."""
+
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 

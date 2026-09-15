@@ -1,3 +1,5 @@
+"""API router registration for the v1 chat endpoints."""
+
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import chat

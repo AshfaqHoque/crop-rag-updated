@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "crop-rag-chatbot"
 version = "0.2.0"
-description = "Production RAG chatbot for crop advisory questions (Bangla/English), LangGraph + Ollama + Chroma"
+description = "Bangla/English crop advisory chatbot with LangGraph, Chroma, and local LLM providers"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115,<1",
@@ -26,6 +26,7 @@ dependencies = [
     "tenacity>=9.0,<10",
     "beautifulsoup4>=4.12,<5",
     "streamlit>=1.38,<2",
+    "redis>=5.0,<6",
 ]
 
 [project.scripts]
@@ -35,6 +36,7 @@ crop-rag-ingest = "app.ingestion.loader:main"
 dev = [
     "pytest>=8.0,<9",
     "pytest-asyncio>=0.24,<2",
+    "ruff>=0.6,<1",
 ]
 [tool.setuptools.packages.find]
 where = ["src"]

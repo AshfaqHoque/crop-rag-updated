@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     chroma_persist_dir: str = "./data/chroma"
     chroma_collection: str = "crop_knowledge_base"
     chroma_company_collection: str = "company_knowledge_base"
-
+    chroma_soil_test_collection: str = "soil_test_knowledge_base"
 
     # Knowledge registry
     crop_registry_path: str = "./data/crops.json"
@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     # Pipeline tuning
     retrieval_top_k: int = 20
     company_retrieval_top_k: int = 3
+    soil_test_retrieval_top_k: int = 3
     # dense_candidate_k: int = 20
     # bm25_candidate_k: int = 20
     # bm25_cache_ttl_seconds: int = 300

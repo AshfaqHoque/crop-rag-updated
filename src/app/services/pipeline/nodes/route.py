@@ -15,6 +15,7 @@ Return the requested structured output as valid JSON matching the schema.
 
 Intent:
 - chitchat: greetings, thanks, social interactions, or personal conversations that do not seek agricultural advice.
+- soil_test_query: questions specifically about soil testing, sampling, reports, pH/EC/nutrient interpretation, soil-test-based fertilizer recommendations, or the Porokh soil-testing device/service.
 - company_query: questions about the company, assistant, or organization behind this service.
 - crop_query: anything about crops, farming, soil, pests, fertilizers, irrigation, or farming weather.
 - meaningless: pure gibberish, random keyboard mashing, unintelligible input or semantically impossible/nonsensical farming queries.

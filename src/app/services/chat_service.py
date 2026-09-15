@@ -12,7 +12,7 @@ from starlette.concurrency import run_in_threadpool
 from app.schemas.chat import ChatRequest, ChatResponse, SourceChunk
 from app.services.pipeline.graph import get_chat_graph
 
-_TERMINAL_GENERATE_NODES = {"generate", "generate_company", "generate_chitchat", "generate_meaningless"}
+_TERMINAL_GENERATE_NODES = {"generate", "generate_company", "generate_chitchat", "generate_meaningless", "generate_soil_test"}
 
 class ChatService:
     def __init__(self, graph=None) -> None:

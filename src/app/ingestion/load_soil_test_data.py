@@ -8,6 +8,9 @@ their own functions, since none of them are reused anywhere else.
 Run (single file):
     python -m app.ingestion.load_soil_test_data --input data/soil_test_faq.csv
 
+Run (default files):
+    python -m app.ingestion.load_soil_test_data --reset
+
 Run (multiple FAQ CSVs into the same collection -- e.g. Porokh device FAQ
 + general Soil Test FAQ; chunk ids are namespaced per source filename in
 prepare_soil_test_data.py, so rows with the same row-number from different
@@ -83,7 +86,7 @@ def main() -> None:
     settings = get_settings()
 
     parser = argparse.ArgumentParser(description="Load soil-test FAQ chunks (CSV) into Chroma")
-    parser.add_argument("--input", type=Path, nargs="+", default=[Path("data/soil_test_faq.csv")], help="Path(s) to soil-test FAQ CSV file(s)")
+    parser.add_argument("--input", type=Path, nargs="+", default=[Path("data/porokh_faq.csv"), Path("data/soil_test_faq.csv")], help="Path(s) to soil-test FAQ CSV file(s)",)
     parser.add_argument("--chunks-output", type=Path, default=Path("data/soil_test_chunks.jsonl"), help="Where to write the inspectable JSONL chunk dump (default: data/soil_test_chunks.jsonl)")
     parser.add_argument("--reset", action="store_true", help="Wipe the existing soil-test Chroma collection first")
     parser.add_argument("--batch-size", type=int, default=64)

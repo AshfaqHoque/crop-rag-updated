@@ -24,3 +24,6 @@
 
 21. added an llm layer that converts big chunks into two chunks and saved the chunks in db
 22. rnd on how to implement text to sql using sqlite that will execute query without connecting to main vm
+
+23. currently rewrite layer biased towards crop query, it should consider company query, soil test query follow ups based on chat history
+24. calculation

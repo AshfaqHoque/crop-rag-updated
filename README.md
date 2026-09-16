@@ -191,9 +191,40 @@ The UI posts to `http://localhost:8000/api/v1/chat/stream` by default.
 }
 ```
 
-## Build and ingest data
+## Vector store commands
 
-### Crop registry
+The default local configuration uses embedded Chroma and persists its data in
+`data/chroma`. Make sure the embedding model is available before ingesting:
+
+```bash
+ollama serve
+ollama pull bge-m3
+```
+
+If you use the Docker services instead, start Chroma and Ollama with:
+
+```bash
+docker compose up -d chroma ollama
+```
+
+Set `CHROMA_HOST=localhost` and `CHROMA_PORT=8001` in `.env` when running the
+Python ingestion commands against the Docker Chroma service. The full Docker
+stack, including the app and the model initialization container, can be
+started with `docker compose up -d`.
+
+Run the following commands from the repository root.
+
+### Ingestion collections (reset + rebuild)
+
+Run the three ingestion commands together to reset and reload all collections:
+
+```bash
+python -m app.ingestion.build_index --reset
+python -m app.ingestion.load_company_data --reset
+python -m app.ingestion.load_soil_test_data --reset
+```
+
+### Crop collection
 
 Refresh the local crop registry from the upstream GraphQL endpoint:
 
@@ -202,33 +233,76 @@ python -m app.ingestion.fetch_crops
 python -m app.ingestion.fetch_crops --updated-within-days 7
 ```
 
-Build the crop chunks and load the crop Chroma collection:
+Build chunks from `data/crops.json` and load the `crop_knowledge_base` Chroma
+collection:
 
 ```bash
 python -m app.ingestion.build_index
 ```
 
-To reset the crop collection before rebuild:
+Reset the crop collection before rebuilding it:
 
 ```bash
 python -m app.ingestion.build_index --reset
 ```
 
-You can also ingest an existing JSONL dump directly:
+Load an existing crop JSONL dump without rebuilding chunks:
 
 ```bash
+python -m app.ingestion.loader --input data/chunks.jsonl
 crop-rag-ingest --input data/chunks.jsonl
 ```
 
-### Company knowledge
+Inspect chunk sizes before ingesting:
 
-Build the separate company collection from the Markdown file:
+```bash
+python -m app.ingestion.analyze_chunks --input data/chunks.jsonl
+python -m app.ingestion.analyze_chunks --input data/chunks.jsonl --top 20
+```
+
+### Company collection
+
+Build the company collection from `data/aunkur_company_info.md`:
 
 ```bash
 python -m app.ingestion.load_company_data
 ```
 
-The default source is `data/aunkur_company_info.md`, which produces `data/company_chunks.jsonl` and loads the company Chroma collection.
+Reset the company collection before loading it:
+
+```bash
+python -m app.ingestion.load_company_data --reset
+```
+
+Use another Markdown file or several files:
+
+```bash
+python -m app.ingestion.load_company_data --input data/aunkur_company_info.md
+python -m app.ingestion.load_company_data --input data/company_one.md data/company_two.md
+```
+
+The command writes the inspectable chunk dump to `data/company_chunks.jsonl`
+and loads the `company_knowledge_base` collection.
+
+### Soil-test collection
+
+Load the default soil-test FAQ CSV into the `soil_test_knowledge_base`
+collection:
+
+```bash
+python -m app.ingestion.load_soil_test_data
+```
+
+Load multiple FAQ files into the same collection, resetting it first:
+
+```bash
+python -m app.ingestion.load_soil_test_data \
+  --input data/porokh_faq.csv data/soil_test_faq.csv \
+  --reset
+```
+
+The command writes the inspectable chunk dump to
+`data/soil_test_chunks.jsonl`.
 
 ## Validation
 

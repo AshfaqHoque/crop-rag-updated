@@ -26,15 +26,7 @@ The JSON object MUST contain exactly these two fields:
 def rewrite_query(state: PipelineState) -> PipelineState:
     query = (state.get("raw_query") or "").strip()
     conversation = list(state.get("messages") or [])
-    history = conversation[-3:-1] if conversation else [] 
-
-    # if not history:
-    #     logger.info("rewrite_query used_history=False")
-    #     return {
-    #         **state,
-    #         "rewritten_query": query,
-    #         "rewrite_used_history": False,
-    #     }
+    history = conversation[-9:-1] if conversation else []
 
     current_message = f"New Query to Evaluate:\n{query}"
     

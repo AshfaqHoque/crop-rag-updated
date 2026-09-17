@@ -37,6 +37,58 @@ LangGraph workflow
 
 The graph is assembled in `src/app/services/pipeline/graph.py` and uses `session_id` as the LangGraph thread key. The default checkpoint is an in-memory `MemorySaver`, with Redis support available when configured.
 
+## How it works
+
+The project uses local files for source data and the VM for model and vector services.
+
+### Ingestion flow
+
+1. An ingestion command reads source files from the local `data/` folder.
+  - Crop data comes from `data/crops.json`.
+  - Company data comes from `data/aunkur_company_info.md`.
+  - Soil-test data comes from the FAQ CSV files.
+2. The files are split into small text chunks with metadata such as crop, section, and source.
+3. The local app sends each chunk to the VM's Ollama service through the SSH tunnel.
+4. Ollama creates an embedding vector for each chunk.
+5. The app sends the text, metadata, and vectors to Chroma running on the VM.
+6. Chroma stores the vectors in its VM disk directory and makes them available for search.
+
+The JSONL files in `data/` are inspectable chunk dumps. They are useful for checking the generated chunks, but Chroma is the database used for retrieval.
+
+### Question-answering flow
+
+1. A user sends a question through the Streamlit UI or the FastAPI API.
+2. The pipeline rewrites follow-up questions and identifies the request type.
+3. For a crop, company, or soil-test question, the app searches the matching Chroma collection on the VM.
+4. The most relevant results are filtered, reranked, and compressed into context.
+5. The selected context is sent to the configured chat model on the VM.
+6. The API returns the answer together with the rewritten question and source information.
+
+### Connection flow
+
+The SSH tunnel makes VM services look like local services:
+
+```text
+Local app -> localhost:8001 -> SSH tunnel -> VM Chroma:8000
+Local app -> localhost:11434 -> SSH tunnel -> VM Ollama:11434
+Local app -> localhost:8091 -> SSH tunnel -> VM vLLM:8091
+Local app -> localhost:8090 -> SSH tunnel -> VM reranker:8090
+```
+
+With `CHROMA_HOST=127.0.0.1` and `CHROMA_PORT=8001`, the app uses remote Chroma. It does not read vectors from local `data/chroma`; that directory is used only when `CHROMA_HOST` is empty. The source documents and ingestion scripts still remain local.
+
+When the app runs in Docker Compose, it uses `host.docker.internal` to reach the same forwarded host ports. The Compose stack starts the app, UI, and Redis, but Chroma, Ollama, vLLM, and the reranker remain on the VM.
+
+### Collections
+
+The data is stored in separate Chroma collections:
+
+- `crop_knowledge_base` for crop information
+- `company_knowledge_base` for company information
+- `soil_test_knowledge_base` for soil-test and Porokh FAQs
+
+Running an ingestion command again updates existing chunks with the same IDs. Use `--reset` when you want to delete the selected collection and rebuild it from the current local source files.
+
 ## Runtime stack
 
 - Python 3.11+
@@ -201,16 +253,35 @@ ollama serve
 ollama pull bge-m3
 ```
 
-If you use the Docker services instead, start Chroma and Ollama with:
+The Docker stack expects the model services to be available through the SSH
+forwarded host ports shown below. Start the tunnel before starting Compose:
 
 ```bash
-docker compose up -d chroma ollama
+ssh -N -L 8091:127.0.0.1:8091 -L 8090:127.0.0.1:8090 -L 11434:127.0.0.1:11434 -L 8001:127.0.0.1:8000 ashfaq@34.74.153.108
 ```
 
-Set `CHROMA_HOST=localhost` and `CHROMA_PORT=8001` in `.env` when running the
-Python ingestion commands against the Docker Chroma service. The full Docker
-stack, including the app and the model initialization container, can be
-started with `docker compose up -d`.
+Port `8091` provides vLLM (`gemma4:12b`), port `8090` provides the reranker,
+port `11434` provides Ollama embeddings, and port `8001` provides VM Chroma.
+The full Docker stack can then be started with `docker compose up -d`.
+
+The stack also starts the Streamlit UI. Open the API at
+`http://localhost:8000/docs` and the UI at `http://localhost:8501`.
+
+The Docker configuration uses only the host-forwarded vLLM, reranker, Ollama
+embedding, and Chroma services. Compose does not start a local Chroma or Ollama
+container, so it cannot reset the VM collections during startup.
+
+The ingestion commands reset individual collections only when `--reset` is
+provided:
+
+```bash
+docker compose exec app python -m app.ingestion.build_index --reset
+docker compose exec app python -m app.ingestion.load_company_data --reset
+docker compose exec app python -m app.ingestion.load_soil_test_data --reset
+```
+
+These commands delete collections in the VM because Docker is configured to use
+the forwarded VM Chroma endpoint.
 
 Run the following commands from the repository root.
 
@@ -219,14 +290,20 @@ Run the following commands from the repository root.
 Run the three ingestion commands together to reset and reload all collections:
 
 ```bash
-python -m app.ingestion.build_index --reset
+python -m app.ingestion.build_index --fetch --reset
 python -m app.ingestion.load_company_data --reset
 python -m app.ingestion.load_soil_test_data --reset
 ```
 
+For crops, `--fetch` calls the GraphQL crop service and keeps the returned crop
+rows in memory. It does not write `data/crops.json`. The same command then
+creates chunks, generates embeddings through the VM Ollama service, and stores
+the vectors in the VM Chroma collection. Without `--fetch`, `build_index` uses
+the existing local `data/crops.json` file.
+
 ### Crop collection
 
-Refresh the local crop registry from the upstream GraphQL endpoint:
+Fetch crops from the upstream GraphQL endpoint and save the response locally:
 
 ```bash
 python -m app.ingestion.fetch_crops
@@ -238,6 +315,13 @@ collection:
 
 ```bash
 python -m app.ingestion.build_index
+```
+
+Fetch the latest crops and rebuild the collection directly without saving a
+local JSON registry:
+
+```bash
+python -m app.ingestion.build_index --fetch --reset
 ```
 
 Reset the crop collection before rebuilding it:

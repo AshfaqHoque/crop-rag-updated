@@ -15,6 +15,8 @@ directly here.)
 Run:
     python -m app.ingestion.build_index                        # settings.crop_registry_path -> data/chunks.jsonl -> Chroma
     python -m app.ingestion.build_index --input data/other.json
+    python -m app.ingestion.build_index --fetch                 # fetch crops in memory, then index them
+    python -m app.ingestion.build_index --fetch --reset         # fetch in memory, then rebuild the collection
     python -m app.ingestion.build_index --reset                # wipe the collection first
 """
 import argparse
@@ -23,6 +25,7 @@ from pathlib import Path
 
 from app.core.config import get_settings
 from app.core.logging import configure_logging, get_logger
+from app.ingestion.fetch_crops import fetch_crops
 from app.ingestion.loader import ingest
 from app.ingestion.prepare_data import chunk_all
 from app.schemas.chunk_schema import Chunk
@@ -50,6 +53,14 @@ def load_crop_rows(path: Path) -> list[dict]:
     rows = raw.get("data", {}).get("getAllCropsFullDetails", {}).get("rows")
     if rows is None:
         raise ValueError(f"{path}: missing data.getAllCropsFullDetails.rows")
+    return rows
+
+
+def load_crop_rows_from_payload(payload: dict) -> list[dict]:
+    """Extract crop rows from an in-memory GraphQL response."""
+    rows = payload.get("data", {}).get("getAllCropsFullDetails", {}).get("rows")
+    if not isinstance(rows, list):
+        raise ValueError("GraphQL response is missing data.getAllCropsFullDetails.rows")
     return rows
 
 
@@ -86,13 +97,19 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Chunk raw crop data and load it into the Chroma vector store.")
     parser.add_argument("--input", type=Path, default=Path(settings.crop_registry_path), help="Path to the crop JSON export (default: settings.crop_registry_path)")
     parser.add_argument("--chunks-output", type=Path, default=Path("data/chunks.jsonl"), help="Where to write the inspectable JSONL chunk dump (default: data/chunks.jsonl)")
+    parser.add_argument("--fetch", action="store_true", help="Fetch the latest crop registry from GraphQL before chunking")
     parser.add_argument("--reset", action="store_true", help="Wipe the existing Chroma collection first")
     parser.add_argument("--batch-size", type=int, default=64)
     args = parser.parse_args()
 
-    logger.info("Loading crop rows from %s", args.input)
-    crops = load_crop_rows(args.input)
-    logger.info("Loaded %d crop(s)", len(crops))
+    if args.fetch:
+        logger.info("Fetching the latest crop registry...")
+        crops = load_crop_rows_from_payload(fetch_crops(persist=False))
+        logger.info("Loaded %d crop(s) directly from GraphQL", len(crops))
+    else:
+        logger.info("Loading crop rows from %s", args.input)
+        crops = load_crop_rows(args.input)
+        logger.info("Loaded %d crop(s)", len(crops))
 
     logger.info("Chunking...")
     chunks = chunk_all(crops)

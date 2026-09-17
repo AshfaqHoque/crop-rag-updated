@@ -40,62 +40,243 @@ query getAllCropsFullDetails($updated_within_days: Int) {
     status
     count
     rows {
-      id creator_id crop_name crop_bangla_name scientific_name crop_family general_info
-      average_production is_verified
-      harvest { id crop_id description }
-      intercultural { id crop_id description }
-      irrigation { id crop_id description }
-      landPreparation { id crop_id description }
-      fertilizer { fertilizer }
-      seed { id crop_id treatment showing_method time_showing seedbed seed_rate }
+      id
+      creator_id
+      crop_name
+      crop_bangla_name
+      scientific_name
+      crop_family
+      general_info
+      average_production
+      is_verified
+      children {
+        herbicides
+        pesticides
+        varieties
+      }
+      harvest {
+        id
+        crop_id
+        description
+      }
+      intercultural {
+        id
+        crop_id
+        description
+      }
+      irrigation {
+        id
+        crop_id
+        description
+      }
+      landPreparation {
+        id
+        crop_id
+        description
+      }
+      fertilizer {
+        fertilizer
+      }
+      seed {
+        id
+        crop_id
+        treatment
+        showing_method
+        time_showing
+        seedbed
+        seed_rate
+      }
       climate {
-        id crop_id general_info climate_temperature_start climate_temperature_end
-        climate_rainfall_start climate_rainfall_end climate_ph_start climate_ph_end
-        climate_humidity climate_humidity_end climate_ec_start climate_ec_end
-        land_type soil_texture salinity_start salinity_end
+        id
+        crop_id
+        general_info
+        climate_temperature_start
+        climate_temperature_end
+        climate_rainfall_start
+        climate_rainfall_end
+        climate_ph_start
+        climate_ph_end
+        climate_humidity
+        climate_humidity_end
+        climate_ec_start
+        climate_ec_end
+        land_type
+        soil_texture
+        salinity_start
+        salinity_end
       }
       cropInfestationGuidelines {
-        id crop_id infestation_id application_guide infestation_slug herbicide_message
+        id
+        crop_id
+        infestation_id
+        application_guide
+        infestation_slug
+        herbicide_message
       }
-      cropAdditionalCostInfo { id crop_id cost_type amount unit unitInfo { id unit_name unit_code } }
+      cropAdditionalCostInfo {
+        id
+        crop_id
+        cost_type
+        amount
+        unit
+        unitInfo {
+          id
+          unit_name
+          unit_code
+        }
+      }
       herbicide {
-        id crop_id pesticide_name trade_name generic_name company_name company_id
-        company { id name }
-        application_dose application_dose_unit application_dose_unit_name
-        applicationDoseUnitInfo { id unit_name unit_code }
-        pesticide_amount pesticide_amount_unit pesticideAmountUnitInfo { id unit_name unit_code }
-        rating price price_unit priority application_guide is_deleted is_verified
+        id
+        crop_id
+        pesticide_name
+        trade_name
+        generic_name
+        company_name
+        company_id
+        company {
+          id
+          name
+        }
+        application_dose
+        application_dose_unit
+        application_dose_unit_name
+        applicationDoseUnitInfo {
+          id
+          unit_name
+          unit_code
+        }
+        pesticide_amount
+        pesticide_amount_unit
+        pesticideAmountUnitInfo {
+          id
+          unit_name
+          unit_code
+        }
+        rating
+        price
+        price_unit
+        priority
+        application_guide
+        is_deleted
+        is_verified
       }
       pesticide {
-        id crop_id priority infestation_id disease_type disease_name damage_control
-        control_measure is_verified
+        id
+        crop_id
+        priority
+        infestation_id
+        disease_type
+        disease_name
+        disease_germs
+        favorable_environment
+        damage_control
+        control_measure
+        is_verified
         chemical {
-          id pesticide_id pesticide_name trade_name generic_name company_name company_id
-          company { id name }
-          application_dose application_dose_unit application_dose_unit_name
-          applicationDoseUnitInfo { id unit_name unit_code }
-          pesticide_amount pesticide_amount_unit pesticideAmountUnitInfo { id unit_name unit_code }
-          rating price priority packetSizeAndPrice { size price }
-          application_guide is_deleted is_verified
+          id
+          pesticide_id
+          pesticide_name
+          trade_name
+          generic_name
+          company_name
+          company_id
+          company {
+            id
+            name
+          }
+          application_dose
+          application_dose_unit
+          application_dose_unit_name
+          applicationDoseUnitInfo {
+            id
+            unit_name
+            unit_code
+          }
+          pesticide_amount
+          pesticide_amount_unit
+          pesticideAmountUnitInfo {
+            id
+            unit_name
+            unit_code
+          }
+          rating
+          price
+          priority
+          packetSizeAndPrice {
+            size
+            price
+          }
+          application_guide
+          is_deleted
+          is_verified
         }
       }
       variety {
-        id crop_id variety_name variety_duration variety_yield avg_expected_yield yield_up yield_low
-        company_name company_id company { id name }
-        seed_rate rating price duration_start duration_end seed_rate_unit seed_rate_unit_name
-        seedRateUnit { id unit_name unit_code }
-        production production_unit productionUnit { id unit_name unit_code }
-        special_character time_showing
-        seasons { variety_id season_id season }
-        variety_seed {
-          id variety_id crops_name company_name per_shotok per_shotok_unit
-          potential_yield_text potential_yield_value potential_yield_unit rating
+        id
+        crop_id
+        variety_name
+        variety_duration
+        variety_yield
+        avg_expected_yield
+        yield_up
+        yield_low
+        company_name
+        company_id
+        company {
+          id
+          name
         }
-        is_deleted is_verified
+        seed_rate
+        rating
+        price
+        duration_start
+        duration_end
+        seed_rate_unit
+        seed_rate_unit_name
+        seedRateUnit {
+          id
+          unit_name
+          unit_code
+        }
+        production
+        production_unit
+        productionUnit {
+          id
+          unit_name
+          unit_code
+        }
+        special_character
+        time_showing
+        seasons {
+          variety_id
+          season_id
+          season
+        }
+        variety_seed {
+          id
+          variety_id
+          crops_name
+          company_name
+          per_shotok
+          per_shotok_unit
+          potential_yield_text
+          potential_yield_value
+          potential_yield_unit
+          rating
+        }
+        is_deleted
+        is_verified
       }
       crop_category {
-        id category_name category_code
-        feature { id feature_name feature_desc feature_price }
+        id
+        category_name
+        category_code
+        feature {
+          id
+          feature_name
+          feature_desc
+          feature_price
+        }
       }
     }
   }
@@ -114,15 +295,16 @@ def _write_registry(payload: dict, path: str) -> None:
     os.replace(temporary_path, destination)
 
 
-def fetch_crops(updated_within_days: Optional[int] = None) -> dict:
-    """Fetch crops and update the configured crop registry.
+def fetch_crops(updated_within_days: Optional[int] = None, *, persist: bool = True) -> dict:
+    """Fetch crops and optionally update the configured crop registry.
 
     Args:
         updated_within_days: If provided, asks GraphQL for crops changed in
             this many previous days. ``None`` requests the complete registry.
+        persist: Write the response to ``CROP_REGISTRY_PATH`` when true.
 
     Returns:
-        The complete decoded GraphQL response that was written to the registry.
+        The complete decoded GraphQL response.
 
     Raises:
         ValueError: If the endpoint is not configured or the response shape is
@@ -149,8 +331,11 @@ def fetch_crops(updated_within_days: Optional[int] = None) -> dict:
     if not isinstance(rows, list):
         raise ValueError("GraphQL response is missing data.getAllCropsFullDetails.rows")
 
-    _write_registry(payload, settings.crop_registry_path)
-    logger.info("Updated crop registry %s with %d crop(s)", settings.crop_registry_path, len(rows))
+    if persist:
+      _write_registry(payload, settings.crop_registry_path)
+      logger.info("Updated crop registry %s with %d crop(s)", settings.crop_registry_path, len(rows))
+    else:
+      logger.info("Fetched %d crop(s) without writing a local registry", len(rows))
     get_known_crops.cache_clear()
     return payload
 

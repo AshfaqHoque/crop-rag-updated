@@ -1,13 +1,14 @@
 """Streamlit interface for the crop advisory chatbot."""
 
 import json
+import os
 import uuid
 
 import requests
 import streamlit as st
 
 
-API_URL = "http://localhost:8000/api/v1/chat/stream"
+API_URL = os.getenv("API_URL", "http://localhost:8000/api/v1/chat/stream")
 REQUEST_TIMEOUT = 120
 
 AVATARS = {

@@ -8,8 +8,9 @@ The application answers questions about crop production, pests, diseases, fertil
 
 - Serves a chat API at `POST /api/v1/chat` and a streaming endpoint at `POST /api/v1/chat/stream`
 - Uses a LangGraph pipeline to rewrite follow-up questions, route intent, retrieve documents, rerank, compress, and generate answers
-- Supports `crop_query`, `company_query`, `chitchat`, and `meaningless` intents
+- Supports `crop_query`, `soil_test_query`, `company_query`, `chitchat`, and `meaningless` intents
 - Stores crop and company knowledge in separate Chroma collections
+- Stores Porokh and general soil-test FAQs in the `soil_test_knowledge_base` collection
 - Reuses the same session ID as the LangGraph thread ID for multi-turn context
 - Runs a Streamlit UI for local testing and demos
 - Loads crop/company data from JSON, Markdown, and JSONL ingestion stages
@@ -30,6 +31,7 @@ LangGraph workflow
    +--> route
           |
           +--> crop_query -> extract_crop -> retrieve -> compress_chunk -> generate
+          +--> soil_test_query -> retrieve_soil_test -> generate_soil_test
           +--> company_query -> retrieve_company -> generate_company
           +--> chitchat -> generate_chitchat
           +--> meaningless -> generate_meaningless
@@ -59,7 +61,7 @@ The JSONL files in `data/` are inspectable chunk dumps. They are useful for chec
 
 1. A user sends a question through the Streamlit UI or the FastAPI API.
 2. The pipeline rewrites follow-up questions and identifies the request type.
-3. For a crop, company, or soil-test question, the app searches the matching Chroma collection on the VM.
+3. The router classifies soil-testing questions separately from crop questions. Soil-test questions search the dedicated `soil_test_knowledge_base` Chroma collection; crop and company questions search their matching collections.
 4. The most relevant results are filtered, reranked, and compressed into context.
 5. The selected context is sent to the configured chat model on the VM.
 6. The API returns the answer together with the rewritten question and source information.
@@ -162,6 +164,8 @@ CHROMA_PORT=8000
 CHROMA_PERSIST_DIR=./data/chroma
 CHROMA_COLLECTION=crop_knowledge_base
 CHROMA_COMPANY_COLLECTION=company_knowledge_base
+CHROMA_SOIL_TEST_COLLECTION=soil_test_knowledge_base
+SOIL_TEST_RETRIEVAL_TOP_K=3
 CROP_REGISTRY_PATH=./data/crops.json
 GRAPHQL_ENDPOINT=https://aunkur-backend-311104304042.us-central1.run.app/graphql
 RETRIEVAL_TOP_K=20
@@ -387,6 +391,26 @@ python -m app.ingestion.load_soil_test_data \
 
 The command writes the inspectable chunk dump to
 `data/soil_test_chunks.jsonl`.
+
+The two CSV sources cover different parts of the soil-testing experience:
+
+- `data/porokh_faq.csv` contains Porokh device and service FAQs.
+- `data/soil_test_faq.csv` contains general soil sampling, testing, and report FAQs.
+
+Both sources are indexed into `soil_test_knowledge_base`. The same collection is
+used for questions about soil sampling, test frequency, sample depth and amount,
+wet or fertilized soil, pH/EC and nutrient interpretation, soil-test-based
+fertilizer recommendations, and the Porokh service. Soil-test retrieval uses up
+to `SOIL_TEST_RETRIEVAL_TOP_K` results (default `3`) before answer generation.
+
+Example questions:
+
+```text
+মাটি পরীক্ষা কেন করব?
+How deep should I collect a soil sample?
+How long does a Porokh soil test report take?
+What nutrients does the Porokh device test?
+```
 
 ## Validation
 

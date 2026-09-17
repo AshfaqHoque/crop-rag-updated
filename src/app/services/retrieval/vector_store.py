@@ -25,12 +25,14 @@ def get_vector_store(collection_name: str | None = None) -> Chroma:
         "embedding_function": get_embeddings(),
     }
     if settings.chroma_host:
+        logger.info("Using remote Chroma at %s:%s for collection '%s'",settings.chroma_host,settings.chroma_port,kwargs["collection_name"],)
         kwargs["client"] = chromadb.HttpClient(
             host=settings.chroma_host,
             port=settings.chroma_port,
             ssl=settings.chroma_ssl,
         )
     else:
+        logger.info("Using local Chroma at %s for collection '%s'",settings.chroma_persist_dir,kwargs["collection_name"],)
         kwargs["persist_directory"] = settings.chroma_persist_dir
     return Chroma(**kwargs)
 

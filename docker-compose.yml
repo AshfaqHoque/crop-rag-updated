@@ -2,21 +2,27 @@ services:
   app:
     build: .
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       APP_ENV: docker
       LOG_LEVEL: INFO
-      CHAT_PROVIDER: ${CHAT_PROVIDER:-ollama}
-      OLLAMA_CHAT_MODEL: gemma3:4b
-      GROQ_CHAT_MODEL: openai/gpt-oss-120b
-      GROQ_API_KEY: ${GROQ_API_KEY:-}
-      OLLAMA_BASE_URL: http://ollama:11434
-      EMBED_MODEL: bge-m3
-      CHROMA_HOST: chroma
-      CHROMA_PORT: 8000
+      CHAT_PROVIDER: vllm
+      VLLM_BASE_URL: http://host.docker.internal:8091/v1
+      VLLM_CHAT_MODEL: gemma4:12b
+      VLLM_API_KEY: ${VLLM_API_KEY:-not-needed}
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      EMBED_MODEL: bge-m3:latest
+      CHROMA_HOST: host.docker.internal
+      CHROMA_PORT: 8001
       CHROMA_COLLECTION: crop_knowledge_base
-      BM25_CACHE_TTL_SECONDS: 300
+      CHROMA_COMPANY_COLLECTION: company_knowledge_base
+      CHROMA_SOIL_TEST_COLLECTION: soil_test_knowledge_base   
       CROP_REGISTRY_PATH: /app/data/crops.json
-      RERANKER_URL: ${RERANKER_URL:-http://host.docker.internal:8090/rerank}
+      RERANKER_URL: http://host.docker.internal:8090/rerank
+      CHECKPOINT_BACKEND: redis
+      REDIS_URL: redis://redis:6379/0
+      LANGSMITH_TRACING: ${LANGSMITH_TRACING_DOCKER:-false}
     ports:
       - "8000:8000"
     healthcheck:
@@ -27,48 +33,32 @@ services:
       start_period: 30s
     volumes:
       - ./data:/app/data
-      - huggingface_cache:/models/huggingface
     depends_on:
-      chroma:
-        condition: service_started
-      ollama-init:
-        condition: service_completed_successfully
-
-  ollama:
-    image: ollama/ollama:latest
-    restart: unless-stopped
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    healthcheck:
-      test: ["CMD", "ollama", "list"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-
-  ollama-init:
-    image: ollama/ollama:latest
-    restart: "no"
-    environment:
-      OLLAMA_HOST: http://ollama:11434
-    entrypoint: ["/bin/sh", "-c"]
-    command: >-
-      ollama pull gemma3:4b &&
-      ollama pull bge-m3
-    depends_on:
-      ollama:
+      redis:
         condition: service_healthy
 
-  chroma:
-    image: chromadb/chroma:latest
+  ui:
+    build: .
     restart: unless-stopped
+    environment:
+      API_URL: http://app:8000/api/v1/chat/stream
+    command: ["streamlit", "run", "ui/streamlit_app.py", "--server.address=0.0.0.0", "--server.port=8501"]
     ports:
-      - "8001:8000"
+      - "8501:8501"
+    depends_on:
+      app:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
     volumes:
-      - chroma_data:/data
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
 volumes:
-  ollama_data:
-  chroma_data:
-  huggingface_cache:
+  redis_data:

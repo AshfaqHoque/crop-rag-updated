@@ -2,8 +2,7 @@ FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    HF_HOME=/models/huggingface
+    PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 
@@ -14,10 +13,11 @@ RUN apt-get update \
 COPY pyproject.toml README.md ./
 COPY src ./src
 COPY data ./data
+COPY ui ./ui
 
 RUN python -m pip install --upgrade pip \
     && python -m pip install .
 
-EXPOSE 8000
+EXPOSE 8000 8501
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

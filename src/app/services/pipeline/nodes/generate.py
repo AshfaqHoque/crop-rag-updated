@@ -31,6 +31,8 @@ Grounding rules:
 def _answer_language(language_type: str) -> str:
     if language_type == "bangla":
         return "natural Bangla"
+    if language_type == "arabic":
+        return "clear Arabic"
     return "clear English"
 
 

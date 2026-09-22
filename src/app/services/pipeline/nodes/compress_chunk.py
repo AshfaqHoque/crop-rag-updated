@@ -55,7 +55,7 @@ def _metadata_prefix(metadata: dict) -> str:
 
     return "[" + " | ".join(pairs) + "] "
 
-def compress_chunk(state: PipelineState) -> PipelineState:
+async def compress_chunk(state: PipelineState) -> PipelineState:
     """Extract only query-relevant content from reranked chunks."""
 
     documents = state.get("reranked_documents", []) or state.get("retrieved_documents", [])
@@ -63,7 +63,7 @@ def compress_chunk(state: PipelineState) -> PipelineState:
     if not documents:
         return {**state, "compressed_documents": []}
 
-    query = ( state.get("rewritten_query") or state.get("normalized_query")or state.get("raw_query", ""))
+    query = ( state.get("rewritten_query") or state.get("raw_query", ""))
     compression_inputs: list[Document] = []
 
     for index, document in enumerate(documents):
@@ -78,7 +78,7 @@ def compress_chunk(state: PipelineState) -> PipelineState:
 
     try:
         compressor = get_context_compressor()
-        compressed_documents = compressor.compress_documents(
+        compressed_documents = await compressor.acompress_documents(
             documents=compression_inputs,
             query=query,
         )

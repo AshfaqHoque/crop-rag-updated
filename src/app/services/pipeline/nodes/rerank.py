@@ -54,7 +54,7 @@ def cut_at_unusual_gap(reranked: list[Document]) -> list[Document]:
         logger.info("rerank unusual gap detected cut_after=%d",cutoff)
         return reranked[:cutoff]
 
-    minimum_score = scores[0] - .7
+    minimum_score = scores[0] - .65
     reranked = [ document for document in reranked if document.metadata["relevance_score"] >= minimum_score ]
     logger.info("rerank score threshold top_score=%.4f minimum_score=%.4f chunks_after=%d",scores[0],minimum_score,len(reranked),)
 

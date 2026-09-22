@@ -11,7 +11,13 @@ class QueryUnderstanding(BaseModel):
 
 class QueryRewrite(BaseModel):
     rewritten_query: str
-    used_history: bool
+
+
+class CropExtraction(BaseModel):
+    crops: list[str] = Field(
+        default_factory=list,
+        description="Crop names selected from the provided crop registry.",
+    )
 
 
 class RelevantChunks(BaseModel):

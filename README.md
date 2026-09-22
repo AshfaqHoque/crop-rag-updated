@@ -149,10 +149,9 @@ Create a `.env` file in the repository root to override the defaults. The projec
 
 ```dotenv
 APP_ENV=dev
-CHAT_PROVIDER=ollama
+CHAT_PROVIDER=vllm
 OLLAMA_CHAT_MODEL=gemma4:31b-cloud
 OLLAMA_BASE_URL=http://localhost:11434
-BANGFISH_CONVERTER_MODEL=gemma4:12b
 VLLM_CHAT_MODEL=gemma4:12b
 VLLM_BASE_URL=http://localhost:8091/v1
 VLLM_API_KEY=not-needed
@@ -172,16 +171,15 @@ RETRIEVAL_TOP_K=20
 COMPANY_RETRIEVAL_TOP_K=3
 RERANK_TOP_K=6
 RERANKER_URL=http://localhost:8090/rerank
-HISTORY_MAX_TURNS=1
 CONTEXT_MAX_CHARS_PER_CHUNK=3000
 LLM_TEMPERATURE=0
 LANGSMITH_TRACING=true
 LANGSMITH_PROJECT=crop-rag-chatbot
-CHECKPOINT_BACKEND=memory
+CHECKPOINT_BACKEND=redis
 REDIS_URL=redis://localhost:6379/0
 ```
 
-Accepted values for `CHAT_PROVIDER` are `ollama`, `groq`, and `vllm`. The default project setup is `ollama`, with embeddings served through Ollama and an optional external reranker used by cropping queries.
+Accepted values for `CHAT_PROVIDER` are `ollama`, `groq`, and `vllm`. The default project setup is `vllm`, with embeddings served through Ollama and an optional external reranker used by cropping queries.
 
 ## Run the API locally
 

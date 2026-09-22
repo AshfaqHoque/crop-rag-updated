@@ -17,7 +17,6 @@ class Settings(BaseSettings):
     # Ollama and Groq remain available for other deployments.
     chat_provider: Literal["ollama", "groq", "vllm"] = "vllm"
     ollama_chat_model: str = "gemma4:31b-cloud"
-    banglish_converter_model: str = "gemma4:12b"
     groq_chat_model: str = "openai/gpt-oss-20b"
     groq_api_key: SecretStr | None = None
     vllm_chat_model: str = "gemma4:12b"
@@ -43,20 +42,14 @@ class Settings(BaseSettings):
     # App
     app_env: str = "dev"
     log_level: str = "INFO"
-    supported_languages: str = "bn,en"
 
     # Pipeline tuning
     retrieval_top_k: int = 20
     company_retrieval_top_k: int = 3
     soil_test_retrieval_top_k: int = 3
-    # dense_candidate_k: int = 20
-    # bm25_candidate_k: int = 20
-    # bm25_cache_ttl_seconds: int = 300
-    # rrf_k: int = 60
-    rerank_top_k: int = 6
+    rerank_top_k: int = 7
     llm_temperature: float = 0
-    history_max_turns: int = 1
-    context_max_chars_per_chunk: int = 3000
+    context_max_chars_per_chunk: int = 4000
 
     # External reranker service
     reranker_url: str = "http://localhost:8090/rerank"
@@ -68,14 +61,8 @@ class Settings(BaseSettings):
     langsmith_endpoint: str = "https://api.smith.langchain.com"
 
     # Checkpointer
-    checkpoint_backend: str = "redis"  # memory | redis | postgres | sqlite
+    checkpoint_backend: str = "redis"  # memory | redis
     redis_url: str = "redis://localhost:6379/0"
-    checkpoint_postgres_uri: str | None = None
-    checkpoint_sqlite_path: str = "./data/checkpoints.db"
-
-    @property
-    def supported_languages_list(self) -> list[str]:
-        return [lang.strip() for lang in self.supported_languages.split(",") if lang.strip()]
 
     @property
     def chat_model(self) -> str:

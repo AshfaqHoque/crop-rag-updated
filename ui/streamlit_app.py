@@ -165,7 +165,7 @@ with st.sidebar:
     st.caption("LANGUAGE")
     st.session_state.language_type = st.radio(
         "Response language",
-        ["english", "bangla"],
+        ["english", "bangla", "arabic"],
         horizontal=True,
         label_visibility="collapsed",
     )

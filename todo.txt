@@ -18,7 +18,7 @@
 15. test with multiple questions to verify rewritten query or raw query should be passed to generator #done, raw passed
 16. add a layer that will decide if previous history/compressed chunk is enough to answer the correct question or not 
 17. statistically analysis how many chars each chunk contains, avg min max etc #done
-18. decide how calculations would be done if toools needed or normal context passing will work
+18. decide how calculations would be done if toools needed or normal context passing will work #done
 19. set another threshold on reranker when the unsual gap is false, remove chunks that has less score then the first one (70 is the threshold)
 20. skip scores in metadata prefix #done
 
@@ -27,3 +27,5 @@
 
 23. currently rewrite layer biased towards crop query, it should consider company query, soil test query follow ups based on chat history
 24. calculation
+
+25. add lang cache

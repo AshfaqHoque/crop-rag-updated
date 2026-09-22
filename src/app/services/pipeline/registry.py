@@ -1,139 +1,64 @@
+"""Minimal runtime crop registry used by extraction.
+
+This module only keeps the canonical crop names needed for entity extraction and
+retrieval. Section and variety registries are intentionally omitted because the
+application does not currently use them at runtime.
 """
-Canonical crop and section registry. Crops are matched deterministically,
-while sections extracted by the LLM are validated against this fixed
-vocabulary before either value reaches the retriever's metadata filters.
-"""
-import json
 from dataclasses import dataclass
 from functools import lru_cache
-from pathlib import Path
 
-from app.core.config import get_settings
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-# The 11 sections that exist as top-level fields in the crop schema /
-# chunk metadata. Keep this in sync with however chunks are built —
-# these must exactly match the "section" value in chunk metadata.
-SECTIONS: list[str] = [
-    "overview",
-    "seed",
-    "land_preparation",
-    "intercultural",
-    "irrigation",
-    "harvest",
-    "fertilizer",
-    "climate",
-    "variety",
-    "pesticide",
-    "herbicide",
-]
-
 
 @dataclass(frozen=True)
 class CropInfo:
-    crop_id: str
-    crop_name: str  # canonical English name — must match Chroma metadata "crop_name" exactly
-    crop_bangla_name: str
+    crop_name: str  # canonical English name — used for Chroma filtering and reranking
+    crop_id: str | None = None
+    crop_bangla_name: str = ""
 
-@dataclass(frozen=True)
-class VarietyInfo:
-    variety_id: int
-    variety_name: str
-    crop_id: int
-    crop_name: str
-    crop_bangla_name: str
+
+def _build_crop_infos(rows: list[dict]) -> list[CropInfo]:
+    crops: list[CropInfo] = []
+    for item in rows:
+        crop_name = item.get("crop_name")
+        if not crop_name:
+            continue
+
+        crops.append(
+            CropInfo(
+                crop_id=str(item.get("crop_id") or item.get("id") or "").strip() or None,
+                crop_name=str(crop_name).strip(),
+                crop_bangla_name=str(item.get("crop_bangla_name") or "").strip(),
+            )
+        )
+    return crops
+
 
 @lru_cache
 def get_known_crops() -> list[CropInfo]:
-    """
-    Loads the canonical crop list from a JSON file (crop_id, crop_name,
-    crop_bangla_name). This should be exported from your crop database —
-    see data/crops.json for the expected format and README for the
-    export step. Cached for the process lifetime; restart the app (or
-    call .cache_clear()) after updating the file.
-    """
-    settings = get_settings()
-    path = Path(settings.crop_registry_path)
-    if not path.exists():
-        logger.warning("Crop registry file not found at %s — extraction will match no crops.", path)
-        return []    
-    with path.open("r", encoding="utf-8") as file:
-        raw = json.load(file)
-     
-    if isinstance(raw, dict):
-        rows = raw.get("data", {}).get("getAllCropsFullDetails", {}).get("rows", [])
-    else:
-        logger.warning("Crop registry at %s has an unsupported JSON shape.", path)
+    """Load the canonical crop list from GraphQL and cache it in memory."""
+    from app.ingestion.fetch_crops import fetch_crops
+
+    payload = fetch_crops(persist=False)
+    rows = payload.get("data", {}).get("getAllCropsFullDetails", {}).get("rows", [])
+    if not isinstance(rows, list):
+        logger.warning("GraphQL crop response did not include rows; returning an empty registry.")
         return []
-    
+
     crops: list[CropInfo] = []
-    
     for item in rows:
-        crop_id = item.get("crop_id") or item.get("id")
         crop_name = item.get("crop_name")
-        crop_bangla_name = item.get("crop_bangla_name")
-        
-        if crop_id is None or not crop_name or not crop_bangla_name:
+        if not crop_name:
             continue
-        
+
         crops.append(
             CropInfo(
-                crop_id=str(crop_id),
+                crop_id=str(item.get("crop_id") or item.get("id") or "").strip() or None,
                 crop_name=str(crop_name).strip(),
-                crop_bangla_name=str(crop_bangla_name).strip(),
+                crop_bangla_name=str(item.get("crop_bangla_name") or "").strip(),
             )
         )
-    
     return crops
-
-def get_known_varieties() -> list[VarietyInfo]:
-    settings = get_settings()
-    path = Path(settings.crop_registry_path)
-    if not path.exists():
-        logger.warning("Crop registry file not found at %s — extraction will match no varieties.", path)    
-    with path.open("r", encoding="utf-8") as file:
-        raw = json.load(file)
-    if isinstance(raw, dict):
-        rows = raw.get("data", {}).get("getAllCropsFullDetails", {}).get("rows", [])
-    else:
-        logger.warning("Crop registry at %s has an unsupported JSON shape.", path)
-        return []
-    
-    varities: list[VarietyInfo] = []
-    
-    for item in rows:
-        crop_id = item.get("crop_id") or item.get("id")
-        crop_name = item.get("crop_name")
-        crop_bangla_name = item.get("crop_bangla_name")
-        
-        variety = item.get("variety", [])
-        for v in variety:
-            variety_id = v.get("id")
-            variety_name = v.get("variety_name")
-            
-            if crop_id is None or variety_id is None or not crop_name or not crop_bangla_name or not variety_name:
-                continue
-            
-            varities.append(
-                VarietyInfo(
-                    crop_id=str(crop_id),
-                    crop_name=str(crop_name).strip(),
-                    crop_bangla_name=str(crop_bangla_name).strip(),
-                    variety_id=str(variety_id),
-                    variety_name=str(variety_name).strip(),
-                )
-            )
-    return varities
-            
-        
-
-# def crop_names() -> list[str]:
-#     return [c.crop_name for c in get_known_crops()]
-
-
-# def format_crop_list_for_prompt() -> str:
-#     """'Boro Paddy (বোরো ধান), Mango (আম), ...' — fed into the extraction prompt."""
-#     return ", ".join(f"{c.crop_name} ({c.crop_bangla_name})" for c in get_known_crops())
 

@@ -43,7 +43,7 @@ def _format_context(documents: list[Document]) -> str:
     formatted = []
     for index, document in enumerate(documents, start=1):
         chunk_id = document.metadata.get("chunk_id", "unknown")
-        formatted.append(f"[{index}] chunk_id={chunk_id}\n{document.page_content[:max_chars]}")
+        formatted.append(f"\n{document.page_content[:max_chars]}")
     return "\n\n".join(formatted)
 
 

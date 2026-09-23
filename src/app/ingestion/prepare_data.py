@@ -243,7 +243,7 @@ def chunk_cost(crop: dict) -> Chunk | None:
     for cost in costs:
         cost_type = (cost.get("cost_type") or "").strip()
         amount = cost.get("amount")
-        unit_name = (cost.get("unitInfo") or {}).get("unit_name", "")
+        unit_name = "টাকা প্রতি শতক" #(cost.get("unitInfo") or {}).get("unit_name", "")
         if not is_meaningful(cost_type) or not is_meaningful(amount):
             continue
         label = cost_type.replace("_", " ").strip().title()

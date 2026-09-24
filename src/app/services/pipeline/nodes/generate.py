@@ -52,7 +52,7 @@ def generate(state: PipelineState) -> PipelineState:
     history = conversation[-3:-1] if conversation else []
     context_documents = (state.get("compressed_documents") or state.get("reranked_documents") or state.get("retrieved_documents", []))
     query = (state.get("raw_query") or state.get("raw_query", ""))
-    current_message = f"Context:\n{_format_context(context_documents)}\n\nUser Query: {query}"
+    current_message = f"Your Knowledge Context:\n{_format_context(context_documents)}\n\nUser Query: {query}"
 
     messages = [
         SystemMessage(

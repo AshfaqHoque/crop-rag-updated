@@ -68,6 +68,8 @@ def test_vllm_chat_client_uses_openai_compatible_endpoint(mock_settings, mock_ch
         vllm_chat_model="gemma4:12b",
         vllm_api_key="not-needed",
         llm_temperature=0.1,
+        vllm_top_p=0.9,
+        vllm_top_k=30,
     )
     get_vllm_chat_llm.cache_clear()
 

@@ -24,7 +24,7 @@ def test_reranker_calls_service_and_orders_chunks(monkeypatch):
     def post(url, *, json, timeout):
         assert url == get_settings().reranker_url
         assert json == {"query": "rewritten", "documents": ["a", "b", "c"]}
-        assert timeout == 30.0
+        assert timeout == get_settings().reranker_timeout_seconds
         return FakeResponse()
 
     monkeypatch.setattr(rerank_module.httpx, "post", post)

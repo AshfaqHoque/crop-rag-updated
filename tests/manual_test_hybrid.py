@@ -1,26 +1,12 @@
 import httpx
-from langchain_chroma import Chroma
-from langchain_ollama import OllamaEmbeddings
 
-from app.core.config import get_settings
+from app.services.retrieval.vector_store import get_vector_store
 
-settings = get_settings()
+vectorstore = get_vector_store()
 
-embedding_model = settings.embed_model
-collection_name = settings.chroma_collection
-persist_directory = settings.chroma_persist_dir
+query = "লবণাক্ত জমির জন্য ব্রি ধান ৪৭ ও আলোড়নের মধ্যে কী পার্থক্য আছে?"
 
-embeddings = OllamaEmbeddings(model=embedding_model)
-
-vectorstore = Chroma(
-    collection_name=collection_name,
-    embedding_function=embeddings,
-    persist_directory=persist_directory,
-)
-
-query = "আলোড়ন?"
-
-semantic_results = vectorstore.similarity_search_with_score(query, k=40)
+semantic_results = vectorstore.similarity_search_with_score(query, k=20)
 
 semantic_docs = [doc for doc, _ in semantic_results]
 

@@ -33,3 +33,6 @@ class PipelineState(TypedDict, total=False):
 
     # output
     answer: str
+
+    # HITL escalation
+    status: str | None

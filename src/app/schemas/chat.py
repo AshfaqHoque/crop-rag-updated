@@ -29,6 +29,7 @@ class ChatResponse(BaseModel):
     session_id: str
     answer: str
     language: str
+    status: str | None = None
     rewritten_query: str | None = None
     retrieval_mode: str | None = None
     sources: list[SourceChunk] = Field(default_factory=list)

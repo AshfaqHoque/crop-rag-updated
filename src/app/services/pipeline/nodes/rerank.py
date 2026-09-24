@@ -10,6 +10,7 @@ from app.core.logging import get_logger
 from app.services.pipeline.state import PipelineState
 
 logger = get_logger(__name__)
+settings = get_settings()
 
 def cut_at_unusual_gap(reranked: list[Document]) -> list[Document]:
     """
@@ -34,7 +35,7 @@ def cut_at_unusual_gap(reranked: list[Document]) -> list[Document]:
     # Remove biggest gap before calculating normal/typical gap
     other_gaps = [gap for index, gap in enumerate(gaps) if index != max_gap_index]
     median_gap = statistics.median(other_gaps)
-    threshold = median_gap * 60
+    threshold = median_gap * settings.rerank_gap_multiplier
     unusual = max_gap >= threshold
 
     logger.info("rerank gap analysis scores=%s gaps=%s max_gap=%.4f "
@@ -54,7 +55,7 @@ def cut_at_unusual_gap(reranked: list[Document]) -> list[Document]:
         logger.info("rerank unusual gap detected cut_after=%d",cutoff)
         return reranked[:cutoff]
 
-    minimum_score = scores[0] - .65
+    minimum_score = scores[0] - settings.rerank_min_score_delta
     reranked = [ document for document in reranked if document.metadata["relevance_score"] >= minimum_score ]
     logger.info("rerank score threshold top_score=%.4f minimum_score=%.4f chunks_after=%d",scores[0],minimum_score,len(reranked),)
 
@@ -67,12 +68,12 @@ def rerank(state: PipelineState) -> PipelineState:
 
     query = state.get("rewritten_query") or state["raw_query"]
     response = httpx.post(
-        get_settings().reranker_url,
+        settings.reranker_url,
         json={
             "query": query,
             "documents": [document.page_content for document in documents],
         },
-        timeout=30.0,
+        timeout=settings.reranker_timeout_seconds,
     )
     response.raise_for_status()
 
@@ -84,7 +85,7 @@ def rerank(state: PipelineState) -> PipelineState:
         reranked.append(Document(page_content=document.page_content, metadata=metadata))
 
     reranked.sort(key=lambda document: document.metadata["relevance_score"], reverse=True)
-    reranked = reranked[: get_settings().rerank_top_k]
+    reranked = reranked[: settings.rerank_top_k]
     reranked = cut_at_unusual_gap(reranked)
 
     logger.info(

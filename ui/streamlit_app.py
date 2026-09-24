@@ -7,9 +7,11 @@ import uuid
 import requests
 import streamlit as st
 
+from app.core.config import get_settings
 
-API_URL = os.getenv("API_URL", "http://localhost:8000/api/v1/chat/stream")
-REQUEST_TIMEOUT = 120
+settings = get_settings()
+API_URL = os.getenv("API_URL", settings.ui_api_url)
+REQUEST_TIMEOUT = settings.ui_request_timeout_seconds
 
 AVATARS = {
     "user": "🧑",

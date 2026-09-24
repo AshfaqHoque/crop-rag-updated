@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     vllm_chat_model: str = "gemma4:12b"
     vllm_base_url: str = "http://localhost:8091/v1"
     vllm_api_key: str = "not-needed"
+    vllm_top_p: float = 0.9
+    vllm_top_k: int = 30
 
     # Ollama chat/embedding server
     ollama_base_url: str = "http://localhost:11434"
@@ -39,6 +41,7 @@ class Settings(BaseSettings):
     # Knowledge registry
     crop_registry_path: str = "./data/crops.json"
     graphql_endpoint: str = "https://aunkur-backend-311104304042.us-central1.run.app/graphql"
+    graphql_timeout_seconds: float = 30.0
     # App
     app_env: str = "dev"
     log_level: str = "INFO"
@@ -50,9 +53,15 @@ class Settings(BaseSettings):
     rerank_top_k: int = 7
     llm_temperature: float = 0
     context_max_chars_per_chunk: int = 4000
+    compression_temperature: float = 0.1
+    compression_max_tokens: int = 1000
+    rerank_gap_multiplier: float = 60.0
+    rerank_min_score_delta: float = 0.65
+    stream_chunk_delay_seconds: float = 0.1
 
     # External reranker service
     reranker_url: str = "http://localhost:8090/rerank"
+    reranker_timeout_seconds: float = 30.0
 
     # LangSmith tracing
     langsmith_tracing: bool = True
@@ -63,6 +72,10 @@ class Settings(BaseSettings):
     # Checkpointer
     checkpoint_backend: str = "redis"  # memory | redis
     redis_url: str = "redis://localhost:6379/0"
+
+    # Streamlit frontend
+    ui_api_url: str = "http://localhost:8000/api/v1/chat/stream"
+    ui_request_timeout_seconds: float = 120.0
 
     @property
     def chat_model(self) -> str:

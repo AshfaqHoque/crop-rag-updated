@@ -6,11 +6,13 @@ from langchain_core.documents import Document
 from langchain_classic.retrievers.document_compressors import LLMChainExtractor
 from langchain_core.prompts import PromptTemplate
 
+from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.services.llm.client import get_chat_llm
 from app.services.pipeline.state import PipelineState
 
 logger = get_logger(__name__)
+settings = get_settings()
 
 # Standard LangChain LLMChainExtractor prompt with your custom rule added
 DEFAULT_EXTRACTION_TEMPLATE = """Given the following question and context, extract any part of the context AS IS that is directly useful for answering the question. Preserve context liberally. Return NO_OUTPUT only if the context is completely irrelevant.
@@ -31,7 +33,7 @@ CUSTOM_DEFAULT_PROMPT = PromptTemplate(
 def get_context_compressor() -> LLMChainExtractor:
     """Create the LangChain LLM context compressor."""
     #for vllm it is max_tokens=1000, for ollama it is num_predict=1000
-    llm = get_chat_llm(temperature=0.1).bind(max_tokens=1000)
+    llm = get_chat_llm(temperature=settings.compression_temperature).bind(max_tokens=settings.compression_max_tokens)
     # Uses LangChain's default extraction prompt.
     return LLMChainExtractor.from_llm(llm, prompt=CUSTOM_DEFAULT_PROMPT)
 

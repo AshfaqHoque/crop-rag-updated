@@ -319,7 +319,7 @@ def fetch_crops(updated_within_days: Optional[int] = None, *, persist: bool = Tr
     response = requests.post(
         settings.graphql_endpoint,
         json={"query": QUERY, "variables": {"updated_within_days": updated_within_days}},
-        timeout=30,
+        timeout=settings.graphql_timeout_seconds,
     )
     response.raise_for_status()
     payload = response.json()

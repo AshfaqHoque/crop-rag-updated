@@ -9,6 +9,7 @@ from langchain_core.documents import Document
 from langchain_core.messages import HumanMessage
 from starlette.concurrency import run_in_threadpool
 
+from app.core.config import get_settings
 from app.schemas.chat import ChatRequest, ChatResponse, SourceChunk
 from app.services.pipeline.graph import get_chat_graph
 
@@ -67,7 +68,7 @@ class ChatService:
                     continue  # second LLM run (e.g. an invoke_text retry) — skip it
                 if msg_chunk.content:
                     yield f"data: {json.dumps({'content': msg_chunk.content})}\n\n"
-                    await asyncio.sleep(0.1)
+                    await asyncio.sleep(get_settings().stream_chunk_delay_seconds)
             yield "data: [DONE]\n\n"
 
 

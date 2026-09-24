@@ -200,9 +200,52 @@ if user_input:
     # Stream assistant response.
     with st.chat_message("assistant", avatar=AVATARS["assistant"]):
         try:
-            answer = st.write_stream(
-                stream_backend(message=user_input,language_type=st.session_state.language_type,session_id=st.session_state.active_session_id,)
+            loading = st.empty()
+            loading.markdown(
+                """
+                <style>
+                    .aunkur-loader {
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 5px;
+                        color: #5f6f52;
+                        font-size: 0.9rem;
+                    }
+                    .aunkur-loader span {
+                        width: 7px;
+                        height: 7px;
+                        border-radius: 50%;
+                        background: #7a9d54;
+                        animation: aunkur-bounce 1.2s infinite ease-in-out;
+                    }
+                    .aunkur-loader span:nth-child(2) {
+                        animation-delay: 0.15s;
+                    }
+                    .aunkur-loader span:nth-child(3) {
+                        animation-delay: 0.3s;
+                    }
+                    @keyframes aunkur-bounce {
+                        0%, 60%, 100% { transform: translateY(0); opacity: 0.45; }
+                        30% { transform: translateY(-4px); opacity: 1; }
+                    }
+                </style>
+                <div class="aunkur-loader">
+                    <span></span><span></span><span></span>
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
+
+            def stream_with_loading():
+                for chunk in stream_backend(
+                    message=user_input,
+                    language_type=st.session_state.language_type,
+                    session_id=st.session_state.active_session_id,
+                ):
+                    loading.empty()
+                    yield chunk
+
+            answer = st.write_stream(stream_with_loading())
         except Exception as error:
             st.error(get_backend_error(error))
             answer = None

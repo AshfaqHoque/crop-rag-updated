@@ -1,0 +1,54 @@
+# Cloud Build config for Crop_RAG.
+#
+# Builds the "app" service from docker-compose.yml (the only service with a
+# custom Dockerfile) and pushes it to Artifact Registry, tagged with both the
+# short commit SHA and "latest". Qdrant, Redis, and the reranker are external
+# managed services (configured via QDRANT_URL/REDIS_URL/RERANKER_URL) — this
+# repo does not build or mirror images for them.
+#
+# This config only builds and pushes images — it does not deploy to Cloud
+# Run. Deploy separately once the images are in Artifact Registry, e.g.:
+#   gcloud run deploy crop-rag-app \
+#     --image=REGION-docker.pkg.dev/PROJECT_ID/crop-rag/app:latest \
+#     --region=REGION
+#
+# Trigger it with:
+#   gcloud builds submit --config=cloudbuild.yaml \
+#     --substitutions=_REGION=us-central1,_REPO=crop-rag
+#
+substitutions:
+  _REGION: us-central1
+  _REPO: development
+  _IMAGE: chat-bot-api
+  _PROJECT_ID: upheld-setting-423215-p7
+
+images:
+  - "${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO}/${_IMAGE}:latest"
+
+steps:
+  # Build the app image from Crop_RAG/Dockerfile (same context/dockerfile
+  # docker-compose.yml's "app" service uses). BuildKit is required for the
+  # Dockerfile's `RUN --mount=type=cache` steps.
+  - id: build-app
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        DOCKER_BUILDKIT=1 docker build \
+          -t "${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO}/${_IMAGE}:latest" \
+          -f Dockerfile .
+
+  # Push both tags of the app image.
+  - id: push-app
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - "${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO}/${_IMAGE}"
+      - --all-tags
+    waitFor: ["build-app"]
+
+options:
+  machineType: E2_HIGHCPU_8
+
+timeout: 3600s

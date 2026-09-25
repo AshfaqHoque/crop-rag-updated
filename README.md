@@ -174,7 +174,7 @@ RERANKER_URL=http://localhost:8090/rerank
 CONTEXT_MAX_CHARS_PER_CHUNK=3000
 LLM_TEMPERATURE=0
 LANGSMITH_TRACING=true
-LANGSMITH_PROJECT=crop-rag-chatbot
+LANGSMITH_PROJECT=aunkur-chat-api
 CHECKPOINT_BACKEND=redis
 REDIS_URL=redis://localhost:6379/0
 ```
@@ -430,3 +430,38 @@ ruff check .
 - Crop retrieval depends on a reachable reranker service at `RERANKER_URL`.
 - This project is designed for a local or self-hosted deployment and should be validated against the target model and vector store environment before production use.
 - The app currently has no license metadata declared in the repository.
+
+ssh -N -L 8091:127.0.0.1:8091 -L 8090:127.0.0.1:8090 -L 11434:127.0.0.1:11434 -L 8001:127.0.0.1:8000 imtiazhossain@34.139.77.250
+
+
+## Docker Image push to GCloud Artifact Registry
+
+gcloud builds submit \
+  --config=cloudbuild.yaml \
+  --project=upheld-setting-423215-p7 \
+  .
+
+## Artifact Registry run deploy
+
+gcloud run deploy chat-bot-api \
+--image=us-central1-docker.pkg.dev/upheld-setting-423215-p7/development/chat-bot-api:latest \
+--port=8000 \
+--region=us-central1 \
+--allow-unauthenticated \
+--platform managed
+
+## Azure Deploy
+
+az containerapp up \
+  --name aunkur-chat-api \
+  --resource-group aunkur-ai-rg \
+  --environment aunkur-ai-env \
+  --source . \
+  --ingress external \
+  --target-port 8000
+
+## Update 
+az containerapp update \
+  --name aunkur-chat-api \
+  --resource-group aunkur-ai-rg \
+  --source .

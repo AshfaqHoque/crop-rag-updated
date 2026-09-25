@@ -18,8 +18,8 @@ Extract crops mentioned in the user query that appear in the registry below. Ret
 
 Rules:
 - Only select crops present in the registry.
-- First determine the crop(s) the query is genuinely about, based on meaning and context — not by matching crop names against words or fragments in the text (e.g. a pest, disease, or other fixed term may contain a crop's name without the query being about that crop).
-- Only return a crop if you are confident it is the crop the user means.
+- First determine the crop(s) the query is genuinely about, including resolving cultivars, varieties, or common local names to their parent crop present in the registry.
+- Map variety, cultivar, or breed names (e.g., BRRI Dhan / ব্রি ধান varieties) to their corresponding canonical crop in the registry when there is a well-established mapping. Only return an empty list if a variety cannot be mapped or is genuinely ambiguous.
 - If you are confident about one crop but unsure whether another candidate crop is also being referenced, do not return just the one you're confident about — return an empty list instead. Do not return a partial or "safer" subset.
 - If you are not confident about any crop, return an empty list.
 - Never answer the user's question, only return the structured output.

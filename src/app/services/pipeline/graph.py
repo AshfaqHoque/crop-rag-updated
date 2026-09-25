@@ -59,7 +59,7 @@ def build_chat_graph():
         "route",
         route_after_route,
         {
-            "extract_crop": "extract_crop",
+            "extract_crop": "retrieve",
             "retrieve_company": "retrieve_company",
             "retrieve_soil_test": "retrieve_soil_test",
             "generate_chitchat": "generate_chitchat",

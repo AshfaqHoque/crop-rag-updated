@@ -41,7 +41,7 @@ multi_retriever = MultiQueryRetriever.from_llm(
 )
 
 # ── Test Query ─────────────────────────────────────────────────────
-query = "আলোড়ন কোন মৌসুমে চাষ করা যায়?"
+query = "ব্রি ধান৪৭"
 # query = "bhutta chara ki ki jaat chash korle bhalo folon pawa jay"
 
 print(f"Original Query: {query}\n")

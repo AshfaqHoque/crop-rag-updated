@@ -7,29 +7,20 @@ services:
     environment:
       APP_ENV: docker
       LOG_LEVEL: INFO
-
-      # LLM / Gemma 4
       CHAT_PROVIDER: vllm
       VLLM_BASE_URL: http://10.30.0.2:8091/v1
       VLLM_CHAT_MODEL: gemma4:12b
       VLLM_API_KEY: ${VLLM_API_KEY:-not-needed}
       OLLAMA_BASE_URL: http://10.30.0.2:11434
-
-      # Local retrieval sidecar. Infinity serves BOTH models on one port.
-      EMBED_URL: http://retrieval:7997
-      EMBED_MODEL: BAAI/bge-m3
-      RERANKER_URL: http://retrieval:7997/rerank
-      RERANKER_MODEL: BAAI/bge-reranker-v2-m3
-
-      # Existing vector store settings. Keep/remove according to the app code.
+      EMBED_MODEL: bge-m3:latest
       CHROMA_HOST: 10.30.0.2
       CHROMA_PORT: 8001
       CHROMA_COLLECTION: crop_knowledge_base
       CHROMA_COMPANY_COLLECTION: company_knowledge_base
-      CHROMA_SOIL_TEST_COLLECTION: soil_test_knowledge_base
-
+      CHROMA_SOIL_TEST_COLLECTION: soil_test_knowledge_base   
       CROP_REGISTRY_PATH: /app/data/crops.json
-      CHECKPOINT_BACKEND: redis
+      RERANKER_URL: http://10.30.0.2:8090/rerank
+      CHECKPOINT_BACKEND: memory
       REDIS_URL: redis://redis:6379/0
       LANGSMITH_TRACING: ${LANGSMITH_TRACING_DOCKER:-false}
     ports:
@@ -43,31 +34,8 @@ services:
     volumes:
       - ./data:/app/data
     depends_on:
-      retrieval:
-        condition: service_started
       redis:
         condition: service_healthy
-
-  # One model server for both BGE-M3 embeddings and BGE reranking.
-  # Infinity exposes OpenAI-compatible POST /embeddings and Cohere-style POST /rerank.
-  retrieval:
-    image: michaelf34/infinity:0.0.77-cpu
-    restart: unless-stopped
-    command:
-      - v2
-      - --model-id
-      - BAAI/bge-m3
-      - --model-id
-      - BAAI/bge-reranker-v2-m3
-      - --port
-      - "7997"
-      - --engine
-      - torch
-    environment:
-      INFINITY_ANONYMOUS_USAGE_STATS: "0"
-      HF_HOME: /app/.cache
-    volumes:
-      - retrieval_cache:/app/.cache
 
   ui:
     build: .
@@ -94,4 +62,3 @@ services:
 
 volumes:
   redis_data:
-  retrieval_cache:

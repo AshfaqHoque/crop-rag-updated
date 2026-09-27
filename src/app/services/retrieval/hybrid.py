@@ -69,50 +69,26 @@ class SemanticRetriever:
             raise
 
         documents: list[Document] = []
-        seen: set[str] = set()
         for document, distance in dense_results:
             metadata = dict(document.metadata)
             metadata["distance"] = float(distance)
-            self._append_unique(documents, seen, Document(
-                page_content=document.page_content,
-                metadata=metadata,
-            ))
+            documents.append(Document(page_content=document.page_content, metadata=metadata))
 
         query_tokens = tokenize(query)
         if corpus and query_tokens:
-            tokenized_documents = [
-                (document, tokenize(document.page_content))
-                for document in corpus
-            ]
-            tokenized_documents = [
-                (document, tokens)
-                for document, tokens in tokenized_documents
-                if tokens
-            ]
-            if tokenized_documents:
-                lexical_documents, tokenized_corpus = zip(*tokenized_documents)
-                bm25 = BM25Okapi(list(tokenized_corpus))
-                scores = bm25.get_scores(query_tokens)
-                ranked_indices = sorted(
-                    range(len(scores)),
-                    key=lambda index: scores[index],
-                    reverse=True,
-                )[:limit]
-                for index in ranked_indices:
-                    self._append_unique(documents, seen, lexical_documents[index])
+            bm25 = BM25Okapi([tokenize(document.page_content) for document in corpus])
+            scores = bm25.get_scores(query_tokens)
+            top_indices = sorted(
+                range(len(scores)), key=lambda index: scores[index], reverse=True
+            )[:limit]
+            documents.extend(corpus[index] for index in top_indices)
 
-        return documents, "hybrid_filtered"
+        combined: list[Document] = []
+        seen: set[str] = set()
+        for document in documents:
+            key = str(document.metadata.get("chunk_id") or document.page_content)
+            if key not in seen:
+                seen.add(key)
+                combined.append(document)
 
-    @staticmethod
-    def _append_unique(
-        documents: list[Document],
-        seen: set[str],
-        document: Document,
-    ) -> bool:
-        chunk_id = document.metadata.get("chunk_id")
-        unique_key = str(chunk_id or document.page_content)
-        if unique_key in seen:
-            return False
-        seen.add(unique_key)
-        documents.append(document)
-        return True
+        return combined, "hybrid_filtered"

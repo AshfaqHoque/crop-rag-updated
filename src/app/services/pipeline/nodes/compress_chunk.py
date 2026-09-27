@@ -61,6 +61,7 @@ async def compress_chunk(state: PipelineState) -> PipelineState:
     """Extract only query-relevant content from reranked chunks."""
 
     documents = state.get("reranked_documents", []) or state.get("retrieved_documents", [])
+    documents = [document for document in documents if document.metadata.get("relevance_score", 1.0) >= 0.9]
 
     if not documents:
         return {**state, "compressed_documents": []}

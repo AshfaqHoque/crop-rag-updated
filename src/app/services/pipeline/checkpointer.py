@@ -9,6 +9,7 @@ def make_checkpointer():
     backend = settings.checkpoint_backend  # "memory" | "redis" | "postgres" | "sqlite"
     if backend == "redis":
         from langgraph.checkpoint.redis import RedisSaver
+        logger.info("checkpointer backend=redis")
         saver = RedisSaver.from_conn_string(settings.redis_url)
         saver.setup()
         return saver

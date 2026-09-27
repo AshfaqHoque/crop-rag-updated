@@ -66,7 +66,7 @@ class Settings(BaseSettings):
     # LangSmith tracing
     langsmith_tracing: bool = True
     langsmith_api_key: SecretStr | None = None
-    langsmith_project: str = "crop-rag-chatbot"
+    langsmith_project: str = "aunkur-chat-api"
     langsmith_endpoint: str = "https://api.smith.langchain.com"
 
     # Checkpointer

@@ -1,0 +1,111 @@
+# Azure Container Apps template for aunkur-chat-api.
+#
+# One Container App replica contains TWO containers:
+#   1) api       -> FastAPI application on port 8000
+#   2) retrieval -> Infinity serving BGE-M3 + bge-reranker-v2-m3 on port 7997
+#
+# Containers in the same Azure Container App share the network namespace, so
+# the API reaches retrieval through localhost:7997.
+#
+# NOTE: The resource allocation below totals 4 vCPU / 8 GiB, the normal
+# Consumption profile ceiling. Two ~568M-parameter models can be memory-tight
+# at this ceiling. For production, a Flexible/Dedicated profile with >8 GiB
+# per replica is safer if you see OOM/restarts.
+
+properties:
+  configuration:
+    activeRevisionsMode: Single
+    ingress:
+      external: true
+      targetPort: 8000
+      transport: auto
+
+  template:
+    containers:
+      - name: api
+        image: us-central1-docker.pkg.dev/upheld-setting-423215-p7/development/chat-bot-api:latest
+        env:
+          - name: APP_ENV
+            value: production
+          - name: LOG_LEVEL
+            value: INFO
+
+          # Both endpoints are local because retrieval is a sidecar in the same replica.
+          - name: EMBED_URL
+            value: http://localhost:7997
+          - name: EMBED_MODEL
+            value: BAAI/bge-m3
+          - name: RERANKER_URL
+            value: http://localhost:7997/rerank
+          - name: RERANKER_MODEL
+            value: BAAI/bge-reranker-v2-m3
+
+          # Keep your existing production values/secrets for these.
+          # - name: CHECKPOINT_BACKEND
+          #   value: redis
+          # - name: REDIS_URL
+          #   secretRef: redis-url
+          # - name: QDRANT_URL
+          #   secretRef: qdrant-url
+          # - name: QDRANT_API_KEY
+          #   secretRef: qdrant-api-key
+          # - name: VLLM_BASE_URL
+          #   secretRef: vllm-base-url
+          # - name: VLLM_CHAT_MODEL
+          #   value: gemma4:12b
+          # - name: VLLM_API_KEY
+          #   secretRef: vllm-api-key
+
+        resources:
+          cpu: 0.5
+          memory: 1Gi
+
+        probes:
+          - type: Liveness
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 5
+
+      - name: retrieval
+        image: us-central1-docker.pkg.dev/upheld-setting-423215-p7/development/chat-retrieval:latest
+        command:
+          - infinity_emb
+        args:
+          - v2
+          - --model-id
+          - BAAI/bge-m3
+          - --model-id
+          - BAAI/bge-reranker-v2-m3
+          - --port
+          - "7997"
+          - --engine
+          - torch
+        env:
+          - name: INFINITY_ANONYMOUS_USAGE_STATS
+            value: "0"
+        resources:
+          cpu: 3.5
+          memory: 7Gi
+        probes:
+          - type: Startup
+            httpGet:
+              path: /health
+              port: 7997
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 60
+          - type: Liveness
+            httpGet:
+              path: /health
+              port: 7997
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 5
+
+    scale:
+      minReplicas: 1
+      maxReplicas: 2

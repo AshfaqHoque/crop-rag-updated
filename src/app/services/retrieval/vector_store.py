@@ -78,11 +78,12 @@ def list_documents(
     *,
     crops: list[str] | None = None,
     sections: list[str] | None = None,
+    collection_name: str | None = None,
 ) -> list[Document]:
     """Load documents for lexical retrieval using the same metadata filter."""
     try:
         where = build_metadata_filter(crops, sections)
-        result = get_vector_store().get(where=where, include=["documents", "metadatas"])
+        result = get_vector_store(collection_name).get(where=where,include=["documents", "metadatas"],)
         ids = result.get("ids") or []
         texts = result.get("documents") or []
         metadatas = result.get("metadatas") or []

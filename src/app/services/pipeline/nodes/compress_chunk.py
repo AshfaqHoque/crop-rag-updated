@@ -58,18 +58,23 @@ def _metadata_prefix(metadata: dict) -> str:
     return "[" + " | ".join(pairs) + "] "
 
 async def compress_chunk(state: PipelineState) -> PipelineState:
-    """Extract only query-relevant content from reranked chunks."""
+    """Compress lower-scoring chunks and preserve the strongest chunks as-is."""
 
     documents = state.get("reranked_documents", []) or state.get("retrieved_documents", [])
-    documents = [document for document in documents if document.metadata.get("relevance_score", 1.0) >= 0.9]
 
     if not documents:
         return {**state, "compressed_documents": []}
 
     query = ( state.get("rewritten_query") or state.get("raw_query", ""))
     compression_inputs: list[Document] = []
+    output_entries: list[tuple[int, Document]] = []
 
     for index, document in enumerate(documents):
+        score = document.metadata.get("relevance_score", 0.0)
+        if score > 0.9:
+            output_entries.append((index, document))
+            continue
+
         content = document.page_content.strip()
 
         if not content:
@@ -85,7 +90,6 @@ async def compress_chunk(state: PipelineState) -> PipelineState:
             documents=compression_inputs,
             query=query,
         )
-        output_documents = []
 
         for compressed_document in compressed_documents:
             content = compressed_document.page_content.strip()
@@ -101,15 +105,23 @@ async def compress_chunk(state: PipelineState) -> PipelineState:
             if prefix:
                 content = f"{prefix}{content}"
 
-            output_documents.append(
-                Document(
-                    page_content=content,
-                    metadata=metadata,
+            output_entries.append(
+                (
+                    index,
+                    Document(
+                        page_content=content,
+                        metadata=metadata,
+                    ),
                 )
             )
     except Exception:
         logger.exception("Context compression failed; using reranked chunks")
-        output_documents = list(documents)
+        output_entries = list(enumerate(documents))
+
+    output_documents = [
+        document
+        for _, document in sorted(output_entries, key=lambda entry: entry[0])
+    ]
 
     original_chars = sum(
         len(document.page_content)

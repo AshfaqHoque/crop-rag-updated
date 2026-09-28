@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_router
 from app.core.config import get_settings
@@ -16,6 +17,14 @@ app = FastAPI(
     title="Aunkur AI Chatbot",
     version="0.2.0",
     description="RAG chatbot for crop advisory Q&A (Bangla/English)",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # Your hosted UI domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 

@@ -3,23 +3,23 @@ services:
     build: .
     restart: unless-stopped
     extra_hosts:
-      - "10.30.0.2:host-gateway"
+      - "localhost:host-gateway"
     environment:
       APP_ENV: docker
       LOG_LEVEL: INFO
       CHAT_PROVIDER: vllm
-      VLLM_BASE_URL: http://10.30.0.2:8091/v1
+      VLLM_BASE_URL: http://localhost:8091/v1
       VLLM_CHAT_MODEL: gemma4:12b
       VLLM_API_KEY: ${VLLM_API_KEY:-not-needed}
-      OLLAMA_BASE_URL: http://10.30.0.2:11434
+      OLLAMA_BASE_URL: http://localhost:11434
       EMBED_MODEL: bge-m3:latest
-      CHROMA_HOST: 10.30.0.2
+      CHROMA_HOST: localhost
       CHROMA_PORT: 8001
       CHROMA_COLLECTION: crop_knowledge_base
       CHROMA_COMPANY_COLLECTION: company_knowledge_base
       CHROMA_SOIL_TEST_COLLECTION: soil_test_knowledge_base   
       CROP_REGISTRY_PATH: /app/data/crops.json
-      RERANKER_URL: http://10.30.0.2:8090/rerank
+      RERANKER_URL: http://localhost:8090/rerank
       CHECKPOINT_BACKEND: memory
       REDIS_URL: redis://redis:6379/0
       LANGSMITH_TRACING: ${LANGSMITH_TRACING_DOCKER:-false}

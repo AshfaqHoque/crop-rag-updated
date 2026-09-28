@@ -431,7 +431,7 @@ ruff check .
 - This project is designed for a local or self-hosted deployment and should be validated against the target model and vector store environment before production use.
 - The app currently has no license metadata declared in the repository.
 
-ssh -N -L 8091:127.0.0.1:8091 -L 8090:127.0.0.1:8090 -L 11434:127.0.0.1:11434 -L 8001:127.0.0.1:8000 imtiazhossain@34.139.77.250
+ssh -N -L 8091:127.0.0.1:8091 -L 8090:127.0.0.1:8090 -L 11434:127.0.0.1:11434 -L 8001:127.0.0.1:8000 imtiazhossain@35.243.250.134
 
 
 ## Docker Image push to GCloud Artifact Registry

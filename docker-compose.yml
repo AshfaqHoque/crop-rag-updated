@@ -20,7 +20,7 @@ services:
       CHROMA_SOIL_TEST_COLLECTION: soil_test_knowledge_base   
       CROP_REGISTRY_PATH: /app/data/crops.json
       RERANKER_URL: http://10.30.0.2:8090/rerank
-      CHECKPOINT_BACKEND: redis
+      CHECKPOINT_BACKEND: memory
       REDIS_URL: redis://redis:6379/0
       LANGSMITH_TRACING: ${LANGSMITH_TRACING_DOCKER:-false}
     ports:

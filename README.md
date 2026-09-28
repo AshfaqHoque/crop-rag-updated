@@ -1,4 +1,4 @@
-# Crop RAG Chatbot
+# AUNKUR AI Chatbot
 
 This repository contains a crop-advisory chat application for Bangla and English queries. It exposes a FastAPI API, a Streamlit interface, a LangGraph orchestration pipeline, and Chroma-backed retrieval over crop and company knowledge.
 
@@ -259,7 +259,7 @@ The Docker stack expects the model services to be available through the SSH
 forwarded host ports shown below. Start the tunnel before starting Compose:
 
 ```bash
-ssh -N -L 8091:127.0.0.1:8091 -L 8090:127.0.0.1:8090 -L 11434:127.0.0.1:11434 -L 8001:127.0.0.1:8000 ashfaq@34.74.153.108
+ssh -N -L 8091:127.0.0.1:8091 -L 8090:127.0.0.1:8090 -L 11434:127.0.0.1:11434 -L 8001:127.0.0.1:8000 ashfaq@136.108.76.151
 ```
 
 Port `8091` provides vLLM (`gemma4:12b`), port `8090` provides the reranker,

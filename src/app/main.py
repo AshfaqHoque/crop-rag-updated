@@ -1,4 +1,4 @@
-"""FastAPI application entry point for the crop advisory chatbot."""
+"""FastAPI application entry point for the Aunkur AI chatbot."""
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 settings = get_settings()
 
 app = FastAPI(
-    title="Crop RAG Chatbot",
+    title="Aunkur AI Chatbot",
     version="0.2.0",
     description="RAG chatbot for crop advisory Q&A (Bangla/English)",
 )

@@ -519,30 +519,36 @@ Text:
 {text}
 """
 def llm_splitter(chunks: list[Chunk]) -> list[Chunk]:
-    """Split chunks larger than MAX_CHUNK_SIZE words into two semantic chunks."""
-    updated_chunks = []
-    for chunk in chunks:
+    """Keep splitting any chunk > MAX_CHUNK_SIZE until all pieces are ≤ limit."""
+    final: list[Chunk] = []
+    queue: list[Chunk] = list(chunks)          # work list
+
+    while queue:
+        chunk = queue.pop(0)
+
         if len(chunk.text) <= MAX_CHUNK_SIZE:
-            updated_chunks.append(chunk)
+            final.append(chunk)
             continue
+
         prompt = _LLM_SPLIT_PROMPT.format(text=chunk.text)
-        logger.info("Splitting chunk %s (size %d): ", chunk.chunk_id, len(chunk.text))
+        logger.info("Splitting chunk %s (size %d)", chunk.chunk_id, len(chunk.text))
         result = invoke_structured(LLMSplitResult, prompt)
+
         for i, text in enumerate(result.chunks, start=1):
-            logger.info("Created chunk %s (size %d): ", f"{chunk.chunk_id}_{i}", len(text))            
-            updated_chunks.append(
+            new_id = f"{chunk.chunk_id}_{i}"
+            logger.info("Created chunk %s (size %d)", new_id, len(text))
+            queue.append(                       # put back on the work list
                 Chunk(
-                    chunk_id=f"{chunk.chunk_id}_{i}",
+                    chunk_id=new_id,
                     text=text,
                     metadata=chunk.metadata,
                 )
             )
 
-    return updated_chunks
-
+    return final
 
 def chunk_all(crops: list[dict]) -> list[Chunk]:
     all_chunks: list[Chunk] = []
     for crop in crops:
         all_chunks.extend(chunk_crop(crop))
-    return llm_splitter(all_chunks)
+    return all_chunks

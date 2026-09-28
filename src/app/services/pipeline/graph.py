@@ -4,6 +4,7 @@ from functools import lru_cache
 from langgraph.graph import END, START, StateGraph
 
 from app.services.pipeline.checkpointer import make_checkpointer
+from app.services.pipeline.nodes.classify_descriptive_query import classify_descriptive_query
 from app.services.pipeline.nodes.compress_chunk import compress_chunk
 from app.services.pipeline.nodes.extract_crop import extract_crop
 from app.services.pipeline.nodes.generate import generate
@@ -18,6 +19,7 @@ from app.services.pipeline.nodes.retrieve_company import retrieve_company
 from app.services.pipeline.nodes.retrieve_soil_test import retrieve_soil_test
 from app.services.pipeline.nodes.rewrite_query import rewrite_query
 from app.services.pipeline.nodes.route import route
+from app.services.pipeline.nodes.summarize_chunks import summarize_chunks
 from app.services.pipeline.state import PipelineState
 
 
@@ -35,6 +37,13 @@ def route_after_route(state: PipelineState) -> str:
     if state.get("intent") == "soil_test_query":
         return "retrieve_soil_test"
 
+
+def route_after_descriptive_query(state: PipelineState) -> str:
+    if state.get("descriptive", False):
+        return "summarize_chunks"
+    return "compress_chunk"
+
+
 def build_chat_graph():
     builder = StateGraph(PipelineState)
     
@@ -45,7 +54,9 @@ def build_chat_graph():
     builder.add_node("retrieve_company", retrieve_company)
     builder.add_node("retrieve_soil_test", retrieve_soil_test)
     builder.add_node("rerank", rerank)
+    builder.add_node("classify_descriptive_query", classify_descriptive_query)
     builder.add_node("compress_chunk", compress_chunk)
+    builder.add_node("summarize_chunks", summarize_chunks)
     builder.add_node("generate", generate)
     builder.add_node("generate_company", generate_company)
     builder.add_node("generate_soil_test", generate_soil_test)
@@ -71,8 +82,17 @@ def build_chat_graph():
     builder.add_edge("retrieve_company", "generate_company")
     builder.add_edge("retrieve_soil_test", "generate_soil_test")
     builder.add_edge("retrieve", "rerank")
-    builder.add_edge("rerank", "compress_chunk")
+    builder.add_edge("rerank", "classify_descriptive_query")
+    builder.add_conditional_edges(
+        "classify_descriptive_query",
+        route_after_descriptive_query,
+        {
+            "compress_chunk": "compress_chunk",
+            "summarize_chunks": "summarize_chunks",
+        },
+    )
     builder.add_edge("compress_chunk", "generate")
+    builder.add_edge("summarize_chunks", "generate")
     builder.add_edge("generate", END)
     builder.add_edge("generate_company", END)
     builder.add_edge("generate_chitchat", END)

@@ -13,6 +13,12 @@ class QueryRewrite(BaseModel):
     rewritten_query: str
 
 
+class DescriptiveQuery(BaseModel):
+    descriptive: bool = Field(
+        description="Whether the query requests broad coverage across multiple entities or sections."
+    )
+
+
 class CropExtraction(BaseModel):
     crops: list[str] = Field(
         default_factory=list,

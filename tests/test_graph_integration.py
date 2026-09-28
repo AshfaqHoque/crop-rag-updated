@@ -45,6 +45,11 @@ def test_full_graph_crop_query_path(monkeypatch):
     )
     monkeypatch.setattr(
         graph_module,
+        "classify_descriptive_query",
+        lambda state: {**state, "descriptive": False},
+    )
+    monkeypatch.setattr(
+        graph_module,
         "compress_chunk",
         lambda state: {**state, "compressed_documents": state["reranked_documents"]},
     )
@@ -57,6 +62,62 @@ def test_full_graph_crop_query_path(monkeypatch):
     assert visited == ["rewrite", "route", "extract", "retrieve", "generate"]
     assert result["answer"] == "answer [1]"
     assert result["retrieval_mode"] == "dense_filtered"
+
+
+def test_full_graph_descriptive_query_summarizes_before_generation(monkeypatch):
+    visited = []
+    document = Document(page_content="crop details", metadata={"chunk_id": "x"})
+
+    monkeypatch.setattr(
+        graph_module,
+        "route",
+        lambda state: {**state, "intent": "crop_query"},
+    )
+    monkeypatch.setattr(
+        graph_module,
+        "rewrite_query",
+        lambda state: {**state, "rewritten_query": "complete crop guide"},
+    )
+    monkeypatch.setattr(graph_module, "extract_crop", lambda state: state)
+    monkeypatch.setattr(
+        graph_module,
+        "retrieve",
+        lambda state: {**state, "retrieved_documents": [document]},
+    )
+    monkeypatch.setattr(
+        graph_module,
+        "rerank",
+        lambda state: {**state, "reranked_documents": [document]},
+    )
+    monkeypatch.setattr(
+        graph_module,
+        "classify_descriptive_query",
+        lambda state: {**state, "descriptive": True},
+    )
+    monkeypatch.setattr(
+        graph_module,
+        "compress_chunk",
+        lambda state: (_ for _ in ()).throw(AssertionError("compression should be skipped")),
+    )
+
+    def summarize(state):
+        visited.append("summarize_chunks")
+        return {**state, "compressed_documents": [document]}
+
+    def generate(state):
+        visited.append("generate")
+        return {**state, "answer": "guide"}
+
+    monkeypatch.setattr(graph_module, "summarize_chunks", summarize)
+    monkeypatch.setattr(graph_module, "generate", generate)
+
+    result = graph_module.build_chat_graph().invoke(
+        {"session_id": "s", "raw_query": "complete crop guide", "messages": []},
+        {"configurable": {"thread_id": "s"}},
+    )
+
+    assert visited == ["summarize_chunks", "generate"]
+    assert result["answer"] == "guide"
 
 
 def test_full_graph_chitchat_skips_retrieval(monkeypatch):

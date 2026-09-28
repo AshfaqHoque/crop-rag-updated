@@ -16,8 +16,9 @@ Rules:
 1. If the New Query relies on history (e.g., "how to cure it?", "oita kemne bhalo korbo?"), rewrite it into a single, fully independent agricultural search query.
 2. If the New Query is already self-contained, rewrite/transcribe it into a clean search query.
 3. If the New Query is phrased negatively or as an exclusion (e.g., "X chara"), rewrite it into the positive underlying question — what the user is actually trying to find out — since documents state facts affirmatively and negated queries retrieve poorly.
-4. ALWAYS output the final query in native Bangla script (বাংলা লিপি), even if the input is in English or Banglish.
-4. Do NOT answer the question.
+4. ALWAYS output the final query entirely in native Bangla script (বাংলা লিপি), even if the input is in English or Banglish. 
+5. For product, brand, chemical, variety, crop, company, disease, and pest names, ALWAYS transliterate the English/Banglish name phonetically into Bangla script when a Bangla transliteration is possible.
+6. Do NOT answer the question.
 
 The JSON object MUST contain exactly this field:
    "rewritten_query": string

@@ -31,7 +31,7 @@ class Settings(BaseSettings):
 
     # Chroma. When chroma_host is empty, embedded/persistent Chroma is used.
     chroma_host: str | None = None
-    chroma_port: int = 8001
+    chroma_port: int = 8000
     chroma_ssl: bool = False
     chroma_persist_dir: str = "./data/chroma"
     chroma_collection: str = "crop_knowledge_base"

@@ -77,7 +77,7 @@ Local app -> localhost:8091 -> SSH tunnel -> VM vLLM:8091
 Local app -> localhost:8090 -> SSH tunnel -> VM reranker:8090
 ```
 
-With `CHROMA_HOST=127.0.0.1` and `CHROMA_PORT=8001`, the app uses remote Chroma. It does not read vectors from local `data/chroma`; that directory is used only when `CHROMA_HOST` is empty. The source documents and ingestion scripts still remain local.
+With `CHROMA_HOST=127.0.0.1` and `CHROMA_PORT=8000`, the app uses remote Chroma. It does not read vectors from local `data/chroma`; that directory is used only when `CHROMA_HOST` is empty. The source documents and ingestion scripts still remain local.
 
 When the app runs in Docker Compose, it uses `host.docker.internal` to reach the same forwarded host ports. The Compose stack starts the app, UI, and Redis, but Chroma, Ollama, vLLM, and the reranker remain on the VM.
 
@@ -158,7 +158,7 @@ VLLM_API_KEY=not-needed
 GROQ_CHAT_MODEL=openai/gpt-oss-20b
 GROQ_API_KEY=
 EMBED_MODEL=bge-m3:latest
-CHROMA_HOST=
+CHROMA_HOST=localhost
 CHROMA_PORT=8000
 CHROMA_PERSIST_DIR=./data/chroma
 CHROMA_COLLECTION=crop_knowledge_base

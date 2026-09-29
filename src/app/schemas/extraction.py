@@ -33,3 +33,6 @@ class ChunkRelevance(BaseModel):
 
 class LLMSplitResult(BaseModel):
     chunks: list[str]
+
+class DecomposedQuery(BaseModel):
+    subqueries: list[str]

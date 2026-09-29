@@ -29,10 +29,12 @@ Grounding rules:
 # - <strong> sparingly for key numbers/terms.
 
 def _answer_language(language_type: str) -> str:
-    if language_type == "bangla":
+    if language_type == "bn":
         return "natural Bangla"
-    if language_type == "arabic":
+    if language_type == "ar":
         return "clear Arabic"
+    if language_type == "en":
+        return "clear English"
     return "clear English"
 
 

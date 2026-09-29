@@ -186,7 +186,7 @@ Accepted values for `CHAT_PROVIDER` are `ollama`, `groq`, and `vllm`. The defaul
 Start the backing services first, especially Ollama and Chroma if they are not already running.
 
 ```bash
-uvicorn app.main:app --reload --app-dir src
+uvicorn app.main:app --reload --app-dir src --port 8052 
 ```
 
 The API listens on `http://localhost:8000`.
@@ -259,9 +259,9 @@ The Docker stack expects the model services to be available through the SSH
 forwarded host ports shown below. Start the tunnel before starting Compose:
 
 ```bash
-ssh -N -L 8091:127.0.0.1:8091 -L 8090:127.0.0.1:8090 -L 11434:127.0.0.1:11434 -L 8001:127.0.0.1:8000 ashfaq@136.108.76.151
+ssh -N -L 8091:127.0.0.1:8091 -L 8090:127.0.0.1:8090 -L 11434:127.0.0.1:11434 -L 8000:127.0.0.1:8000 ashfaq@34.24.59.50
 ```
-ssh -i ~/.ssh/id_rsa ashfaq@136.108.76.151
+ssh -i ~/.ssh/id_rsa ashfaq@34.24.59.50
 Port `8091` provides vLLM (`gemma4:12b`), port `8090` provides the reranker,
 port `11434` provides Ollama embeddings, and port `8001` provides VM Chroma.
 The full Docker stack can then be started with `docker compose up -d`.
@@ -467,5 +467,5 @@ az containerapp update \
   --source .
 
 
-sudo systemctl restart app-8080.service
+sudo systemctl restart app-8080.service \
 journalctl -u app-8080.service -f

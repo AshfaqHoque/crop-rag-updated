@@ -67,6 +67,8 @@ def stream_backend(message: str,language_type: str,session_id: str,):
             data = json.loads(line[6:])
             event_type = data.get("type")
 
+            if event_type == "thinking":
+                yield "thinking", data.get("content", "")
             if event_type == "token":
                 yield "token", data.get("content", "")
 
@@ -169,7 +171,7 @@ with st.sidebar:
     st.caption("LANGUAGE")
     st.session_state.language_type = st.radio(
         "Response language",
-        ["english", "bangla", "arabic"],
+        ["en", "bn", "ar"],
         horizontal=True,
         label_visibility="collapsed",
     )
@@ -245,8 +247,17 @@ if user_input:
                     language_type=st.session_state.language_type,
                     session_id=st.session_state.active_session_id,
                 ):
-                    loading.empty()
-                    if event_type == "token":
+                    if event_type == "thinking":
+                        loading.markdown(
+                            f"""
+                            <div style="color:#888; font-size:0.9rem;">
+                                {content}
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                    elif event_type == "token":
+                        loading.empty()
                         yield content
                     elif event_type == "done":
                         final_answer[0] = content

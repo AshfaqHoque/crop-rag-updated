@@ -12,6 +12,7 @@ from starlette.concurrency import run_in_threadpool
 from app.core.config import get_settings
 from app.schemas.chat import ChatRequest, ChatResponse, SourceChunk
 from app.services.pipeline.graph import get_chat_graph
+from app.services.thinking_messages import get_thinking_message
 
 _TERMINAL_GENERATE_NODES = {"generate", "generate_company", "generate_chitchat", "generate_meaningless", "generate_soil_test", "handle_agronomist_request"}
 
@@ -56,6 +57,10 @@ class ChatService:
                 "raw_query": request.message.strip(),
                 "language_type": request.language_type,
             }
+            
+            thinking_message = get_thinking_message(request.language_type)
+            yield f"data: {json.dumps({'type': 'thinking', 'content': thinking_message}, ensure_ascii=False)}\n\n"
+
             active_message_id = None
             answer = ""
             async for msg_chunk, metadata in self._graph.astream(initial_state, config, stream_mode="messages"):
@@ -69,9 +74,9 @@ class ChatService:
                     continue  # second LLM run (e.g. an invoke_text retry) — skip it
                 if msg_chunk.content:
                     answer += msg_chunk.content
-                    yield f"data: {json.dumps({'type': 'token', 'content': msg_chunk.content})}\n\n"
+                    yield f"data: {json.dumps({'type': 'token', 'content': msg_chunk.content}, ensure_ascii=False)}\n\n"
                     await asyncio.sleep(get_settings().stream_chunk_delay_seconds)
-            yield f"data: {json.dumps({'type': 'done', 'answer': answer})}\n\n"
+            yield f"data: {json.dumps({'type': 'done', 'answer': answer}, ensure_ascii=False)}\n\n"
 
 
     @staticmethod

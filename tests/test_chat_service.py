@@ -1,8 +1,11 @@
+import json
+
 import pytest
 from langchain_core.documents import Document
 
 from app.schemas.chat import ChatRequest
 from app.services.chat_service import ChatService
+from app.services.thinking_messages import BENGALI_THINKING_MESSAGES
 
 
 class FakeGraph:
@@ -30,6 +33,10 @@ class FakeGraph:
             ],
         }
 
+    async def astream(self, state, config, stream_mode):
+        if False:
+            yield None
+
 
 @pytest.mark.asyncio
 async def test_chat_service_uses_langgraph_thread_state():
@@ -45,3 +52,18 @@ async def test_chat_service_uses_langgraph_thread_state():
     assert response.answer == "grounded answer [1]"
     assert response.sources[0].chunk_id == "5_seed"
     assert response.sources[0].distance == 0.91
+
+
+@pytest.mark.asyncio
+async def test_stream_chat_uses_bangla_thinking_message():
+    service = ChatService(graph=FakeGraph())
+
+    chunks = service.stream_chat(
+        ChatRequest(session_id="session", message="ধানের পরিচর্যা", language_type="bangla")
+    )
+    status_event = json.loads((await anext(chunks)).removeprefix("data: ").strip())
+
+    assert status_event["type"] == "status"
+    assert status_event["content"] in BENGALI_THINKING_MESSAGES
+
+    await chunks.aclose()

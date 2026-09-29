@@ -57,6 +57,7 @@ class ChatService:
                 "language_type": request.language_type,
             }
             active_message_id = None
+            answer = ""
             async for msg_chunk, metadata in self._graph.astream(initial_state, config, stream_mode="messages"):
                 # Only forward tokens from the actual answer-generating nodes —
                 # not rewrite_query/route/extract_crop, which also call the LLM.
@@ -67,9 +68,10 @@ class ChatService:
                 elif msg_chunk.id != active_message_id:
                     continue  # second LLM run (e.g. an invoke_text retry) — skip it
                 if msg_chunk.content:
-                    yield f"data: {json.dumps({'content': msg_chunk.content})}\n\n"
+                    answer += msg_chunk.content
+                    yield f"data: {json.dumps({'type': 'token', 'content': msg_chunk.content})}\n\n"
                     await asyncio.sleep(get_settings().stream_chunk_delay_seconds)
-            yield "data: [DONE]\n\n"
+            yield f"data: {json.dumps({'type': 'done', 'answer': answer})}\n\n"
 
 
     @staticmethod

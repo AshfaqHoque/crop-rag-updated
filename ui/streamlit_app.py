@@ -64,13 +64,15 @@ def stream_backend(message: str,language_type: str,session_id: str,):
         for line in response.iter_lines(decode_unicode=True):
             if not line or not line.startswith("data: "):
                 continue
-            data = line[6:]
-            if data == "[DONE]":
+            data = json.loads(line[6:])
+            event_type = data.get("type")
+
+            if event_type == "token":
+                yield "token", data.get("content", "")
+
+            elif event_type == "done":
+                yield "done", data.get("answer", "")
                 break
-            chunk = json.loads(data)
-            content = chunk.get("content")
-            if content:
-                yield content
 
 def get_backend_error(error: Exception) -> str:
     """Convert backend exceptions into user-friendly messages."""
@@ -236,16 +238,21 @@ if user_input:
                 unsafe_allow_html=True,
             )
 
+            final_answer = [""]
             def stream_with_loading():
-                for chunk in stream_backend(
+                for event_type, content in stream_backend(
                     message=user_input,
                     language_type=st.session_state.language_type,
                     session_id=st.session_state.active_session_id,
                 ):
                     loading.empty()
-                    yield chunk
+                    if event_type == "token":
+                        yield content
+                    elif event_type == "done":
+                        final_answer[0] = content
 
-            answer = st.write_stream(stream_with_loading())
+            st.write_stream(stream_with_loading())
+            answer = final_answer[0]
         except Exception as error:
             st.error(get_backend_error(error))
             answer = None

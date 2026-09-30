@@ -10,6 +10,7 @@ from app.services.llm.client import (
     get_ollama_chat_llm,
     get_structured_llm,
     get_vllm_chat_llm,
+    astream_text,
     invoke_text,
 )
 
@@ -155,4 +156,18 @@ def test_text_invocation_uses_output_parser(mock_settings, mock_get_llm, caplog)
     with caplog.at_level(logging.INFO, logger=MODULE):
         assert invoke_text("question") == "answer"
 
+    mock_get_llm.return_value.__or__.assert_called_once()
+
+
+@patch(f"{MODULE}.get_chat_llm")
+async def test_text_streaming_collects_output_parser_chunks(mock_get_llm):
+    async def stream_chunks(prompt):
+        assert prompt == "question"
+        yield " streamed"
+        yield " answer "
+
+    chain = mock_get_llm.return_value.__or__.return_value
+    chain.astream.side_effect = stream_chunks
+
+    assert await astream_text("question") == "streamed answer"
     mock_get_llm.return_value.__or__.assert_called_once()

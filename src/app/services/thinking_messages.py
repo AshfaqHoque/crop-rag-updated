@@ -35,9 +35,5 @@ ENGLISH_THINKING_MESSAGES = [
 
 
 def get_thinking_message(language: str) -> str:
-    messages = (
-        BENGALI_THINKING_MESSAGES
-        if language == "bn"
-        else ENGLISH_THINKING_MESSAGES
-    )
+    messages = (BENGALI_THINKING_MESSAGES if language == "bn" else ENGLISH_THINKING_MESSAGES)
     return random.choice(messages)

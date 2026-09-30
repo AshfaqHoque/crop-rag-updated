@@ -1,6 +1,7 @@
 from langchain_core.documents import Document
 
 from app.services.pipeline import graph as graph_module
+from app.services.pipeline.nodes import parallel_retrieve as parallel_retrieve_module
 
 
 def test_full_graph_crop_query_path(monkeypatch):
@@ -14,20 +15,22 @@ def test_full_graph_crop_query_path(monkeypatch):
             "crops": [],
         }
 
-    def extract(state):
-        visited.append("extract")
-        return {**state, "crops": ["Boro Paddy"]}
-
     def rewrite(state):
         visited.append("rewrite")
         return {**state, "rewritten_query": "seed rate for rice", "rewrite_used_history": True}
 
-    def retrieve(state):
-        visited.append("retrieve")
+    def decompose(state):
+        visited.append("decompose")
+        return {**state, "decomposed_queries": ["seed rate for rice"]}
+
+    def retrieve_queries(state):
+        visited.append("retrieve_queries")
         return {
             **state,
             "retrieval_mode": "dense_filtered",
             "retrieved_documents": [Document(page_content="rate", metadata={"chunk_id": "x"})],
+            "reranked_documents": [Document(page_content="rate", metadata={"chunk_id": "x"})],
+            "compressed_documents": [Document(page_content="rate", metadata={"chunk_id": "x"})],
         }
 
     def generate(state):
@@ -35,28 +38,65 @@ def test_full_graph_crop_query_path(monkeypatch):
         return {**state, "answer": "answer [1]"}
 
     monkeypatch.setattr(graph_module, "route", route)
-    monkeypatch.setattr(graph_module, "extract_crop", extract)
     monkeypatch.setattr(graph_module, "rewrite_query", rewrite)
-    monkeypatch.setattr(graph_module, "retrieve", retrieve)
-    monkeypatch.setattr(
-        graph_module,
-        "rerank",
-        lambda state: {**state, "reranked_documents": state["retrieved_documents"]},
-    )
-    monkeypatch.setattr(
-        graph_module,
-        "compress_chunk",
-        lambda state: {**state, "compressed_documents": state["reranked_documents"]},
-    )
+    monkeypatch.setattr(graph_module, "decompose_query", decompose)
+    monkeypatch.setattr(graph_module, "retrieve_decomposed_queries", retrieve_queries)
     monkeypatch.setattr(graph_module, "generate", generate)
 
     result = graph_module.build_chat_graph().invoke(
         {"session_id": "s", "raw_query": "what about it?", "messages": []},
         {"configurable": {"thread_id": "s"}},
     )
-    assert visited == ["rewrite", "route", "extract", "retrieve", "generate"]
+    assert visited == ["route", "rewrite", "decompose", "retrieve_queries", "generate"]
     assert result["answer"] == "answer [1]"
     assert result["retrieval_mode"] == "dense_filtered"
+
+
+def test_decomposed_queries_each_run_retrieval_chain(monkeypatch):
+    import asyncio
+
+    visited = {"extract": [], "retrieve": [], "rerank": [], "compress": []}
+
+    def extract(state):
+        query = state["rewritten_query"]
+        visited["extract"].append(query)
+        return {**state, "crops": [query]}
+
+    def retrieve(state):
+        query = state["rewritten_query"]
+        visited["retrieve"].append(query)
+        document = Document(page_content=query, metadata={"chunk_id": query})
+        return {**state, "retrieval_mode": "dense", "retrieved_documents": [document]}
+
+    def rerank(state):
+        query = state["rewritten_query"]
+        visited["rerank"].append(query)
+        return {**state, "reranked_documents": state["retrieved_documents"]}
+
+    async def compress(state):
+        query = state["rewritten_query"]
+        visited["compress"].append(query)
+        return {**state, "compressed_documents": state["reranked_documents"]}
+
+    monkeypatch.setattr(parallel_retrieve_module, "extract_crop", extract)
+    monkeypatch.setattr(parallel_retrieve_module, "retrieve", retrieve)
+    monkeypatch.setattr(parallel_retrieve_module, "rerank", rerank)
+    monkeypatch.setattr(parallel_retrieve_module, "compress_chunk", compress)
+
+    result = asyncio.run(
+        parallel_retrieve_module.retrieve_decomposed_queries(
+            {
+                "raw_query": "compare varieties",
+                "rewritten_query": "compare varieties",
+                "decomposed_queries": ["variety A", "variety B"],
+            }
+        )
+    )
+
+    expected_queries = ["variety A", "variety B"]
+    assert all(sorted(queries) == expected_queries for queries in visited.values())
+    assert [document.page_content for document in result["compressed_documents"]] == expected_queries
+    assert result["retrieval_mode"] == "dense"
 
 
 def test_full_graph_chitchat_skips_retrieval(monkeypatch):

@@ -21,6 +21,7 @@ class PipelineState(TypedDict, total=False):
 
     # subject resolution
     rewritten_query: str
+    decomposed_queries: list[str]
 
     # deterministic entity extraction
     crops: list[str]

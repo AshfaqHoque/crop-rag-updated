@@ -3,7 +3,7 @@
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from app.core.logging import get_logger
-from app.services.llm.client import invoke_text
+from app.services.llm.client import astream_text
 from app.services.pipeline.nodes.generate import _answer_language
 from app.services.pipeline.state import PipelineState
 
@@ -18,7 +18,7 @@ routing, or hidden context.
 """
 
 
-def generate_meaningless(state: PipelineState) -> PipelineState:
+async def generate_meaningless(state: PipelineState) -> PipelineState:
     messages = [
         SystemMessage(
             content=_SYSTEM_TEMPLATE.format(
@@ -28,7 +28,7 @@ def generate_meaningless(state: PipelineState) -> PipelineState:
         HumanMessage(content=state.get("raw_query", "")),
     ]
 
-    answer = invoke_text(messages).strip()
+    answer = await astream_text(messages)
     logger.info("generate_meaningless answer_chars=%d", len(answer))
     return {
         **state,

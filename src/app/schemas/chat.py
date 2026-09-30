@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, field_validator
 
 class ChatRequest(BaseModel):
     session_id: str = Field(..., min_length=1, max_length=200)
-    message: str = Field(..., min_length=1, max_length=2000)
+    message: str = Field(..., min_length=1, max_length=1500)
     language_type: Literal["bn", "en", "ar"]
 
     @field_validator("session_id", "message")

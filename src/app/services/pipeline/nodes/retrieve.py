@@ -16,10 +16,10 @@ def get_semantic_retriever() -> SemanticRetriever:
 
 def retrieve(state: PipelineState) -> PipelineState:
     query = state.get("rewritten_query") or state["raw_query"]
-    documents, mode = get_semantic_retriever().retrieve(
+    documents, _ = get_semantic_retriever().retrieve(
         query,
         crops=state.get("crops"),
         top_k=get_settings().retrieval_top_k,
     )
-    logger.info("retrieve mode=%s documents=%d", mode, len(documents))
-    return {**state, "retrieved_documents": documents, "retrieval_mode": mode}
+    logger.info("retrieve documents=%d for query='%s'", len(documents), query)
+    return {"retrieved_documents": documents}

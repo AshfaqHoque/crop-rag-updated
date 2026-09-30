@@ -2,9 +2,11 @@
 from functools import lru_cache
 
 from langgraph.graph import END, START, StateGraph
+from langgraph.types import Send
 
 from app.services.pipeline.checkpointer import make_checkpointer
 from app.services.pipeline.nodes.compress_chunk import compress_chunk
+from app.services.pipeline.nodes.decompose_query import decompose_query
 from app.services.pipeline.nodes.extract_crop import extract_crop
 from app.services.pipeline.nodes.generate import generate
 from app.services.pipeline.nodes.generate_company import generate_company
@@ -35,6 +37,20 @@ def route_after_route(state: PipelineState) -> str:
     if state.get("intent") == "soil_test_query":
         return "retrieve_soil_test"
 
+
+def fan_out_subqueries(state: PipelineState) -> list[Send]:
+    return [
+        Send("retrieve", {
+            **state,
+            "rewritten_query": q,
+            "retrieved_documents": [],      # important: clear list fields so reducers don’t double-count
+            "reranked_documents": [],
+            "compressed_documents": [],
+        })
+        for q in state["subqueries"]
+    ]
+
+
 def build_chat_graph():
     builder = StateGraph(PipelineState)
     
@@ -42,6 +58,7 @@ def build_chat_graph():
     builder.add_node("route", route)
     builder.add_node("extract_crop", extract_crop)
     builder.add_node("retrieve", retrieve)
+    builder.add_node("decompose_query", decompose_query)
     builder.add_node("retrieve_company", retrieve_company)
     builder.add_node("retrieve_soil_test", retrieve_soil_test)
     builder.add_node("rerank", rerank)
@@ -59,7 +76,7 @@ def build_chat_graph():
         "route",
         route_after_route,
         {
-            "extract_crop": "retrieve",
+            "extract_crop": "decompose_query",
             "retrieve_company": "retrieve_company",
             "retrieve_soil_test": "retrieve_soil_test",
             "generate_chitchat": "generate_chitchat",
@@ -67,7 +84,7 @@ def build_chat_graph():
             "handle_agronomist_request": "handle_agronomist_request",
         },
     )
-    builder.add_edge("extract_crop", "retrieve")
+    builder.add_conditional_edges("decompose_query", fan_out_subqueries, ["retrieve"])
     builder.add_edge("retrieve_company", "generate_company")
     builder.add_edge("retrieve_soil_test", "generate_soil_test")
     builder.add_edge("retrieve", "rerank")

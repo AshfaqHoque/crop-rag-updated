@@ -89,13 +89,13 @@ def rerank(state: PipelineState) -> PipelineState:
     reranked = cut_at_unusual_gap(reranked)
 
     logger.info(
-        "rerank final chunks=%d scores=%s",
+        "rerank final chunks=%d scores=%s for query='%s'",
         len(reranked),
         [
             round(document.metadata["relevance_score"], 4)
             for document in reranked
         ],
+        query,
     )
 
-    logger.info("rerank chunks=%d", len(reranked))
-    return {**state, "reranked_documents": reranked}
+    return {"reranked_documents": reranked}

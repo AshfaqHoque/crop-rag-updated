@@ -142,4 +142,4 @@ async def compress_chunk(state: PipelineState) -> PipelineState:
         compressed_chars,
     )
 
-    return {**state, "compressed_documents": output_documents}
+    return {"compressed_documents": output_documents}

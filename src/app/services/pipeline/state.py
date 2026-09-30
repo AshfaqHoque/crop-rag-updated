@@ -3,6 +3,7 @@ from typing import Annotated, TypedDict
 
 from langchain_core.documents import Document
 from langchain_core.messages import AnyMessage
+from operator import add
 from langgraph.graph import add_messages
 
 
@@ -21,15 +22,17 @@ class PipelineState(TypedDict, total=False):
 
     # subject resolution
     rewritten_query: str
-
+    subqueries: list[str]
+    # per-subquery working fields (set by Send payload)
+    current_subquery: str
     # deterministic entity extraction
     crops: list[str]
 
     # retrieval/reranking
-    retrieved_documents: list[Document]
-    reranked_documents: list[Document]
-    compressed_documents: list[Document]
-    retrieval_mode: str
+    # reducers so parallel branches merge cleanly
+    retrieved_documents: Annotated[list[Document], add]
+    reranked_documents: Annotated[list[Document], add]
+    compressed_documents: Annotated[list[Document], add]
 
     # output
     answer: str

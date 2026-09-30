@@ -26,7 +26,6 @@ def test_full_graph_crop_query_path(monkeypatch):
         visited.append("retrieve")
         return {
             **state,
-            "retrieval_mode": "dense_filtered",
             "retrieved_documents": [Document(page_content="rate", metadata={"chunk_id": "x"})],
         }
 
@@ -56,7 +55,6 @@ def test_full_graph_crop_query_path(monkeypatch):
     )
     assert visited == ["rewrite", "route", "extract", "retrieve", "generate"]
     assert result["answer"] == "answer [1]"
-    assert result["retrieval_mode"] == "dense_filtered"
 
 
 def test_full_graph_chitchat_skips_retrieval(monkeypatch):
@@ -152,7 +150,6 @@ def test_full_graph_company_query_skips_crop_pipeline(monkeypatch):
             visited.append("retrieve_company")
             or {
                 **state,
-                "retrieval_mode": "company_dense",
                 "retrieved_documents": [Document(page_content="company fact") for _ in range(3)],
             }
         ),
@@ -175,4 +172,3 @@ def test_full_graph_company_query_skips_crop_pipeline(monkeypatch):
 
     assert visited == ["retrieve_company", "generate_company"]
     assert result["answer"] == "company answer"
-    assert result["retrieval_mode"] == "company_dense"

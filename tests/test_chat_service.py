@@ -18,7 +18,6 @@ class FakeGraph:
             **state,
             "language": "en",
             "rewritten_query": "standalone query",
-            "retrieval_mode": "dense_filtered",
             "answer": "grounded answer [1]",
             "reranked_documents": [
                 Document(

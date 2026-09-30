@@ -13,7 +13,6 @@ class FakeChatService:
             answer="ok",
             language="english",
             rewritten_query=request.message,
-            retrieval_mode="dense_filtered",
             sources=[],
             messages=[HumanMessage(content="seed rate?")],
         )

@@ -26,5 +26,4 @@ def retrieve_company(state: PipelineState) -> PipelineState:
     return {
         **state,
         "retrieved_documents": documents,
-        "retrieval_mode": "company_dense",
     }

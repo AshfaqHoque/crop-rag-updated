@@ -106,7 +106,6 @@ class ChatService:
             language=result.get("language_type", "unknown"),
             status=result.get("status"),
             rewritten_query=result.get("rewritten_query"),
-            retrieval_mode=result.get("retrieval_mode"),
             sources=sources,
             messages=result.get("messages", []),
         )

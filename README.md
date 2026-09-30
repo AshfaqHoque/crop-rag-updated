@@ -232,7 +232,6 @@ The UI posts to `http://localhost:8000/api/v1/chat/stream` by default.
   "answer": "...",
   "language": "english",
   "rewritten_query": "...",
-  "retrieval_mode": "dense_filtered",
   "sources": [
     {
       "chunk_id": "5_seed",

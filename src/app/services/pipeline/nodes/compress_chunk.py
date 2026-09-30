@@ -70,10 +70,10 @@ async def compress_chunk(state: PipelineState) -> PipelineState:
     output_entries: list[tuple[int, Document]] = []
 
     for index, document in enumerate(documents):
-        score = document.metadata.get("relevance_score", 0.0)
-        if score > 0.9:
-            output_entries.append((index, document))
-            continue
+        # score = document.metadata.get("relevance_score", 0.0)
+        # if score > 0.9:
+        #     output_entries.append((index, document))
+        #     continue
 
         content = document.page_content.strip()
 

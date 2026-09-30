@@ -22,11 +22,15 @@ def test_full_graph_crop_query_path(monkeypatch):
         visited.append("rewrite")
         return {**state, "rewritten_query": "seed rate for rice", "rewrite_used_history": True}
 
-    def retrieve(state):
-        visited.append("retrieve")
+    def decompose(state):
+        return {**state, "subqueries": ["query one", "query two"]}
+
+    def retrieve_and_rerank(state):
+        visited.append(state["rewritten_query"])
+        document = Document(page_content=state["rewritten_query"], metadata={"chunk_id": state["rewritten_query"]})
         return {
-            **state,
-            "retrieved_documents": [Document(page_content="rate", metadata={"chunk_id": "x"})],
+            "retrieved_documents": [document],
+            "reranked_documents": [document],
         }
 
     def generate(state):
@@ -36,12 +40,8 @@ def test_full_graph_crop_query_path(monkeypatch):
     monkeypatch.setattr(graph_module, "route", route)
     monkeypatch.setattr(graph_module, "extract_crop", extract)
     monkeypatch.setattr(graph_module, "rewrite_query", rewrite)
-    monkeypatch.setattr(graph_module, "retrieve", retrieve)
-    monkeypatch.setattr(
-        graph_module,
-        "rerank",
-        lambda state: {**state, "reranked_documents": state["retrieved_documents"]},
-    )
+    monkeypatch.setattr(graph_module, "decompose_query", decompose)
+    monkeypatch.setattr(graph_module, "retrieve_and_rerank", retrieve_and_rerank)
     monkeypatch.setattr(
         graph_module,
         "compress_chunk",
@@ -53,7 +53,9 @@ def test_full_graph_crop_query_path(monkeypatch):
         {"session_id": "s", "raw_query": "what about it?", "messages": []},
         {"configurable": {"thread_id": "s"}},
     )
-    assert visited == ["rewrite", "route", "extract", "retrieve", "generate"]
+    assert visited[:3] == ["rewrite", "route", "extract"]
+    assert sorted(visited[3:-1]) == ["query one", "query two"]
+    assert visited[-1] == "generate"
     assert result["answer"] == "answer [1]"
 
 

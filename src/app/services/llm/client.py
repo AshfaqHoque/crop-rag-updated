@@ -111,3 +111,21 @@ def invoke_text(prompt: PromptInput, *, temperature: float | None = None) -> str
     except Exception as exc:
         logger.warning("Text LLM call failed: %s", exc)
         raise LLMGenerationError(str(exc)) from exc
+
+
+@retry(stop=stop_after_attempt(2), wait=wait_exponential(multiplier=0.5, max=4), reraise=True)
+async def astream_text(prompt: PromptInput, *, temperature: float | None = None) -> str:
+    try:
+        chunks = []
+        async for chunk in (get_chat_llm(temperature) | StrOutputParser()).astream(prompt):
+            if chunk:
+                chunks.append(chunk)
+        text = "".join(chunks).strip()
+        if not text:
+            raise LLMGenerationError("Model returned an empty response")
+        return text
+    except LLMGenerationError:
+        raise
+    except Exception as exc:
+        logger.warning("Streaming text LLM call failed: %s", exc)
+        raise LLMGenerationError(str(exc)) from exc

@@ -23,6 +23,14 @@ from app.services.pipeline.nodes.route import route
 from app.services.pipeline.state import PipelineState
 
 
+def reset_document_state(state: PipelineState) -> PipelineState:
+    return {
+        "retrieved_documents": None,
+        "reranked_documents": None,
+        "compressed_documents": None,
+    }
+
+
 def route_after_route(state: PipelineState) -> str:
     if state.get("intent") == "request_agronomist":
         return "handle_agronomist_request"
@@ -40,9 +48,9 @@ def route_after_route(state: PipelineState) -> str:
 
 def fan_out_subqueries(state: PipelineState) -> list[Send]:
     return [
-        Send("retrieve", {
+        Send("retrieve_and_rerank", {
             **state,
-            "rewritten_query": q,
+            "current_subquery": q,
             "retrieved_documents": [],      # important: clear list fields so reducers don’t double-count
             "reranked_documents": [],
             "compressed_documents": [],
@@ -51,17 +59,26 @@ def fan_out_subqueries(state: PipelineState) -> list[Send]:
     ]
 
 
+def retrieve_and_rerank(state: PipelineState) -> PipelineState:
+    retrieved = retrieve(state)
+    branch_state = {**state, **retrieved}
+    reranked = rerank(branch_state)
+    return {
+        "retrieved_documents": retrieved.get("retrieved_documents", []),
+        "reranked_documents": reranked.get("reranked_documents", []),
+    }
+
+
 def build_chat_graph():
     builder = StateGraph(PipelineState)
     
     builder.add_node("rewrite_query", rewrite_query)
+    builder.add_node("reset_document_state", reset_document_state)
     builder.add_node("route", route)
-    builder.add_node("extract_crop", extract_crop)
-    builder.add_node("retrieve", retrieve)
+    builder.add_node("retrieve_and_rerank", retrieve_and_rerank)
     builder.add_node("decompose_query", decompose_query)
     builder.add_node("retrieve_company", retrieve_company)
     builder.add_node("retrieve_soil_test", retrieve_soil_test)
-    builder.add_node("rerank", rerank)
     builder.add_node("compress_chunk", compress_chunk)
     builder.add_node("generate", generate)
     builder.add_node("generate_company", generate_company)
@@ -70,7 +87,8 @@ def build_chat_graph():
     builder.add_node("generate_meaningless", generate_meaningless)
     builder.add_node("handle_agronomist_request", handle_agronomist_request)
 
-    builder.add_edge(START, "rewrite_query")
+    builder.add_edge(START, "reset_document_state")
+    builder.add_edge("reset_document_state", "rewrite_query")
     builder.add_edge("rewrite_query", "route")
     builder.add_conditional_edges(
         "route",
@@ -84,11 +102,10 @@ def build_chat_graph():
             "handle_agronomist_request": "handle_agronomist_request",
         },
     )
-    builder.add_conditional_edges("decompose_query", fan_out_subqueries, ["retrieve"])
+    builder.add_conditional_edges("decompose_query", fan_out_subqueries, ["retrieve_and_rerank"])
     builder.add_edge("retrieve_company", "generate_company")
     builder.add_edge("retrieve_soil_test", "generate_soil_test")
-    builder.add_edge("retrieve", "rerank")
-    builder.add_edge("rerank", "compress_chunk")
+    builder.add_edge("retrieve_and_rerank", "compress_chunk")
     builder.add_edge("compress_chunk", "generate")
     builder.add_edge("generate", END)
     builder.add_edge("generate_company", END)

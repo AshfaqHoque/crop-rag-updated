@@ -66,7 +66,7 @@ def rerank(state: PipelineState) -> PipelineState:
     if not documents:
         return {**state, "reranked_documents": []}
 
-    query = state.get("rewritten_query") or state["raw_query"]
+    query = state.get("current_subquery") or state.get("rewritten_query") or state["raw_query"]
     response = httpx.post(
         settings.reranker_url,
         json={

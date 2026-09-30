@@ -28,7 +28,7 @@ def test_context_compressor_binds_max_tokens():
     get_context_compressor.cache_clear()
 
 
-async def test_compress_chunk_bypasses_high_scores_and_compresses_the_rest(monkeypatch):
+async def test_compress_chunk_compresses_all_reranked_documents(monkeypatch):
     documents = [
         Document(page_content="below", metadata={"relevance_score": 0.89}),
         Document(page_content="at threshold", metadata={"relevance_score": 0.9}),
@@ -38,7 +38,11 @@ async def test_compress_chunk_bypasses_high_scores_and_compresses_the_rest(monke
     class FakeCompressor:
         async def acompress_documents(self, *, documents, query):
             assert query == "query"
-            assert [document.page_content for document in documents] == ["below", "at threshold"]
+            assert [document.page_content for document in documents] == [
+                "below",
+                "at threshold",
+                "above",
+            ]
             return [
                 Document(
                     page_content=f"compressed {document.page_content}",
@@ -62,5 +66,5 @@ async def test_compress_chunk_bypasses_high_scores_and_compresses_the_rest(monke
     assert [document.page_content for document in result["compressed_documents"]] == [
         "compressed below",
         "compressed at threshold",
-        "above",
+        "compressed above",
     ]

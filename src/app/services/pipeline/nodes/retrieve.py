@@ -15,7 +15,7 @@ def get_semantic_retriever() -> SemanticRetriever:
 
 
 def retrieve(state: PipelineState) -> PipelineState:
-    query = state.get("rewritten_query") or state["raw_query"]
+    query = state.get("current_subquery") or state.get("rewritten_query") or state["raw_query"]
     documents, _ = get_semantic_retriever().retrieve(
         query,
         crops=state.get("crops"),

@@ -58,7 +58,7 @@ def _metadata_prefix(metadata: dict) -> str:
     return "[" + " | ".join(pairs) + "] "
 
 async def compress_chunk(state: PipelineState) -> PipelineState:
-    """Compress lower-scoring chunks and preserve the strongest chunks as-is."""
+    """Compress reranked chunks and preserve their original metadata."""
 
     documents = state.get("reranked_documents", []) or state.get("retrieved_documents", [])
 
@@ -70,11 +70,6 @@ async def compress_chunk(state: PipelineState) -> PipelineState:
     output_entries: list[tuple[int, Document]] = []
 
     for index, document in enumerate(documents):
-        score = document.metadata.get("relevance_score", 0.0)
-        if score > 0.9:
-            output_entries.append((index, document))
-            continue
-
         content = document.page_content.strip()
 
         if not content:

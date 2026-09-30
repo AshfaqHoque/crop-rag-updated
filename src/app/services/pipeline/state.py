@@ -7,6 +7,15 @@ from operator import add
 from langgraph.graph import add_messages
 
 
+def merge_documents(
+    current: list[Document] | None,
+    update: list[Document] | None,
+) -> list[Document]:
+    if update is None:
+        return []
+    return (current or []) + update
+
+
 class PipelineState(TypedDict, total=False):
 
     # Conversation (persisted by checkpointer via thread_id)
@@ -30,9 +39,9 @@ class PipelineState(TypedDict, total=False):
 
     # retrieval/reranking
     # reducers so parallel branches merge cleanly
-    retrieved_documents: Annotated[list[Document], add]
-    reranked_documents: Annotated[list[Document], add]
-    compressed_documents: Annotated[list[Document], add]
+    retrieved_documents: Annotated[list[Document] | None, merge_documents]
+    reranked_documents: Annotated[list[Document] | None, merge_documents]
+    compressed_documents: Annotated[list[Document] | None, merge_documents]
 
     # output
     answer: str

@@ -1,6 +1,7 @@
 from langchain_core.documents import Document
 
 from app.services.pipeline import graph as graph_module
+from app.services.pipeline.nodes import retrieve_and_rerank as retrieve_and_rerank_module
 
 
 def test_full_graph_crop_query_path(monkeypatch):
@@ -33,6 +34,10 @@ def test_full_graph_crop_query_path(monkeypatch):
             "reranked_documents": [document],
         }
 
+    async def compress(state):
+        visited.append(f"compress:{state['rewritten_query']}")
+        return {"compressed_documents": state["reranked_documents"]}
+
     def generate(state):
         visited.append("generate")
         return {**state, "answer": "answer [1]"}
@@ -41,12 +46,8 @@ def test_full_graph_crop_query_path(monkeypatch):
     monkeypatch.setattr(graph_module, "extract_crop", extract)
     monkeypatch.setattr(graph_module, "rewrite_query", rewrite)
     monkeypatch.setattr(graph_module, "decompose_query", decompose)
-    monkeypatch.setattr(graph_module, "retrieve_and_rerank", retrieve_and_rerank)
-    monkeypatch.setattr(
-        graph_module,
-        "compress_chunk",
-        lambda state: {**state, "compressed_documents": state["reranked_documents"]},
-    )
+    monkeypatch.setattr(retrieve_and_rerank_module, "retrieve_and_rerank", retrieve_and_rerank)
+    monkeypatch.setattr(retrieve_and_rerank_module, "compress_chunk", compress)
     monkeypatch.setattr(graph_module, "generate", generate)
 
     result = graph_module.build_chat_graph().invoke(
@@ -54,7 +55,12 @@ def test_full_graph_crop_query_path(monkeypatch):
         {"configurable": {"thread_id": "s"}},
     )
     assert visited[:3] == ["rewrite", "route", "extract"]
-    assert sorted(visited[3:-1]) == ["query one", "query two"]
+    assert sorted(visited[3:-1]) == [
+        "compress:query one",
+        "compress:query two",
+        "query one",
+        "query two",
+    ]
     assert visited[-1] == "generate"
     assert result["answer"] == "answer [1]"
 

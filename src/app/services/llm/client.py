@@ -73,13 +73,12 @@ def get_chat_llm(temperature: float | None = None) -> ChatOllama | ChatGroq | Ch
 
 def get_structured_llm(schema: type[T], *, temperature: float | None = None):
     llm = get_chat_llm(temperature)
-    if get_settings().chat_provider == "groq":
+    if get_settings().chat_provider == "groq" or get_settings().chat_provider == "vllm":
         # ChatGroq defaults to function/tool calling, which can fail when the
         # model emits plain text instead of the required tool call. GPT-OSS
         # supports Groq's native JSON Schema response format directly.
+        #vllm also supports structured output via JSON Schema
         return llm.with_structured_output(schema, method="json_mode")
-    if get_settings().chat_provider == "vllm":
-        return llm.with_structured_output(schema)
     return llm.with_structured_output(schema)
 
 

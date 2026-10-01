@@ -29,6 +29,20 @@ CUSTOM_DEFAULT_PROMPT = PromptTemplate(
     input_variables=["question", "context"],
 )
 
+def dedupe_documents(documents: list[Document]) -> list[Document]:
+    """Remove duplicate chunks by chunk_id (keep first occurrence)."""
+    seen: set[str] = set()
+    unique: list[Document] = []
+
+    for doc in documents:
+        chunk_id = str(doc.metadata.get("chunk_id") or "").strip()
+        if not chunk_id or chunk_id in seen:
+            continue
+        seen.add(chunk_id)
+        unique.append(doc)
+
+    return unique
+
 @lru_cache
 def get_context_compressor() -> LLMChainExtractor:
     """Create the LangChain LLM context compressor."""
@@ -45,13 +59,11 @@ def _metadata_prefix(metadata: dict) -> str:
 
     # Drop fields that are pure plumbing, not identity.
     skip = {"_chunk_index", "crop_id", "variety_id", "chunk_id", "relevance_score", "distance", "crop_bangla_name"}
-
     pairs = [
         f"{key}: {value}"
         for key, value in metadata.items()
         if key not in skip and value not in (None, "")
     ]
-
     if not pairs:
         return ""
 
@@ -61,6 +73,7 @@ async def compress_chunk(state: PipelineState) -> PipelineState:
     """Compress lower-scoring chunks and preserve the strongest chunks as-is."""
 
     documents = state.get("reranked_documents", []) or state.get("retrieved_documents", [])
+    documents = dedupe_documents(documents)
 
     if not documents:
         return {**state, "compressed_documents": []}

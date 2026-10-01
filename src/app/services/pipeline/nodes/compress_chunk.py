@@ -15,8 +15,13 @@ logger = get_logger(__name__)
 settings = get_settings()
 
 # Standard LangChain LLMChainExtractor prompt with your custom rule added
-DEFAULT_EXTRACTION_TEMPLATE = """Given the following question and context, extract any part of the context AS IS that is directly useful for answering the question. Preserve context liberally. Return NO_OUTPUT only if the context is completely irrelevant.
-Remember, DO NOT edit the extracted parts of the context. If the question asks about multiple items (e.g. a comparison) and the context only contains information about one of them, still extract that item's full content as-is — do not return NO_OUTPUT just because the other item is missing.
+DEFAULT_EXTRACTION_TEMPLATE = """Given the question and context, extract only the parts that directly help answer the question. Copy them AS IS. Remember, DO NOT edit the extracted parts of the context.
+
+Rules:
+- If the context is about a different crop/variety/topic than the question, return NO_OUTPUT.
+- If the question is broad (e.g. how to cultivate a crop), keep only the key practical steps, rates, timings, and important warnings. Drop long background or unrelated sections.
+- If the question compares multiple items and this context only covers one of them, still extract that item's relevant content fully. Do NOT return NO_OUTPUT just because the other item is missing.
+- Return NO_OUTPUT only when the context is completely irrelevant.
 
 Question: {question}
 Context:
@@ -83,11 +88,6 @@ async def compress_chunk(state: PipelineState) -> PipelineState:
     output_entries: list[tuple[int, Document]] = []
 
     for index, document in enumerate(documents):
-        # score = document.metadata.get("relevance_score", 0.0)
-        # if score > 0.9:
-        #     output_entries.append((index, document))
-        #     continue
-
         content = document.page_content.strip()
 
         if not content:

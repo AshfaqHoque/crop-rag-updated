@@ -1,5 +1,6 @@
 """History-aware query rewriting for subject/coreference resolution."""
 from langchain_core.messages import HumanMessage, SystemMessage
+from langgraph.types import Overwrite
 
 from app.core.logging import get_logger
 from app.schemas.extraction import QueryRewrite
@@ -42,6 +43,8 @@ def rewrite_query(state: PipelineState) -> PipelineState:
     rewritten = rewritten or query
     logger.info("rewrite_query rewritten=%r", rewritten)
     return {
-        **state,
         "rewritten_query": rewritten,
+        "retrieved_documents": Overwrite([]),
+        "reranked_documents": Overwrite([]),
+        "compressed_documents": Overwrite([]),
     }

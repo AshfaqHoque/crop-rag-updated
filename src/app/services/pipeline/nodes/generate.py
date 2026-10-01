@@ -4,6 +4,7 @@ from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from app.core.config import get_settings
+from app.core.exceptions import LLMGenerationError
 from app.core.logging import get_logger
 from app.services.llm.client import invoke_text
 from app.services.pipeline.state import PipelineState
@@ -48,6 +49,18 @@ def _format_context(documents: list[Document]) -> str:
         formatted.append(f"\n{document.page_content[:max_chars]}")
     return "\n\n".join(formatted)
 
+def _fallback_message(language_type: str) -> str:
+    if language_type == "bn":
+        return (
+            "এই প্রশ্নের জন্য খুব বেশি তথ্য এসেছে, তাই আমি এখন সঠিক উত্তর দিতে পারছি না। "
+            "অনুগ্রহ করে প্রশ্নটি আরও নির্দিষ্ট করে আবার জিজ্ঞাসা করুন, "
+            "অথবা একজন কৃষিবিদের সাথে কথা বলতে চান কিনা জানান।"
+        )
+    return (
+        "This question retrieved too much information for me to answer accurately right now. "
+        "Please make the question more specific and try again, "
+        "or let me know if you would like to speak with an agronomist."
+    )
 
 def generate(state: PipelineState) -> PipelineState:
     conversation = list(state.get("messages") or [])
@@ -65,8 +78,17 @@ def generate(state: PipelineState) -> PipelineState:
         *history,
         HumanMessage(content=current_message),
     ]
+    
+    try:
+        answer = invoke_text(messages).strip()
+    except LLMGenerationError as e:
+        err = str(e).lower()
+        if any(k in err for k in ("token", "context length", "maximum context", "8192", "too long")):
+            logger.warning("generate context overflow: %s", e)
+            answer = _fallback_message(state.get("language_type", "english"))
+        else:
+            raise  # let other LLM failures bubble up as before
 
-    answer = invoke_text(messages).strip()
     logger.info("generate answer_chars=%d, length of history used=%d", len(answer), len(history))
     return {
         **state,

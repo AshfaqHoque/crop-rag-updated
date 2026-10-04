@@ -35,6 +35,7 @@ app = FastAPI(
     title="Aunkur AI Chatbot",
     version="0.2.0",
     description="RAG chatbot for crop advisory Q&A (Bangla/English)",
+    lifespan=lifespan,
 )
 
 

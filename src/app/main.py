@@ -11,7 +11,7 @@ from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.exceptions import AppError
 from app.core.logging import configure_logging, get_logger
-from app.services.pipeline.checkpointer import close_checkpointer, init_checkpointer, init_redis_checkpointer
+from app.services.pipeline.checkpointer import close_checkpointer, init_checkpointer
 from app.services.pipeline.graph import reset_chat_graph
 
 configure_logging()

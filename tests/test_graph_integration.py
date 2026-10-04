@@ -138,6 +138,34 @@ def test_full_graph_meaningless_skips_retrieval(monkeypatch):
     assert result["answer"] == "Please ask a clear question."
 
 
+def test_full_graph_capability_query_skips_retrieval(monkeypatch):
+    visited = []
+
+    monkeypatch.setattr(
+        graph_module,
+        "rewrite_query",
+        lambda state: {**state, "rewritten_query": state["raw_query"]},
+    )
+    monkeypatch.setattr(
+        graph_module,
+        "route",
+        lambda state: {**state, "intent": "capability_query"},
+    )
+    monkeypatch.setattr(
+        graph_module,
+        "generate_capability",
+        lambda state: visited.append("generate_capability") or {**state, "answer": "coverage"},
+    )
+
+    result = graph_module.build_chat_graph().invoke(
+        {"session_id": "s", "raw_query": "what can you answer?", "messages": []},
+        {"configurable": {"thread_id": "s"}},
+    )
+
+    assert visited == ["generate_capability"]
+    assert result["answer"] == "coverage"
+
+
 def test_full_graph_company_query_skips_crop_pipeline(monkeypatch):
     visited = []
 

@@ -14,7 +14,7 @@ from app.schemas.chat import ChatRequest, ChatResponse, SourceChunk
 from app.services.pipeline.graph import get_chat_graph
 from app.services.thinking_messages import get_thinking_message
 
-_TERMINAL_GENERATE_NODES = {"generate", "generate_company", "generate_chitchat", "generate_meaningless", "generate_soil_test", "handle_agronomist_request"}
+_TERMINAL_GENERATE_NODES = {"generate", "generate_company", "generate_chitchat", "generate_meaningless", "generate_soil_test", "handle_agronomist_request", "generate_capability"}
 
 class ChatService:
     def __init__(self, graph=None) -> None:

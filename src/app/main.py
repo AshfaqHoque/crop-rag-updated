@@ -1,5 +1,7 @@
 """FastAPI application entry point for the Aunkur AI chatbot."""
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -9,16 +11,32 @@ from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.exceptions import AppError
 from app.core.logging import configure_logging, get_logger
+from app.services.pipeline.checkpointer import close_checkpointer, init_redis_checkpointer
+from app.services.pipeline.graph import reset_chat_graph
 
 configure_logging()
 logger = get_logger(__name__)
 settings = get_settings()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: init Redis (or memory) checkpointer, then rebuild graph cache
+    await init_redis_checkpointer()
+    reset_chat_graph()
+    logger.info("app startup complete")
+    yield
+    # Shutdown
+    await close_checkpointer()
+    logger.info("app shutdown complete")
+
 
 app = FastAPI(
     title="Aunkur AI Chatbot",
     version="0.2.0",
     description="RAG chatbot for crop advisory Q&A (Bangla/English)",
 )
+
 
 app.add_middleware(
     CORSMiddleware,

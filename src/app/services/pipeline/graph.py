@@ -4,7 +4,7 @@ from functools import lru_cache
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
 
-from app.services.pipeline.checkpointer import make_checkpointer
+from app.services.pipeline.checkpointer import get_checkpointer
 from app.services.pipeline.nodes.decompose_query import decompose_query
 from app.services.pipeline.nodes.extract_crop import extract_crop
 from app.services.pipeline.nodes.generate import generate
@@ -89,9 +89,13 @@ def build_chat_graph():
     builder.add_edge("generate_chitchat", END)
     builder.add_edge("generate_meaningless", END)
     builder.add_edge("handle_agronomist_request", END)
-    return builder.compile(checkpointer=make_checkpointer())
+    return builder.compile(checkpointer=get_checkpointer())
 
 
 @lru_cache
 def get_chat_graph():
     return build_chat_graph()
+
+def reset_chat_graph():
+    """Call after checkpointer is initialized so the graph picks it up."""
+    get_chat_graph.cache_clear()

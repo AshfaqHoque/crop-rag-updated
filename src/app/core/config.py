@@ -71,7 +71,7 @@ class Settings(BaseSettings):
 
     # Checkpointer
     checkpoint_backend: str = "redis"  # memory | redis
-    redis_url: str = "redis://10.30.0.2:6379"
+    redis_url: str = "redis://127.0.0.1:6379"
 
     # Streamlit frontend
     ui_api_url: str = "http://localhost:8000/api/v1/chat/stream"

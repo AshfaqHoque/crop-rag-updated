@@ -15,12 +15,11 @@ logger = get_logger(__name__)
 settings = get_settings()
 
 # Standard LangChain LLMChainExtractor prompt with your custom rule added
-DEFAULT_EXTRACTION_TEMPLATE = """Given the question and context, extract only the parts that directly help answer the question. Copy them AS IS. Remember, DO NOT edit the extracted parts of the context.
+DEFAULT_EXTRACTION_TEMPLATE = """Given the question and context, extract only the parts that help answer the question. Copy them AS IS. Remember, DO NOT edit the extracted parts of the context.
 
 Rules:
-- If the context is about a different crop/variety/topic than the question, return NO_OUTPUT.
+- If the context is about a different crop/variety/disease/entity than the question, return NO_OUTPUT.
 - If the question is broad (e.g. how to cultivate a crop), keep only the key practical steps, rates, timings, and important warnings. Drop long background or unrelated sections.
-- If the question compares multiple items and this context only covers one of them, still extract that item's relevant content fully. Do NOT return NO_OUTPUT just because the other item is missing.
 - Return NO_OUTPUT only when the context is completely irrelevant.
 
 Question: {question}

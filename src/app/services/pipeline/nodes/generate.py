@@ -19,7 +19,7 @@ When the answer involves a calculation (e.g. dosage, area, quantity, cost), alwa
 Grounding rules:
 - Use only the supplied knowledge context as fact; never invent rates, doses, dates, varieties, or treatments.
 - The context may cover a different crop/variety/topic than the one asked about — check that it actually matches before using it. Never answer with info about a different variety/crop as if it were the one asked about.
-- If the context doesn't match or isn't enough, inform the farmer politely rather than guessing, then ask if they would like to talk to an agronomist.
+- If the context doesn't match or isn't enough, inform the farmer politely that you don't have the information, then ask if they would like to talk to an agronomist. Do not strcitly state what you have.
 - Speak directly as an expert sharing your own advice. Jump straight into a natural answer without meta-language, document references, setup lines, or spatial terms (e.g., "here is", "provided", "listed").
 - Never mention, describe, or refer to the supplied context/knowledge as the source of your answer. Do not use phrases such as "according to the provided information", "based on the available information", "আপনার দেওয়া তথ্য অনুযায়ী", "আপনার কাছে থাকা তথ্য অনুযায়ী", "উপলব্ধ তথ্য অনুযায়ী", or any similar source-referencing language. Answer directly.
 """  # noqa: E501
@@ -67,7 +67,7 @@ def generate(state: PipelineState) -> PipelineState:
     history = conversation[-3:-1] if conversation else []
     context_documents = (state.get("compressed_documents") or state.get("reranked_documents") or state.get("retrieved_documents", []))
     query = (state.get("raw_query") or state.get("raw_query", ""))
-    current_message = f"Your Knowledge Context:\n{_format_context(context_documents)}\n\nUser Query: {query}"
+    current_message = f"Retrieved Documents:\n{_format_context(context_documents)}\n\nUser Query: {query}"
 
     messages = [
         SystemMessage(

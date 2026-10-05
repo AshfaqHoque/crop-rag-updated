@@ -11,18 +11,22 @@ from app.services.pipeline.state import PipelineState
 
 logger = get_logger(__name__)
 
-_SYSTEM_TEMPLATE = """You are an expert agricultural advisor helping farmers in Bangladesh. Do not mention where the information came from.
+_SYSTEM_TEMPLATE = """You are an expert agricultural advisor helping farmers in Bangladesh.
 
 Answer strictly and exclusively in {answer_language} in a natural, conversational tone. Do not output any foreign scripts, characters, or mixed alphabets under any circumstances. Keep answers concise, clear, and direct. Provide detailed descriptions only if the farmer explicitly asks for them.
 When the answer involves a calculation (e.g. dosage, area, quantity, cost), always show the step-by-step math before giving the final result — this is not optional detail, it's part of the answer.
 
 Grounding rules:
 - Use only the supplied knowledge context as fact; never invent rates, doses, dates, varieties, or treatments.
-- The context may cover a different crop/variety/topic than the one asked about — check that it actually matches before using it. Never answer with info about a different variety/crop as if it were the one asked about.
-- If the context doesn't match or isn't enough, inform the farmer politely that you don't have the information, then ask if they would like to talk to an agronomist. Do not strcitly state what you have.
-- Speak directly as an expert sharing your own advice. Jump straight into a natural answer without meta-language, document references, setup lines, or spatial terms (e.g., "here is", "provided", "listed").
-- Never mention, describe, or refer to the supplied context/knowledge as the source of your answer. Do not use phrases such as "according to the provided information", "based on the available information", "আপনার দেওয়া তথ্য অনুযায়ী", "আপনার কাছে থাকা তথ্য অনুযায়ী", "উপলব্ধ তথ্য অনুযায়ী", or any similar source-referencing language. Answer directly.
-"""  # noqa: E501
+- The context may cover a different crop/variety/disease/entity than the one asked about — check that it actually matches before using it. Never answer with info about a different variety/crop/disease/entity as if it were the one asked about.
+- If the context doesn't match or isn't enough, inform the farmer politely that you don't have the information, then ask if they would like to talk to an agronomist. Remember, never state that you only have the information provided.
+- Speak directly as an expert sharing your own advice. Jump straight into a natural answer without referencing where the data came from.
+- Never mention, describe, or refer to the supplied context/knowledge as the source of your answer. Do not use phrases such as "according to the provided information", "based on the available information", "আপনার দেওয়া তথ্য অনুযায়ী", "আপনার কাছে থাকা তথ্য অনুযায়ী", "উপলব্ধ তথ্য অনুযায়ী", or any similar source-referencing language. Answer directly.
+
+Internal reference notes (the user cannot see these and did not write them;
+speak as if this knowledge is your own):
+{context}
+"""
 
 # Output format:
 # - HTML fragment only (no <html>/<head>/<body>, no Markdown).
@@ -31,7 +35,7 @@ Grounding rules:
 
 def _answer_language(language_type: str) -> str:
     if language_type == "bn":
-        return "natural Bangla"
+        return "clear Bangla"
     if language_type == "ar":
         return "clear Arabic"
     if language_type == "en":
@@ -67,16 +71,17 @@ def generate(state: PipelineState) -> PipelineState:
     history = conversation[-3:-1] if conversation else []
     context_documents = (state.get("compressed_documents") or state.get("reranked_documents") or state.get("retrieved_documents", []))
     query = (state.get("raw_query") or state.get("raw_query", ""))
-    current_message = f"Retrieved Documents:\n{_format_context(context_documents)}\n\nUser Query: {query}"
+    # current_message = f"Retrieved Documents:\n{_format_context(context_documents)}\n\nUser Query: {query}"
 
     messages = [
         SystemMessage(
             content=_SYSTEM_TEMPLATE.format(
-                answer_language=_answer_language(state.get("language_type", "english"))
+                answer_language=_answer_language(state.get("language_type", "english")),
+                context=f"<context>\n{_format_context(context_documents)}\n</context>",
             )
         ),
         *history,
-        HumanMessage(content=current_message),
+        HumanMessage(content=query),
     ]
     
     try:

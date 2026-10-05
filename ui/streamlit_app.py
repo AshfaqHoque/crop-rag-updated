@@ -250,7 +250,33 @@ if user_input:
                     if event_type == "thinking":
                         loading.markdown(
                             f"""
-                            <div style="color:#888; font-size:0.9rem;">
+                            <style>
+                                .thinking-skeleton {{
+                                    background: linear-gradient(
+                                        90deg,
+                                        #999 25%,
+                                        #eee 50%,
+                                        #999 75%
+                                    );
+                                    background-size: 200% 100%;
+                                    background-clip: text;
+                                    -webkit-background-clip: text;
+                                    -webkit-text-fill-color: transparent;
+                                    animation: shimmer 2s linear infinite;
+                                    font-size: 0.9rem;
+                                }}
+
+                                @keyframes shimmer {{
+                                    0% {{
+                                        background-position: 200% 0;
+                                    }}
+                                    100% {{
+                                        background-position: -200% 0;
+                                    }}
+                                }}
+                            </style>
+
+                            <div class="thinking-skeleton">
                                 {content}
                             </div>
                             """,

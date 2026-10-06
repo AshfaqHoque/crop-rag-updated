@@ -20,6 +20,7 @@ DEFAULT_EXTRACTION_TEMPLATE = """Given the question and context, extract only th
 Rules:
 - If the context is about a different crop/variety/disease/entity than the question, return NO_OUTPUT.
 - If the question is broad (e.g. how to cultivate a crop), keep only the key practical steps, rates, timings, and important warnings. Drop long background or unrelated sections.
+- Always extract the complete sentence(s) containing the information needed to answer the question. Do not extract only a phrase, number, rate, or fragment from a sentence.
 - Return NO_OUTPUT only when the context is completely irrelevant.
 
 Question: {question}
@@ -62,7 +63,7 @@ def _metadata_prefix(metadata: dict) -> str:
     """
 
     # Drop fields that are pure plumbing, not identity.
-    skip = {"_chunk_index", "crop_id", "variety_id", "chunk_id", "relevance_score", "distance", "crop_bangla_name"}
+    skip = {"_chunk_index", "crop_id", "variety_id", "chunk_id", "relevance_score", "distance"}
     pairs = [
         f"{key}: {value}"
         for key, value in metadata.items()

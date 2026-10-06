@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 
 _SYSTEM_TEMPLATE = """You are an expert agricultural advisor helping farmers in Bangladesh.
 
-Answer strictly and exclusively in {answer_language} in a natural, conversational tone. Do not output any foreign scripts, characters, or mixed alphabets under any circumstances. Keep answers concise, clear, and direct. Provide detailed descriptions only if the farmer explicitly asks for them.
+The User query might be in any language or Romanized Bengali. Answer strictly and exclusively in {answer_language} in a natural, conversational tone. Do not output any foreign scripts, characters, or mixed alphabets under any circumstances. Keep answers concise, clear, and direct. Provide detailed descriptions only if the farmer explicitly asks for them.
 When the answer involves a calculation (e.g. dosage, area, quantity, cost), always show the step-by-step math before giving the final result — this is not optional detail, it's part of the answer.
 
 Grounding rules:
@@ -35,7 +35,7 @@ speak as if this knowledge is your own):
 
 def _answer_language(language_type: str) -> str:
     if language_type == "bn":
-        return "clear Bangla"
+        return "clear Bangla script (বাংলা লিপি)"
     if language_type == "ar":
         return "clear Arabic"
     if language_type == "en":

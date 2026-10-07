@@ -107,7 +107,7 @@ async def compress_chunk(state: PipelineState) -> PipelineState:
         for compressed_document in compressed_documents:
             content = compressed_document.page_content.strip()
 
-            if not content:
+            if not content or content == "NO_OUTPUT":
                 continue
 
             index = compressed_document.metadata["_source_index"]

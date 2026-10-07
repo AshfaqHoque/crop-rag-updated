@@ -10,6 +10,7 @@ from app.services.llm.client import (
     get_ollama_chat_llm,
     get_structured_llm,
     get_vllm_chat_llm,
+    invoke_structured,
     invoke_text,
 )
 
@@ -115,6 +116,45 @@ def test_chat_provider_selects_vllm(mock_settings, mock_groq, mock_ollama, mock_
     mock_ollama.assert_not_called()
     mock_groq.assert_not_called()
     get_chat_llm.cache_clear()
+
+
+@patch(f"{MODULE}.get_ollama_chat_llm")
+@patch(f"{MODULE}.get_vllm_chat_llm")
+@patch(f"{MODULE}.get_groq_chat_llm")
+@patch(f"{MODULE}.get_settings")
+def test_structured_provider_override_uses_groq_when_default_is_vllm(
+    mock_settings, mock_groq, mock_vllm, mock_ollama
+):
+    mock_settings.return_value = SimpleNamespace(chat_provider="vllm")
+    get_chat_llm.cache_clear()
+    schema = type("Schema", (), {})
+
+    result = get_structured_llm(schema, provider="groq")
+
+    mock_groq.assert_called_once_with(None)
+    mock_vllm.assert_not_called()
+    mock_ollama.assert_not_called()
+    mock_groq.return_value.with_structured_output.assert_called_once_with(
+        schema,
+        method="json_mode",
+    )
+    assert result is mock_groq.return_value.with_structured_output.return_value
+    get_chat_llm.cache_clear()
+
+
+@patch(f"{MODULE}.get_structured_llm")
+def test_invoke_structured_forwards_provider(mock_get_structured):
+    schema = type("Schema", (), {})
+    mock_get_structured.return_value.invoke.return_value = schema()
+
+    result = invoke_structured(schema, "prompt", provider="groq")
+
+    assert isinstance(result, schema)
+    mock_get_structured.assert_called_once_with(
+        schema,
+        temperature=None,
+        provider="groq",
+    )
 
 
 @patch(f"{MODULE}.get_chat_llm")

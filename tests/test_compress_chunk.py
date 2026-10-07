@@ -64,3 +64,31 @@ async def test_compress_chunk_bypasses_high_scores_and_compresses_the_rest(monke
         "compressed at threshold",
         "above",
     ]
+
+
+async def test_compress_chunk_drops_no_output(monkeypatch):
+    class FakeCompressor:
+        async def acompress_documents(self, *, documents, query):
+            return [
+                Document(page_content="NO_OUTPUT", metadata=documents[0].metadata),
+                Document(page_content="Relevant answer text", metadata=documents[1].metadata),
+            ]
+
+    monkeypatch.setattr(
+        "app.services.pipeline.nodes.compress_chunk.get_context_compressor",
+        lambda: FakeCompressor(),
+    )
+
+    result = await compress_chunk(
+        {
+            "raw_query": "query",
+            "reranked_documents": [
+                Document(page_content="Irrelevant source", metadata={"chunk_id": "irrelevant"}),
+                Document(page_content="Relevant source", metadata={"chunk_id": "relevant"}),
+            ],
+        }
+    )
+
+    assert [document.page_content for document in result["compressed_documents"]] == [
+        "Relevant answer text"
+    ]

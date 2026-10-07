@@ -19,6 +19,19 @@ def test_rewrite_normalizes_without_history(mock_invoke):
 
 
 @patch(f"{MODULE}.invoke_structured")
+def test_rewrite_uses_groq_provider(mock_invoke):
+    mock_invoke.return_value = QueryRewrite(
+        rewritten_query="বোরো ধানের বীজ হার কত?",
+        used_history=False,
+    )
+    state = {"raw_query": "বোরো ধানের বীজ হার কত?", "messages": []}
+
+    rewrite_query(state)
+
+    assert mock_invoke.call_args.kwargs["provider"] == "groq"
+
+
+@patch(f"{MODULE}.invoke_structured")
 def test_rewrite_resolves_subject_from_history(mock_invoke):
     mock_invoke.return_value = QueryRewrite(
         rewritten_query="বোরো ধানে কতবার সেচ দিতে হয়?",

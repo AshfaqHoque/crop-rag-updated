@@ -1,7 +1,7 @@
 """Central chat-model wrapper with provider selection, retries, and normalized errors."""
 from collections.abc import Sequence
 from functools import lru_cache
-from typing import TypeVar
+from typing import Literal, TypeVar
 
 from langchain_core.messages import BaseMessage
 from langchain_core.output_parsers import StrOutputParser
@@ -18,6 +18,7 @@ from app.core.logging import get_logger
 logger = get_logger(__name__)
 T = TypeVar("T", bound=BaseModel)
 PromptInput = str | Sequence[BaseMessage]
+ChatProvider = Literal["ollama", "groq", "vllm"]
 
 
 @lru_cache
@@ -62,18 +63,21 @@ def get_vllm_chat_llm(temperature: float | None = None) -> ChatOpenAI:
     )
 
 @lru_cache
-def get_chat_llm(temperature: float | None = None) -> ChatOllama | ChatGroq | ChatOpenAI:
+def get_chat_llm(temperature: float | None = None,*,provider: ChatProvider | None = None,) -> ChatOllama | ChatGroq | ChatOpenAI:
     settings = get_settings()
-    if settings.chat_provider == "groq":
+    selected_provider = provider or settings.chat_provider
+    if selected_provider == "groq":
         return get_groq_chat_llm(temperature)
-    if settings.chat_provider == "vllm":
+    if selected_provider == "vllm":
         return get_vllm_chat_llm(temperature)
     return get_ollama_chat_llm(temperature)
 
 
-def get_structured_llm(schema: type[T], *, temperature: float | None = None):
-    llm = get_chat_llm(temperature)
-    if get_settings().chat_provider == "groq" or get_settings().chat_provider == "vllm":
+def get_structured_llm(schema: type[T],*,temperature: float | None = None,provider: ChatProvider | None = None):
+    settings = get_settings()
+    selected_provider = provider or settings.chat_provider
+    llm = get_chat_llm(temperature, provider=provider)
+    if selected_provider in ("groq", "vllm"):
         # ChatGroq defaults to function/tool calling, which can fail when the
         # model emits plain text instead of the required tool call. GPT-OSS
         # supports Groq's native JSON Schema response format directly.
@@ -83,10 +87,9 @@ def get_structured_llm(schema: type[T], *, temperature: float | None = None):
 
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=0.5, max=4), reraise=True)
-def invoke_structured(schema: type[T], prompt: PromptInput, *, temperature: float | None = None,) -> T:
+def invoke_structured(schema: type[T], prompt: PromptInput, *, temperature: float | None = None, provider: ChatProvider | None = None,) -> T:
     try:
-        settings = get_settings()
-        result = get_structured_llm(schema, temperature=temperature).invoke(prompt)
+        result = get_structured_llm(schema, temperature=temperature, provider=provider,).invoke(prompt)
         if not isinstance(result, schema):
             raise LLMGenerationError(f"Model did not return expected schema {schema.__name__}")
         return result

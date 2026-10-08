@@ -38,7 +38,7 @@ def rewrite_query(state: PipelineState) -> PipelineState:
         HumanMessage(content=query),
     ]
 
-    result = invoke_structured(QueryRewrite, messages, temperature=0.0, provider="vllm")
+    result = invoke_structured(QueryRewrite, messages, temperature=0.0)
 
     rewritten = result.rewritten_query.strip() if result.rewritten_query else ""
     rewritten = rewritten or query

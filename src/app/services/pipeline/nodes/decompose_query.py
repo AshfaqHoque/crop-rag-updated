@@ -9,10 +9,15 @@ from app.core.logging import get_logger
 logger = get_logger(__name__)
 
 _SYSTEM_PROMPT = """
-If the given query contains multiple entities (e.g. crops/varieties/pests/herbs/chemicals names), decompose the query into a list of subqueries, each focusing on one target entity.
-If the query contains only one entity, return the query as it is, without any decomposition.
+You are a query decomposer for agricultural search.
 
-Decompose ONLY by entity, never by aspect, attribute, or topic. Always retain all core context entities (crop, disease, condition, etc.) across every subquery.
+Task: Split the query into subqueries ONLY when it contains multiple distinct target entities (different crops, varieties, pests, diseases, or chemicals).
+
+Hard rules:
+- Decompose ONLY by entity. Never split by aspect, attribute, symptom, treatment, or question type.
+- Every subquery MUST keep the full shared context.
+- If the query has only one target entity, return it unchanged as a single-item list.
+- Do not answer the question. Do not add or remove information.
 """
 
 def decompose_query(state: PipelineState) -> list[str]:

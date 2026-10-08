@@ -11,14 +11,15 @@ logger = get_logger(__name__)
 
 _SYSTEM_PROMPT = """
 You are an expert query rewriter for an agricultural document retrieval system. The documents are in Bangla.
-Your job is to transform a user's raw input into an optimized search query that search engines and vector databases can better understand.
+
+Task: Rewrite the user message into one clean search query in Bangla Language.
 
 Rules:
-Use conversational history to resolve any coreferences, pronouns, or ambiguous terms in the user's query.
-ALWAYS output the final query in Native Bangla Script (বাংলা লিপি).
-Keep entity names (crops, varieties, diseases, etc.) and numbers strictly accurate. 
-Preserve the user's exact intent.
-Do NOT answer the question.
+- Output ONLY native Bangla script (বাংলা লিপি).
+- Resolve pronouns and coreferences using the conversation history.
+- Preserve the user's exact intent.
+- Convert entity names (crops, varieties, diseases, chemicals, etc.) carefully. Do not change their meaning.
+- Do NOT answer the question.
 
 The JSON object MUST contain exactly this field:
    "rewritten_query": string
@@ -29,15 +30,15 @@ def rewrite_query(state: PipelineState) -> PipelineState:
     conversation = list(state.get("messages") or [])
     history = conversation[-9:-1] if conversation else []
 
-    current_message = f"New Query to Evaluate:\n{query}"
+    # current_message = f"Rewrite this query:\n{query}"
     
     messages = [
         SystemMessage(content=_SYSTEM_PROMPT),
         *history,
-        HumanMessage(content=current_message,),
+        HumanMessage(content=query),
     ]
 
-    result = invoke_structured(QueryRewrite, messages, temperature=0.0)
+    result = invoke_structured(QueryRewrite, messages, temperature=0.0, provider="vllm")
 
     rewritten = result.rewritten_query.strip() if result.rewritten_query else ""
     rewritten = rewritten or query

@@ -346,3 +346,11 @@ Cloud Build, Cloud Run, and Azure Container Apps deployment snippets used by the
 ## License
 
 No license metadata is currently declared in this repository.
+
+```bash
+sudo systemctl restart app-8080.service 
+```
+```bash
+journalctl -u app-8080.service -f
+```
+

@@ -11,22 +11,53 @@ from app.services.pipeline.state import PipelineState
 
 logger = get_logger(__name__)
 
+
 _SYSTEM_TEMPLATE = """
 You are an expert agricultural advisor helping farmers in Bangladesh. Answer strictly and exclusively in {answer_language} in a natural, conversational tone.
 Keep answers concise, clear, and direct. Provide detailed descriptions only if the user explicitly asks for them.
 When the answer involves a calculation (e.g. dosage, area, quantity, cost), always show the step-by-step math before giving the final result — this is not optional detail, it is a part of the answer.
 If the context does not match the question or does not contain enough information to answer, politely inform the farmer that you do not have the information, then ask if they would like to talk to an agronomist. Never state that you only have the information provided.
 
+Present knowledge context as established agricultural information, not as information supplied by the user. Never mention or refer to the knowledge context, prompt, or source of the information in your response.
+
+{unit_conversion_list}
+
 Here is your knowledge context. Answer only using this context. Never invent rates, doses, dates, varieties, treatments, or missing values. Do not use external knowledge.
-<knowledge_context>
 {context}
-</knowledge_context>
 """
+
+
+_UNIT_KEYWORDS = (
+    # শতক / ডেসিমেল (decimal)
+    "শতক", "শতাংশ", "ডেসিমেল", "ডেসিমাল",
+    # বিঘা (bigha)
+    "বিঘা", "বিঘাতে", "বিঘায়",
+    # একর (acre)
+    "একর", "একরে",
+    # হেক্টর (hectare)
+    "হেক্টর", "হেক্টরে"
+)
+
+
+_UNIT_CONVERSIONS = """
+<unit_conversions>
+১ হেক্টর (hectare) = ২৪৭.১ শতক (decimal)
+১ একর (acre) = ১০০ শতক (decimal)
+১ বিঘা (bigha) = ৩৩ শতক (decimal)
+</unit_conversions>
+The conversion factors in <unit_conversions> are allowed for any area calculation, even though they are not part of the knowledge context. Show the multiplication step by step.
+"""
+
+
+def _needs_units(text: str) -> bool:
+    return any(keyword in text for keyword in _UNIT_KEYWORDS)
+
 
 # Output format:
 # - HTML fragment only (no <html>/<head>/<body>, no Markdown).
 # - Use HTML paragraphs and lists only when the answer truly needs structure.
 # - <strong> sparingly for key numbers/terms.
+
 
 def _answer_language(language_type: str) -> str:
     if language_type == "bn":
@@ -67,12 +98,15 @@ def generate(state: PipelineState) -> PipelineState:
     context_documents = (state.get("compressed_documents") or state.get("reranked_documents") or state.get("retrieved_documents", []))
     query = (state.get("raw_query") or state.get("raw_query", ""))
     # current_message = f"Retrieved Documents:\n{_format_context(context_documents)}\n\nUser Query: {query}"
+    unit_check_text = state.get("rewritten_query") or query
+    unit_block = _UNIT_CONVERSIONS if _needs_units(unit_check_text) else ""
 
     messages = [
         SystemMessage(
             content=_SYSTEM_TEMPLATE.format(
                 answer_language=_answer_language(state.get("language_type", "english")),
-                context=f"<context>\n{_format_context(context_documents)}\n</context>",
+                context=f"<knowledge_context>\n{_format_context(context_documents)}\n</knowledge_context>",
+                unit_conversion_list=unit_block,
             )
         ),
         *history,

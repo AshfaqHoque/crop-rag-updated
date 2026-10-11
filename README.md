@@ -241,7 +241,7 @@ python -m app.ingestion.load_soil_test_data --reset
 ### 5. Run
 
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app.main:app --reload --app-dir src --port 8052 
 ```
 
 - API docs: http://localhost:8000/docs  
@@ -352,5 +352,8 @@ sudo systemctl restart app-8080.service
 ```
 ```bash
 journalctl -u app-8080.service -f
+```
+```bash
+ssh -N -L 8091:127.0.0.1:8091 -L 8090:127.0.0.1:8090 -L 11434:127.0.0.1:11434 -L 8000:127.0.0.1:8000 ashfaq@136.112.245.192
 ```
 

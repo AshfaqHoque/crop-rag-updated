@@ -41,7 +41,7 @@ multi_retriever = MultiQueryRetriever.from_llm(
 )
 
 # ── Test Query ─────────────────────────────────────────────────────
-query = "ব্রি ধান৪৭"
+query = "নিউবেন ছত্রাকনাশক কোন কোন রোগ দমনে ব্যবহার করা যায়?"
 # query = "bhutta chara ki ki jaat chash korle bhalo folon pawa jay"
 
 print(f"Original Query: {query}\n")

@@ -86,7 +86,7 @@ def rerank(state: PipelineState) -> PipelineState:
 
     reranked.sort(key=lambda document: document.metadata["relevance_score"], reverse=True)
     reranked = reranked[: settings.rerank_top_k]
-    reranked = cut_at_unusual_gap(reranked)
+    # reranked = cut_at_unusual_gap(reranked)
 
     logger.info(
         "rerank final chunks=%d scores=%s for query='%s'",

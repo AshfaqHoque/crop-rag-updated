@@ -545,4 +545,4 @@ def chunk_all(crops: list[dict]) -> list[Chunk]:
     all_chunks: list[Chunk] = []
     for crop in crops:
         all_chunks.extend(chunk_crop(crop))
-    return llm_splitter(all_chunks)
+    return all_chunks

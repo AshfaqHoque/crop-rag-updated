@@ -66,3 +66,26 @@ async def test_stream_chat_uses_bangla_thinking_message():
     assert status_event["content"] in BENGALI_THINKING_MESSAGES
 
     await chunks.aclose()
+
+
+@pytest.mark.asyncio
+async def test_stream_chat_emits_out_of_scope_fallback_from_node_update():
+    class OutOfScopeGraph:
+        async def astream(self, state, config, stream_mode):
+            yield "updates", {"route": {"intent": "out_of_scope"}}
+            yield "updates", {
+                "generate_out_of_scope": {
+                    "answer": "Sorry, I can't help with this topic. Would you like to know something about agriculture?"
+                }
+            }
+
+    service = ChatService(graph=OutOfScopeGraph())
+    chunks = service.stream_chat(
+        ChatRequest(session_id="session", message="tell me a joke", language_type="en")
+    )
+    events = [json.loads(event.removeprefix("data: ").strip()) async for event in chunks]
+
+    assert any(event.get("node") == "generate_out_of_scope" for event in events)
+    assert any(event["type"] == "token" and event["content"].startswith("Sorry,") for event in events)
+    assert events[-1]["type"] == "done"
+    assert events[-1]["answer"].startswith("Sorry,")

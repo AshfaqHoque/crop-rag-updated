@@ -11,6 +11,7 @@ NODE_THINKING = {
     "generate_chitchat": {"en": "Preparing a response...", "bn": "উত্তর প্রস্তুত করা হচ্ছে..."},
     "generate_capability": {"en": "Preparing a response...", "bn": "উত্তর প্রস্তুত করা হচ্ছে..."},
     "generate_meaningless": {"en": "Preparing a response...", "bn": "উত্তর প্রস্তুত করা হচ্ছে..."},
+    "generate_out_of_scope": {"en": "Preparing a response...", "bn": "উত্তর প্রস্তুত করা হচ্ছে..."},
     "handle_agronomist_request": {"en": "Connecting you with an agronomist...", "bn": "কৃষি বিশেষজ্ঞের সাথে সংযোগ করা হচ্ছে..."},
 }
 

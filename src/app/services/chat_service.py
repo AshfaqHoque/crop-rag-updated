@@ -14,7 +14,7 @@ from app.schemas.chat import ChatRequest, ChatResponse, SourceChunk
 from app.services.pipeline.graph import get_chat_graph
 from app.services.thinking_messages import get_node_thinking_message
 
-_TERMINAL_GENERATE_NODES = {"generate", "generate_company", "generate_chitchat", "generate_meaningless", "generate_soil_test", "handle_agronomist_request", "generate_capability"}
+_TERMINAL_GENERATE_NODES = {"generate", "generate_company", "generate_chitchat", "generate_meaningless", "generate_soil_test", "handle_agronomist_request", "generate_capability", "generate_out_of_scope"}
 
 class ChatService:
     def __init__(self, graph=None) -> None:
@@ -67,6 +67,7 @@ class ChatService:
                     "chitchat": ["generate_chitchat"],
                     "capability_query": ["generate_capability"],
                     "meaningless": ["generate_meaningless"],
+                    "out_of_scope": ["generate_out_of_scope"],
                     "request_agronomist": ["handle_agronomist_request"],
                 }.get(u.get("intent"), []),
                 "decompose_query": lambda u: ["retrieve_rerank_and_compress"],

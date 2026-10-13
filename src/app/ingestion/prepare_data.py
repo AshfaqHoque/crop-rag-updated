@@ -376,17 +376,20 @@ def chunk_herbicides(crop: dict) -> list[Chunk]:
         weed_name = h.get("pesticide_name") or "Unknown weed"
         lines = [
             f"আগাছার নাম (Weed name): {weed_name}",
-            f"ট্রেড নাম (Trade name): {safe_str(h.get('trade_name'))}",
-            f"জেনেরিক নাম (Generic name): {safe_str(h.get('generic_name'))}",
-            f"কোম্পানির নাম (Company name): {safe_str(h.get('company_name'))}",
-            f"আগাছানাশকের প্রয়োগ মাত্রা (Applicable Amount of Herbicide): {safe_str(h.get('application_dose'))}",
-            f"পানির প্রয়োগ মাত্রা (Applicable Amount of Water): {safe_str(h.get('pesticide_amount'))}",
-            f"মূল্য (Price): {safe_str(h.get('price'))}",
-            f"রেটিং (Rating): {h.get('rating', '')}",
+            (
+                f"প্রস্তাবিত আগাছানাশকের ট্রেড নাম (Trade name): {safe_str(h.get('trade_name'))}, "
+                f"জেনেরিক নাম (Generic name): {safe_str(h.get('generic_name'))}, "
+                f"কোম্পানি (Company): {safe_str(h.get('company_name'))}, "
+                f"আগাছানাশকের প্রয়োগ মাত্রা (Applicable Amount of Herbicide): {safe_str(h.get('application_dose'))}, "
+                f"পানির প্রয়োগ মাত্রা (Applicable Amount of Water): {safe_str(h.get('pesticide_amount'))}, "
+                f"মূল্য (Price): {safe_str(h.get('price'))}, "
+                f"রেটিং (Rating): {h.get('rating', '')}"
+            ),
         ]
         guide = clean_html(h.get("application_guide"))
         if is_meaningful(guide):
-            lines.append("প্রয়োগ নির্দেশিকা (Application guide):\n" + guide)
+            lines[-1] += f", প্রয়োগ নির্দেশিকা (Application guide): {guide}"
+        lines[-1] += "।"
         body = "\n".join(lines)
         text = _header(crop, f"আগাছানাশক / Herbicide -- {weed_name}") + body
         chunks.append(

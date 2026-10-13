@@ -12,6 +12,7 @@ from app.services.pipeline.nodes.generate_company import generate_company
 from app.services.pipeline.nodes.generate_chitchat import generate_chitchat
 from app.services.pipeline.nodes.generate_capability import generate_capability
 from app.services.pipeline.nodes.generate_meaningless import generate_meaningless
+from app.services.pipeline.nodes.generate_out_of_scope import generate_out_of_scope
 from app.services.pipeline.nodes.generate_soil_test import generate_soil_test
 from app.services.pipeline.nodes.handle_agronomist_request import handle_agronomist_request
 from app.services.pipeline.nodes.retrieve_and_rerank import retrieve_rerank_and_compress
@@ -29,6 +30,8 @@ def route_after_route(state: PipelineState) -> str:
         return "generate_chitchat"
     if state.get("intent") == "meaningless":
         return "generate_meaningless"
+    if state.get("intent") == "out_of_scope":
+        return "generate_out_of_scope"
     if state.get("intent") == "capability_query":
         return "generate_capability"
     if state.get("intent") == "crop_query":
@@ -68,6 +71,7 @@ def build_chat_graph():
     builder.add_node("generate_chitchat", generate_chitchat)
     builder.add_node("generate_capability", generate_capability)
     builder.add_node("generate_meaningless", generate_meaningless)
+    builder.add_node("generate_out_of_scope", generate_out_of_scope)
     builder.add_node("handle_agronomist_request", handle_agronomist_request)
 
     builder.add_edge(START, "rewrite_query")
@@ -82,6 +86,7 @@ def build_chat_graph():
             "generate_chitchat": "generate_chitchat",
             "generate_capability": "generate_capability",
             "generate_meaningless": "generate_meaningless",
+            "generate_out_of_scope": "generate_out_of_scope",
             "handle_agronomist_request": "handle_agronomist_request",
         },
     )
@@ -94,6 +99,7 @@ def build_chat_graph():
     builder.add_edge("generate_chitchat", END)
     builder.add_edge("generate_capability", END)
     builder.add_edge("generate_meaningless", END)
+    builder.add_edge("generate_out_of_scope", END)
     builder.add_edge("handle_agronomist_request", END)
     return builder.compile(checkpointer=get_checkpointer())
 

@@ -15,6 +15,7 @@ Return the requested structured output as valid JSON matching the schema.
 
 Intent:
 - request_agronomist: the previous assistant message explicitly offered to connect the user with an agronomist/agriculture officer and the user accepts. If the previous message offered anything else, it is not this intent.
+- out_of_scope: meaningful questions or requests that are unrelated to agriculture, farming, soil testing, Aunkur AI, or its services. 
 - capability_query: the user asks what crops or topics Aunkur AI can answer about, or asks about the assistant's supported coverage. This is only for questions about the system's scope, not for substantive crop questions.
 - chitchat: greetings, thanks, social interactions, or personal conversations that do not seek agricultural advice.
 - soil_test_query: questions specifically about soil testing, sampling, reports, pH/EC/nutrient interpretation, soil-test-based fertilizer recommendations, or the Porokh soil-testing device/service.

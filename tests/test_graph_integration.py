@@ -138,6 +138,28 @@ def test_full_graph_meaningless_skips_retrieval(monkeypatch):
     assert result["answer"] == "Please ask a clear question."
 
 
+def test_full_graph_out_of_scope_returns_fallback_without_retrieval(monkeypatch):
+    monkeypatch.setattr(
+        graph_module,
+        "rewrite_query",
+        lambda state: {**state, "rewritten_query": state["raw_query"]},
+    )
+    monkeypatch.setattr(
+        graph_module,
+        "route",
+        lambda state: {**state, "intent": "out_of_scope"},
+    )
+
+    result = graph_module.build_chat_graph().invoke(
+        {"session_id": "s", "raw_query": "tell me a joke", "messages": [], "language_type": "bn"},
+        {"configurable": {"thread_id": "s"}},
+    )
+
+    expected = "দুঃখিত, এই বিষয়ে আমি আপনাকে সাহায্য করতে পারব না। আপনি কি কৃষি সম্পর্কে কিছু জানতে চান?"
+    assert result["answer"] == expected
+    assert result["messages"][-1].content == expected
+
+
 def test_full_graph_capability_query_skips_retrieval(monkeypatch):
     visited = []
 

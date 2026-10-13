@@ -333,20 +333,22 @@ def chunk_pesticides(crop: dict) -> list[Chunk]:
             lines.append("দমন ব্যবস্থাপনা (Control measures): "+ control_measure)
         # Recommended chemicals/pesticides
         chemicals = p.get("chemical") or []
-        for c in chemicals:
-            chemical_lines = [
-                f"ট্রেড নাম (Trade name): {safe_str(c.get('trade_name'))}",
-                f"জেনেরিক নাম (Generic name): {safe_str(c.get('generic_name'))}",
-                f"কোম্পানির নাম (Company name): {safe_str(c.get('company_name'))}",
-                f"কীটনাশকের প্রয়োগ মাত্রা (Applicable Amount of Pesticide): {safe_str(c.get('application_dose'))}",
-                f"পানির প্রয়োগ মাত্রা (Applicable Amount of Water): {safe_str(c.get('pesticide_amount'))}",
-                f"মূল্য (Price): {safe_str(c.get('price'))}",
-                f"রেটিং (Rating): {c.get('rating', '')}",
-            ]
-            guide = clean_html(c.get("application_guide"))
-            if is_meaningful(guide):
-                chemical_lines.append("প্রয়োগ নির্দেশিকা (Application guide):\n" + guide)
-            lines.append("প্রস্তাবিত কীটনাশক (Recommended pesticide):\n" + "\n".join(chemical_lines))
+        if chemicals:
+            lines.append("প্রস্তাবিত কীটনাশক (Recommended pesticides):")
+            for c in chemicals:
+                chemical_info = (
+                    f"ট্রেড নাম (Trade name): {safe_str(c.get('trade_name'))}, "
+                    f"জেনেরিক নাম (Generic name): {safe_str(c.get('generic_name'))}, "
+                    f"কোম্পানি (Company): {safe_str(c.get('company_name'))}, "
+                    f"কীটনাশকের প্রয়োগ মাত্রা (Applicable Amount of Pesticide): {safe_str(c.get('application_dose'))}, "
+                    f"পানির প্রয়োগ মাত্রা (Applicable Amount of Water): {safe_str(c.get('pesticide_amount'))}, "
+                    f"মূল্য (Price): {safe_str(c.get('price'))}, "
+                    f"এবং রেটিং (Rating): {c.get('rating', '')}।"
+                )
+                guide = clean_html(c.get("application_guide"))
+                if is_meaningful(guide):
+                    chemical_info = chemical_info.rstrip("।") + f", প্রয়োগ নির্দেশিকা (Application guide): {guide}।"
+                lines.append(chemical_info)
         body = "\n".join(lines)
 
         text = (_header(crop, f"কীটনাশক / Pesticide -- {disease_name}")+ body)

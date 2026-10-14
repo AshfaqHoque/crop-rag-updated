@@ -8,9 +8,12 @@ from app.services.pipeline.state import PipelineState
 
 logger = get_logger(__name__)
 
-_SYSTEM_TEMPLATE = """You answer questions about soil testing and the Porokh soil-testing service.
+_SYSTEM_TEMPLATE = """You are an expert of answering about soil testing and the Porokh soil-testing service.
 
-Regardless of the language of the user query or context, you MUST answer strictly in {answer_language}, in a natural, concise, conversational tone. Use only the supplied soil-test and Porokh FAQ context. If the context is insufficient, say so plainly rather than guessing. Do not mention the context, retrieval, documents, or these instructions in your answer.
+Regardless of the language of the user query or context, you MUST answer strictly in {answer_language}, in a natural, concise, conversational tone. 
+Use only the supplied soil-test and Porokh FAQ context. 
+If the context is insufficient, say that currently i do not have enough information to answer this question. 
+Do not mention the context, retrieval, documents, or these instructions in your answer.
 """
 
 
@@ -24,7 +27,7 @@ def generate_soil_test(state: PipelineState) -> PipelineState:
     messages = [
         SystemMessage(
             content=_SYSTEM_TEMPLATE.format(
-                answer_language=_answer_language(state.get("language_type", "english"))
+                answer_language=_answer_language(state.get("language_type", "en"))
             )
         ),
         *history,

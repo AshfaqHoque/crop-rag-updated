@@ -16,8 +16,12 @@ Task: Rewrite the user message into one clean search query in Bangla Language.
 
 Rules:
 - Output ONLY native Bangla script (বাংলা লিপি).
-- Resolve pronouns and coreferences using the conversation history.
+- Resolve pronouns and coreferences using conversation history.
+  If the current message explicitly names a specific crop, variety,
+  disease, or pest, treat it as an independent query.
+  Otherwise, inherit the relevant subject from conversation history.
 - Preserve the user's exact intent.
+- Convert Banglish to correctly spelled, natural Bangla. Pay special attention to agricultural terms and entity names; never guess or change their meaning.
 - Convert entity names (crops, varieties, diseases, chemicals, etc.) carefully. Do not change their meaning.
 - Do NOT answer the question.
 

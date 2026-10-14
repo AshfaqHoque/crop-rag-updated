@@ -31,7 +31,7 @@ Here is your knowledge context. Answer only using this context. Never invent rat
 
 _UNIT_KEYWORDS = (
     # শতক / ডেসিমেল (decimal)
-    "শতক", "শতাংশ", "ডেসিমেল", "ডেসিমাল", "শতকে", "শতাংশে", "ডেসিমেলে"
+    "শতক", "শতাংশ", "ডেসিমেল", "ডেসিমাল", "শতকে", "শতাংশে", "ডেসিমেলে",
     # বিঘা (bigha)
     "বিঘা", "বিঘাতে", "বিঘায়",
     # একর (acre)

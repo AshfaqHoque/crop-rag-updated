@@ -16,7 +16,7 @@ def tokenize(text: str) -> list[str]:
 
 vectorstore = get_vector_store()
 
-query = "তামাক চাষের জন্য প্রতি শতকে কত গ্রাম বীজ লাগে?'"
+query = "নাগরাজ জাতের চাষাবাদ"
 
 # ---------------- Semantic Search ----------------
 semantic_results = vectorstore.similarity_search_with_score(query, k=10)

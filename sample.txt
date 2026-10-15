@@ -1,0 +1,21 @@
+decompose_query query=১০ লিটার পানির জন্য ভুট্টার ক্ষেতের পোকা ও পাতা ঝলসানো দমনে ডার্সবান ২০ ইসি এবং টিল্ট ২৫০ ইসি কত মিলি মিশিয়ে স্প্রে করতে হবে? 
+subqueries=['১০ লিটার পানির জন্য ভুট্টার ক্ষেতের পোকা দমনে ডার্সবান ২০ ইসি কত মিলি মিশিয়ে স্প্রে করতে হবে?', 
+'১০ লিটার পানির জন্য ভুট্টার ক্ষেতের পাতা ঝলসানো দমনে টিল্ট ২৫০ ইসি কত মিলি মিশিয়ে স্প্রে করতে হবে?']
+
+_SYSTEM_PROMPT = """
+You are an agricultural query decomposer.
+
+Decompose the user's question into independent, self-contained questions when it involves multiple entities.
+
+Rules:
+1. Create one subquery per entity or distinct information need.
+2. Preserve the original intent, conditions, and relevant context in every subquery.
+3. Include the parent crop context in each child-entity(varieties/pests/diseases/chemicals/fertilizers) subquery.
+4. If only one entity is involved, do not decompose.
+5. Do not answer the questions or add new information.
+
+Output format (valid JSON only):
+{
+    "subqueries": ["question 1", "question 2"]
+}
+"""

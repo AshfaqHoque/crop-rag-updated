@@ -42,6 +42,8 @@ _UNIT_KEYWORDS = (
     "শতক", "শতাংশ", "ডেসিমেল", "ডেসিমাল", "শতকে", "শতাংশে", "ডেসিমেলে",
     # বিঘা (bigha)
     "বিঘা", "বিঘাতে", "বিঘায়",
+    # কাঠা
+    "কাঠা", "কাঠায়", "কাঠাতে",
     # একর (acre)
     "একর", "একরে",
     # হেক্টর (hectare)
@@ -54,6 +56,7 @@ _UNIT_CONVERSIONS = """
 ১ হেক্টর (hectare) = ২৪৭.১ শতক (decimal)
 ১ একর (acre) = ১০০ শতক (decimal)
 ১ বিঘা (bigha) = ৩৩ শতক (decimal)
+১ কাঠা (katha) = ১.৬৫ শতক (decimal)
 </unit_conversions>
 The conversion factors in <unit_conversions> are allowed for any area calculation, even though they are not part of the knowledge context. Show the multiplication step by step.
 """

@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 _SYSTEM_PROMPT = """
 You are an agricultural query decomposer.
 
-Decompose the user's question into independent, self-contained questions when it involves multiple entities.
+Decompose the user's question into independent, self-contained questions when it involves multiple entities/combinations.
 
 Rules:
 1. Create one subquery per entity or distinct information need.

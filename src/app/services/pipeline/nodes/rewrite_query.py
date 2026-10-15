@@ -10,23 +10,20 @@ from app.services.pipeline.state import PipelineState
 logger = get_logger(__name__)
 
 _SYSTEM_PROMPT = """
-You are an expert query rewriter for an agricultural document retrieval system. The documents are in Bangla.
+You are a query rewriter for an agricultural RAG system.
 
-Task: Rewrite the user message into one clean search query in Bangla Language.
+Given the conversation history, rewrite the latest user query
+into a self-contained Bangla search query that reflects exactly
+what the user is asking.
 
 Rules:
-- Output ONLY native Bangla script (বাংলা লিপি).
-- Resolve pronouns and coreferences using conversation history.
-  If the current message explicitly names a specific crop, variety,
-  disease, or pest, treat it as an independent query.
-  Otherwise, inherit the relevant subject from conversation history.
-- Preserve the user's exact intent.
-- Convert Banglish to correctly spelled, natural Bangla. Pay special attention to agricultural terms and entity names; never guess or change their meaning.
-- Convert entity names (crops, varieties, diseases, chemicals, etc.) carefully. Do not change their meaning.
-- Do NOT answer the question.
+- Never reinterpret the question.
+- Preserve the exact meaning and all specific entities, agricultural terms, and requested information. Never omit, generalize, or substitute them.
+- If the latest query is self-contained, ignore conversation history.
+- Do not answer the question.
 
-The JSON object MUST contain exactly this field:
-   "rewritten_query": string
+Return only JSON:
+{"rewritten_query": "বাংলা প্রশ্ন"}
 """
 
 def rewrite_query(state: PipelineState) -> PipelineState:

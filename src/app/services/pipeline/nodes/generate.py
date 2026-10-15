@@ -32,7 +32,7 @@ Never state that you only have the information in the given context, or that you
 
 {unit_conversion_list}
 
-Here is your knowledge context. Answer only using this context. Never invent rates, doses, dates, varieties, treatments, or missing values. Do not use external knowledge.
+The knowledge context is the sole source of factual information. Use your agricultural expertise only to interpret and explain facts explicitly supported by the context, never to introduce new facts.
 {context}
 """
 
@@ -95,12 +95,10 @@ def _format_context(documents: list[Document]) -> str:
 def _fallback_message(language_type: str) -> str:
     if language_type == "bn":
         return (
-            "এই প্রশ্নের জন্য খুব বেশি তথ্য এসেছে, তাই আমি এখন সঠিক উত্তর দিতে পারছি না। "
             "অনুগ্রহ করে প্রশ্নটি আরও নির্দিষ্ট করে আবার জিজ্ঞাসা করুন, "
             "অথবা একজন কৃষিবিদের সাথে কথা বলতে চান কিনা জানান।"
         )
     return (
-        "This question retrieved too much information for me to answer accurately right now. "
         "Please make the question more specific and try again, "
         "or let me know if you would like to speak with an agronomist."
     )
@@ -109,6 +107,7 @@ def generate(state: PipelineState) -> PipelineState:
     conversation = list(state.get("messages") or [])
     history = conversation[-3:-1] if conversation else []
     context_documents = state.get("compressed_documents") or []
+    context = _format_context(context_documents)
     query = (state.get("raw_query") or state.get("raw_query", ""))
     # current_message = f"Retrieved Documents:\n{_format_context(context_documents)}\n\nUser Query: {query}"
     unit_check_text = state.get("rewritten_query") or query
@@ -117,14 +116,20 @@ def generate(state: PipelineState) -> PipelineState:
     messages = [
         SystemMessage(
             content=_SYSTEM_TEMPLATE.format(
-                answer_language=_answer_language(state.get("language_type", "english")),
-                context=f"<knowledge_context>\n{_format_context(context_documents)}\n</knowledge_context>",
+                answer_language=_answer_language(state.get("language_type", "en")),
+                context=f"<knowledge_context>\n{context}\n</knowledge_context>",
                 unit_conversion_list=unit_block,
             )
         ),
         *history,
         HumanMessage(content=query),
     ]
+
+    total_chars = sum(len(str(m.content)) for m in messages)
+
+    if total_chars > 20000:
+        logger.warning("generate context truncated: total_chars=%d, context_chars=%d -> %d",total_chars,len(context),min(len(context), 18000),)
+        messages[0].content = messages[0].content.replace(context, context[:18000])
     
     try:
         answer = invoke_text(messages).strip()

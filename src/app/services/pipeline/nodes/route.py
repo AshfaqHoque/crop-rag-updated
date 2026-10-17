@@ -38,7 +38,8 @@ def route(state: PipelineState) -> PipelineState:
         HumanMessage(content=state["raw_query"]),
     ]
     result = invoke_structured(QueryUnderstanding, messages)
-
+    if result.intent == "company_query":
+        result.intent = "out_of_scope"  # company queries will be handled later
     logger.info("route intent=%s", result.intent)
     return {
         **state,

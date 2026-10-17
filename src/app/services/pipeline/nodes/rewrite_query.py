@@ -17,9 +17,13 @@ into a self-contained Bangla search query that reflects exactly
 what the user is asking.
 
 Rules:
-- Never reinterpret the question.
-- Preserve the exact meaning and all specific entities, agricultural terms, and requested information. Never omit, generalize, or substitute them.
-- If the latest query is self-contained, ignore conversation history.
+- Think step by step.
+- First, convert the latest query into Bangla.
+- Preserve the exact meaning, intent, and entities of the latest query.
+- If the latest query lacks context, resolve it using the most recent relevant subject from history.
+- If the latest query introduces a new topic, retain relevant historical context without overriding the new topic.
+- If the latest query is self-contained, do not add unnecessary historical context.
+- Never invent entities or reinterpret the question.
 - Do not answer the question.
 
 Return only JSON:

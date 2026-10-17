@@ -17,7 +17,7 @@ settings = get_settings()
 # Standard LangChain LLMChainExtractor prompt with your custom rule added
 DEFAULT_EXTRACTION_TEMPLATE = """Given the question and context, extract only the parts that help answer the question. Copy them AS IS. Remember, DO NOT edit the extracted parts of the context.
 Rules:
-- If the context is about a different crop/variety/disease/entity than the question, return NO_OUTPUT.
+- If the context is about a different crop/variety/disease/entity than the question, even after considering spelling variations and aliases, return NO_OUTPUT.
 - If the question is broad (e.g. how to cultivate a crop), keep only the key practical steps, rates, timings, and important warnings. Drop long background or unrelated sections.
 - Always extract the complete sentence(s) containing the information needed to answer the question. Do not extract only a phrase, number, rate, or fragment from a sentence.
 - Always include the relevant original subject and identifying metadata from the context alongside the extracted facts, even if they are already mentioned in the question.

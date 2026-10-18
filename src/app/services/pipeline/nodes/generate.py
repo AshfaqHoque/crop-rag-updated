@@ -65,12 +65,6 @@ def _needs_units(text: str) -> bool:
     return any(keyword in text for keyword in _UNIT_KEYWORDS)
 
 
-# Output format:
-# - HTML fragment only (no <html>/<head>/<body>, no Markdown).
-# - Use HTML paragraphs and lists only when the answer truly needs structure.
-# - <strong> sparingly for key numbers/terms.
-
-
 def _answer_language(language_type: str) -> str:
     if language_type == "bn":
         return "clear Bangla script (বাংলা লিপি)"
@@ -93,20 +87,23 @@ def _format_context(documents: list[Document]) -> str:
 
 def _fallback_message(language_type: str) -> str:
     if language_type == "bn":
-        return (
-            "অনুগ্রহ করে প্রশ্নটি আরও নির্দিষ্ট করে আবার জিজ্ঞাসা করুন, "
-            "অথবা একজন কৃষিবিদের সাথে কথা বলতে চান কিনা জানান।"
-        )
-    return (
-        "Please make the question more specific and try again, "
-        "or let me know if you would like to speak with an agronomist."
-    )
+        return "দুঃখিত, এই সম্পর্কে বর্তমানে আমার কাছে পর্যাপ্ত তথ্য নেই। আপনি কি একজন কৃষিবিদের সাথে কথা বলতে চান?"
+    return "Sorry, I currently don't have enough information about this. Would you like to speak with an agronomist?"
 
 def generate(state: PipelineState) -> PipelineState:
     conversation = list(state.get("messages") or [])
     history = conversation[-3:-1] if conversation else []
     context_documents = state.get("compressed_documents") or []
     context = _format_context(context_documents)
+
+    if not context_documents:
+        answer = _fallback_message(state.get("language_type", "en"))
+        return {
+            **state,
+            "messages": [AIMessage(content=answer)],
+            "answer": answer,
+        }
+    
     query = (state.get("raw_query") or state.get("raw_query", ""))
     # current_message = f"Retrieved Documents:\n{_format_context(context_documents)}\n\nUser Query: {query}"
     unit_check_text = state.get("rewritten_query") or query

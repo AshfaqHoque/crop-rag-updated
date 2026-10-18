@@ -6,6 +6,8 @@ application does not currently use them at runtime.
 """
 from dataclasses import dataclass
 from functools import lru_cache
+import json
+from pathlib import Path
 
 from app.core.logging import get_logger
 
@@ -35,30 +37,44 @@ def _build_crop_infos(rows: list[dict]) -> list[CropInfo]:
         )
     return crops
 
-
 @lru_cache
 def get_known_crops() -> list[CropInfo]:
-    """Load the canonical crop list from GraphQL and cache it in memory."""
-    from app.ingestion.fetch_crops import fetch_crops
+    path = Path("data/crops.json")
 
-    payload = fetch_crops(persist=False)
-    rows = payload.get("data", {}).get("getAllCropsFullDetails", {}).get("rows", [])
-    if not isinstance(rows, list):
-        logger.warning("GraphQL crop response did not include rows; returning an empty registry.")
+    if not path.exists():
+        logger.warning("Local crop registry not found: %s", path)
         return []
 
-    crops: list[CropInfo] = []
-    for item in rows:
-        crop_name = item.get("crop_name")
-        if not crop_name:
-            continue
+    with path.open("r", encoding="utf-8") as f:
+        payload = json.load(f)
 
-        crops.append(
-            CropInfo(
-                crop_id=str(item.get("crop_id") or item.get("id") or "").strip() or None,
-                crop_name=str(crop_name).strip(),
-                crop_bangla_name=str(item.get("crop_bangla_name") or "").strip(),
-            )
-        )
-    return crops
+    rows = payload["data"]["getAllCropsFullDetails"]["rows"]
+
+    return _build_crop_infos(rows)
+
+# @lru_cache
+# def get_known_crops() -> list[CropInfo]:
+#     """Load the canonical crop list from GraphQL and cache it in memory."""
+#     from app.ingestion.fetch_crops import fetch_crops
+
+#     payload = fetch_crops(persist=False)
+#     rows = payload.get("data", {}).get("getAllCropsFullDetails", {}).get("rows", [])
+#     if not isinstance(rows, list):
+#         logger.warning("GraphQL crop response did not include rows; returning an empty registry.")
+#         return []
+
+#     crops: list[CropInfo] = []
+#     for item in rows:
+#         crop_name = item.get("crop_name")
+#         if not crop_name:
+#             continue
+
+#         crops.append(
+#             CropInfo(
+#                 crop_id=str(item.get("crop_id") or item.get("id") or "").strip() or None,
+#                 crop_name=str(crop_name).strip(),
+#                 crop_bangla_name=str(item.get("crop_bangla_name") or "").strip(),
+#             )
+#         )
+#     return crops
 

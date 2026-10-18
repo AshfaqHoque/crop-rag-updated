@@ -80,7 +80,7 @@ def build_chat_graph():
         "route",
         route_after_route,
         {
-            "extract_crop": "decompose_query",
+            "extract_crop": "extract_crop",
             "retrieve_company": "retrieve_company",
             "retrieve_soil_test": "retrieve_soil_test",
             "generate_chitchat": "generate_chitchat",
@@ -90,6 +90,7 @@ def build_chat_graph():
             "handle_agronomist_request": "handle_agronomist_request",
         },
     )
+    builder.add_edge("extract_crop", "decompose_query")
     builder.add_conditional_edges("decompose_query", fan_out_subqueries, ["retrieve_rerank_and_compress"])
     builder.add_edge("retrieve_company", "generate_company")
     builder.add_edge("retrieve_soil_test", "generate_soil_test")

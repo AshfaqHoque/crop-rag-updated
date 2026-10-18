@@ -19,7 +19,7 @@ what the user is asking.
 Rules:
 - Think step by step.
 - First, convert the latest query into Bangla.
-- Preserve the exact meaning, intent, and entities of the latest query.
+- Preserve the exact meaning, intent, and entities of the latest query (it can be crop, variety, disease, pest).
 - If the latest query lacks context, resolve it using the most recent relevant subject from history.
 - If the latest query introduces a new topic, retain relevant historical context without overriding the new topic.
 - If the latest query is self-contained, do not add unnecessary historical context.

@@ -7,6 +7,7 @@ import json
 
 from langchain_core.documents import Document
 from langchain_core.messages import HumanMessage
+from sqlalchemy import update
 from starlette.concurrency import run_in_threadpool
 
 from app.core.config import get_settings
@@ -61,7 +62,7 @@ class ChatService:
             NEXT = {
                 "rewrite_query": lambda u: ["route"],
                 "route": lambda u: {
-                    "crop_query": ["decompose_query"],
+                    "crop_query": ["extract_crop"],
                     "company_query": ["retrieve_company"],
                     "soil_test_query": ["retrieve_soil_test"],
                     "chitchat": ["generate_chitchat"],
@@ -70,14 +71,15 @@ class ChatService:
                     "out_of_scope": ["generate_out_of_scope"],
                     "request_agronomist": ["handle_agronomist_request"],
                 }.get(u.get("intent"), []),
+                "extract_crop": lambda u: ["decompose_query"],
                 "decompose_query": lambda u: ["retrieve_rerank_and_compress"],
                 "retrieve_rerank_and_compress": lambda u: ["generate"],
                 "retrieve_company": lambda u: ["generate_company"],
                 "retrieve_soil_test": lambda u: ["generate_soil_test"],
             }
-
+            crops = []
             def _think(node):
-                msg = get_node_thinking_message(node, request.language_type)
+                msg = get_node_thinking_message(node, request.language_type, crops=crops)
                 return f"data: {json.dumps({'type': 'thinking', 'content': msg, 'node': node}, ensure_ascii=False)}\n\n" if msg else None
 
             evt = _think("rewrite_query")
@@ -89,6 +91,8 @@ class ChatService:
             async for mode, chunk in self._graph.astream(initial_state, config, stream_mode=["updates", "messages"]):
                 if mode == "updates":
                         for node, update in chunk.items():
+                            if node == "extract_crop":
+                                crops = (update or {}).get("crops", [])
                             for nxt in NEXT.get(node, lambda u: [])(update or {}):
                                 if nxt not in announced:
                                     announced.add(nxt)

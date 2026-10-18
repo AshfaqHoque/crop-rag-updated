@@ -25,15 +25,14 @@ If the user mixes agricultural and unrelated questions, answer only the agricult
 
 When the answer involves a calculation (e.g. dosage, area, quantity, cost), always show the step-by-step math before giving the final result — this is not optional detail, it is a part of the answer.
 
+{unit_conversion_list}
+
+Before generating an answer, check whether knowledge_context contains relevant information for the user's question. It is the sole source of factual information. Use your agricultural expertise only to interpret and explain facts explicitly supported by the context, never to introduce new facts. 
+{context}
 If the context contains information for only part of the question, answer the supported part accurately. Politely inform the farmer that currently I do not have enough information about the remaining part(s), and ask if they would like to talk to an agronomist. 
 If the context does not contain information relevant to answering the question, politely inform the farmer that currently I do not have the information, then ask if they would like to talk to an agronomist. 
 
 Never state that you only have the information in the given context, or that you are limited to the context.
-
-{unit_conversion_list}
-
-The knowledge context is the sole source of factual information. Use your agricultural expertise only to interpret and explain facts explicitly supported by the context, never to introduce new facts.
-{context}
 """
 
 
@@ -58,7 +57,7 @@ _UNIT_CONVERSIONS = """
 ১ বিঘা (bigha) = ৩৩ শতক (decimal)
 ১ কাঠা (katha) = ১.৬৫ শতক (decimal)
 </unit_conversions>
-The conversion factors in <unit_conversions> are allowed for any area calculation, even though they are not part of the knowledge context. Show the multiplication step by step.
+The conversion factors in <unit_conversions> are allowed for any area calculation, even though they are not part of the knowledge context.
 """
 
 
@@ -84,7 +83,7 @@ def _answer_language(language_type: str) -> str:
 
 def _format_context(documents: list[Document]) -> str:
     if not documents:
-        return "(No relevant agricultural information was retrieved.)"
+        return "Empty context."
     max_chars = get_settings().context_max_chars_per_chunk
     formatted = []
     for index, document in enumerate(documents, start=1):

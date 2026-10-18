@@ -23,6 +23,7 @@ Task: Classify the the intent using user query and previous conversations into o
 - meaningless: pure gibberish, random keyboard mashing, unintelligible input or semantically impossible/nonsensical farming queries.
 
 Rules:
+- For follow-up queries, classify based on the previous topic.
 - If the user query contains a mixture of crop_query and any other intent, always prioritize crop_query.
 - Do not classify spelling mistakes, Banglish, or unfamiliar crop names as meaningless.
 

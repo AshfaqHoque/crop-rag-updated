@@ -1,16 +1,41 @@
-"""bge-m3 dense embeddings served through Ollama.
+"""BGE-M3 embeddings served through llama.cpp."""
 
-Ollama exposes the dense vector path. The lexical side of hybrid retrieval
-is implemented separately with BM25 in ``services/retrieval/hybrid.py``.
-"""
 from functools import lru_cache
 
-from langchain_ollama import OllamaEmbeddings
+from langchain_openai import OpenAIEmbeddings
 
 from app.core.config import get_settings
 
 
 @lru_cache
-def get_embeddings() -> OllamaEmbeddings:
+def get_embeddings() -> OpenAIEmbeddings:
     settings = get_settings()
-    return OllamaEmbeddings(base_url=settings.ollama_base_url, model=settings.embed_model)
+
+    return OpenAIEmbeddings(
+        base_url=settings.embed_base_url,
+        model=settings.embed_model,
+        api_key=settings.embed_api_key,
+        check_embedding_ctx_length=False,
+    )
+
+
+
+
+
+
+# """bge-m3 dense embeddings served through Ollama.
+
+# Ollama exposes the dense vector path. The lexical side of hybrid retrieval
+# is implemented separately with BM25 in ``services/retrieval/hybrid.py``.
+# """
+# from functools import lru_cache
+
+# from langchain_ollama import OllamaEmbeddings
+
+# from app.core.config import get_settings
+
+
+# @lru_cache
+# def get_embeddings() -> OllamaEmbeddings:
+#     settings = get_settings()
+#     return OllamaEmbeddings(base_url=settings.ollama_base_url, model=settings.embed_model)

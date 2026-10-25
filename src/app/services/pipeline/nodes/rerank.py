@@ -72,6 +72,7 @@ def rerank(state: PipelineState) -> PipelineState:
         json={
             "query": query,
             "documents": [document.page_content for document in documents],
+            "top_n": min(settings.rerank_top_k, len(documents)),
         },
         timeout=settings.reranker_timeout_seconds,
     )

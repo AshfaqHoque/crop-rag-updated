@@ -42,11 +42,16 @@ query getAllCropsFullDetails($updated_within_days: Int) {
     rows {
       id
       creator_id
+      crop_category{
+        category_name
+        id
+      }
       crop_name
       crop_bangla_name
       scientific_name
       crop_family
       general_info
+      rooftop_farming
       average_production
       is_verified
       children {

@@ -56,7 +56,8 @@ def safe_str(val: Any) -> str:
 def _header(crop: dict, section_label: str) -> str:
     name = crop.get("crop_name") or ""
     bn_name = crop.get("crop_bangla_name") or ""
-    return f"ফসল (Crop): {bn_name} ({name})\nবিভাগ (Section): {section_label}\n"
+    category = (crop.get("crop_category") or {}).get("category_name") or ""
+    return f"ফসল (Crop): {bn_name} ({name})\nফসলের শ্রেণি (Crop Category): {category}\nবিভাগ (Section): {section_label}\n"
 
 
 def _crop_id(crop: dict) -> str:
@@ -84,6 +85,7 @@ def chunk_overview(crop: dict) -> Chunk | None:
             "crop_id": _crop_id(crop),
             "crop_name": crop.get("crop_name"),
             "crop_bangla_name": crop.get("crop_bangla_name"),
+            "crop_category_name": (crop.get("crop_category") or {}).get("category_name") or "",
             "section": "overview",
         },
     )
@@ -108,6 +110,7 @@ def _simple_section(crop: dict, key: str, section_label: str, section_tag: str,
             "crop_id": _crop_id(crop),
             "crop_name": crop.get("crop_name"),
             "crop_bangla_name": crop.get("crop_bangla_name"),
+            "crop_category_name": (crop.get("crop_category") or {}).get("category_name") or "",
             "section": section_tag,
         },
     )
@@ -170,6 +173,7 @@ def chunk_climate(crop: dict) -> Chunk | None:
             "crop_id": _crop_id(crop),
             "crop_name": crop.get("crop_name"),
             "crop_bangla_name": crop.get("crop_bangla_name"),
+            "crop_category_name": (crop.get("crop_category") or {}).get("category_name") or "",
             "section": "climate",
         },
     )
@@ -190,6 +194,7 @@ def chunk_fertilizer(crop: dict) -> Chunk | None:
             "crop_id": _crop_id(crop),
             "crop_name": crop.get("crop_name"),
             "crop_bangla_name": crop.get("crop_bangla_name"),
+            "crop_category_name": (crop.get("crop_category") or {}).get("category_name") or "",
             "section": "fertilizer",
         },
     )
@@ -229,6 +234,7 @@ def chunk_seed(crop: dict) -> Chunk | None:
             "crop_id": _crop_id(crop),
             "crop_name": crop.get("crop_name"),
             "crop_bangla_name": crop.get("crop_bangla_name"),
+            "crop_category_name": (crop.get("crop_category") or {}).get("category_name") or "",
             "section": "seed",
         },
     )
@@ -262,6 +268,7 @@ def chunk_cost(crop: dict) -> Chunk | None:
             "crop_id": _crop_id(crop),
             "crop_name": crop.get("crop_name"),
             "crop_bangla_name": crop.get("crop_bangla_name"),
+            "crop_category_name": (crop.get("crop_category") or {}).get("category_name") or "",
             "section": "cost",
         },
     )
@@ -301,6 +308,7 @@ def chunk_varieties(crop: dict) -> list[Chunk]:
                     "crop_id": _crop_id(crop),
                     "crop_name": crop.get("crop_name"),
                     "crop_bangla_name": crop.get("crop_bangla_name"),
+                    "crop_category_name": (crop.get("crop_category") or {}).get("category_name") or "",
                     "section": "variety",
                     "variety_id": str(v.get("id")),
                     "variety_name": name,
@@ -361,6 +369,7 @@ def chunk_pesticides(crop: dict) -> list[Chunk]:
                     "crop_id": _crop_id(crop),
                     "crop_name": crop.get("crop_name"),
                     "crop_bangla_name": crop.get("crop_bangla_name"),
+                    "crop_category_name": (crop.get("crop_category") or {}).get("category_name") or "",
                     "section": "pesticide",
                     "disease_name": disease_name,
                     "disease_type": p.get("disease_type"),
@@ -400,6 +409,7 @@ def chunk_herbicides(crop: dict) -> list[Chunk]:
                     "crop_id": _crop_id(crop),
                     "crop_name": crop.get("crop_name"),
                     "crop_bangla_name": crop.get("crop_bangla_name"),
+                    "crop_category_name": (crop.get("crop_category") or {}).get("category_name") or "",
                     "section": "herbicide",
                     "weed_name": weed_name,
                 },
@@ -433,6 +443,7 @@ def _chunk_name_list(crop: dict, names: list[str], section_tag: str, label_bn: s
             "crop_id": _crop_id(crop),
             "crop_name": crop.get("crop_name"),
             "crop_bangla_name": crop.get("crop_bangla_name"),
+            "crop_category_name": (crop.get("crop_category") or {}).get("category_name") or "",
             "section": section_tag,
         },
     )

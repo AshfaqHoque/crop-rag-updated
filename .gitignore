@@ -39,6 +39,7 @@ tests/section_test_results.json
 
 # Runtime data and logs
 data/chroma/
+data/crops.db
 *.log
 logs/
 

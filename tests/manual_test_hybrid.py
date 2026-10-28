@@ -16,7 +16,7 @@ def tokenize(text: str) -> list[str]:
 
 vectorstore = get_vector_store()
 
-query = "নাগরাজ জাতের চাষাবাদ"
+query = "গমে সার প্রয়োগের মাত্রা কত?"
 
 # ---------------- Semantic Search ----------------
 semantic_results = vectorstore.similarity_search_with_score(query, k=10)
@@ -77,7 +77,7 @@ payload = {
 }
 
 response = httpx.post(
-    "http://localhost:8090/rerank",
+    "http://127.0.0.1:8082/v1/rerank",
     json=payload,
     timeout=30.0,
 )

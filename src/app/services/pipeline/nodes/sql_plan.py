@@ -20,7 +20,6 @@ Identify:
 - entities_to_resolve
 - sort
 - limit
-- relationship
 
 Rules:
 - Use only tables, columns, and relationships in the schema.
@@ -42,7 +41,6 @@ Output format:
   ],
   "sort": null,
   "limit": null,
-  "relationship": null
 }
 """
 

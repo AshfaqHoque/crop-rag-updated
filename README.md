@@ -348,16 +348,16 @@ Cloud Build, Cloud Run, and Azure Container Apps deployment snippets used by the
 No license metadata is currently declared in this repository.
 
 ```bash
-sudo systemctl restart app-8080.service 
+sudo systemctl restart crop-rag.service
 ```
 ```bash
-journalctl -u app-8080.service -f
+journalctl -u crop-rag.service -f
 ```
 ```bash
-ssh -N -L 8091:127.0.0.1:8091 -L 8090:127.0.0.1:8090 -L 11434:127.0.0.1:11434 -L 8000:127.0.0.1:8000 ashfaq@136.112.245.192
+ssh -N -L 8080:127.0.0.1:8080 -L 8081:127.0.0.1:8081 -L 8082:127.0.0.1:8082 -L 8003:127.0.0.1:8003 azureuser@20.189.76.5
 ```
 ```bash
-ssh -i ~/.ssh/id_rsa ashfaq@136.112.245.192
+ssh -i ~/.ssh/id_rsa azureuser@20.189.76.5
 ```
 
 

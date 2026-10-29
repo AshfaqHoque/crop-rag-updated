@@ -216,16 +216,6 @@ The memo cites global farm-analytics companies as validation of the sector. The 
 
 Aunkur says its differentiation comes from homegrown interoperable technology designed for smallholder ecosystems, deep agricultural domain expertise, historical soil-weather-crop data from more than 30,000 farmers, and established relationships across the agriculture value chain. The memo calls Aunkur Bangladesh's first agri-DaaS mover and says it can provide analytics across the full agri-value chain using data gathered from climate-vulnerable regions and proprietary IP.
 
-*Source pages: 11, 12*
-
-### Dhaka Bank integration claim
-
-The memo states that Dhaka Bank PLC engaged Aunkur to integrate its Farm Analytics Engine. It further claims that Dhaka Bank requires iFarmer and WeGro, which the memo describes as bank partners, to use Aunkur's platform to digitally document farmer profiles as part of an emerging compliance and intelligence standard. The memo summarizes this position as Aunkur becoming infrastructure for adjacent agri-fintech players rather than simply competing with them.
-
-*Source pages: 12*
-
-*Retrieval note: Phrase this as a claim from the 2025 memo unless independently verified elsewhere.*
-
 ### Future threats and defense strategy
 
 The memo identifies DataSoft and Intelligent Machines as potential future local competitors if they expand into agriculture. Aunkur's stated defense is to onboard more farmers, increase the depth and diversity of agricultural data, train AI models with richer real-time field data, deepen B2B integrations across banking, inputs, insurance, and advisory workflows, and use first-mover relationships and domain expertise to build institutional trust.
@@ -259,110 +249,6 @@ The page 13 market-sizing visual presents TAM of USD 298 billion for the APAC ma
 ### Bangladesh revenue opportunity calculation
 
 The memo states that Bangladesh has 16 million farmers, about 7 million of whom are smallholders. Using Aunkur Lite at USD 2.50 per farmer per month per acre and an assumption of five acres per farmer, it calculates that capturing 5% of the 7 million smallholder segment, or 350,000 farmers, would yield USD 52.5 million in annual recurring revenue: 350,000 x USD 2.50 x 12 months x 5 acres.
-
-*Source pages: 13*
-
-*Retrieval note: This is a scenario calculation based on assumptions stated in the memo, not realized revenue.*
-
-## Traction
-
-### How to interpret Aunkur farmer metrics
-
-The memo uses several different farmer metrics that should not be treated as interchangeable. It reports 6,638 paying or subscribed B2C small-farmer customers. Elsewhere it says Aunkur has reached or has a footprint of about 30,200 farmers, has historical data from 30,000+ farmers, and has served 30,000+ smallholder farmers. The company timeline separately says it was working with 12,500 farmer-touchpoints in 2024. These labels represent different scopes: paying subscribers, total farmers reached or represented in the dataset, farmers served, and historical touchpoints.
-
-*Source pages: 1, 11, 13, 14, 21, 25*
-
-### Current commercial summary in the memo
-
-The memo's summary reports 6,638 paying B2C small farmers, 2 private-bank B2B customers, 20 input-seller B2B customers, and average month-on-month revenue of USD 24,000. A competitive-context section says Aunkur had reached 30,200 farmers and USD 270,000 in revenue. The subscriber-growth section again lists 6,638 subscribed small farmers and describes growth of 5.26% over the prior six months and 8.05% over the prior three months.
-
-*Source pages: 1, 11, 14*
-
-*Retrieval note: The USD 270K figure is presented as revenue in a peer-comparison context; the memo does not explicitly label the period in that sentence.*
-
-### Revenue mix and structured B2B rollout
-
-The memo states that 85% of revenue is recurring and driven by farmer or B2C subscriptions, while 15% comes from ad hoc B2B engagements. It says structured B2B SaaS service packages were recently rolled out and are expected to increase B2B contribution, diversify revenue, increase ARPU, and improve predictability.
-
-*Source pages: 14*
-
-### Earning versus burning claim
-
-The memo says expenses increased as the company scaled, but revenue grew at nearly twice the pace. It states that by Q3 2025 Aunkur was exceeding operating costs by more than USD 14,000 per month. The stated use of new capital is aggressive farmer acquisition and additional device deployment to generate more hyperlocal agricultural intelligence.
-
-*Source pages: 15*
-
-## Projections
-
-### Revenue and subscribed-farmer growth projection
-
-The page 16 projection chart shows the following FY 2026-FY 2031 targets. Revenue: USD 0.91 million in FY 2026, USD 2.11 million in FY 2027, USD 4.28 million in FY 2028, USD 7.75 million in FY 2029, USD 13.05 million in FY 2030, and USD 22.45 million in FY 2031. Subscribed farmers: 112,000 in FY 2026, 236,000 in FY 2027, 439,000 in FY 2028, 641,000 in FY 2029, 910,000 in FY 2030, and 1.283 million in FY 2031. These are projections, not historical results.
-
-*Source pages: 16*
-
-## Capital Strategy
-
-### Why Aunkur owns devices instead of selling them
-
-The memo argues that Aunkur's analytics depend on high-quality AIoT devices deployed in the field and strategically owned by the company. It says selling devices to farmers would either exclude much of the 600 million-plus smallholder market if quality were maintained, force hardware quality down to reach low price points, or compromise technical integrity for hardware margins. Aunkur therefore treats device capex as a strategic moat that supports data monetization.
-
-*Source pages: 16*
-
-### ROE and ROA projections
-
-The page 17 chart projects Return on Equity (ROE) of 9% in FY 2026, 23% in FY 2027, 40% in FY 2028, 75% in FY 2029, 68% in FY 2030, and 62% in FY 2031. It projects Return on Assets (ROA) of 1%, 2%, 4%, 20%, 30%, and 37% over the same years. The memo interprets the rising ROA as stronger utilization of assets such as soil testers, weather stations, and digital platforms, and the gap between ROE and ROA as an intended effect of leverage and strategic equity deployment.
-
-*Source pages: 17*
-
-## Team
-
-### Mashrur H. Shurid - Co-founder and CEO
-
-The memo identifies Mashrur H. Shurid as Aunkur's Co-founder and CEO. It describes him as a 34-year-old Bangladeshi electronics engineer turned agribusiness entrepreneur, a Top Westerwelle Fellow, UN Land Ambassador, public speaker, and advocate for digital land restoration and agricultural extension. His responsibilities include fundraising, impact management, B2B development, and global partnerships. The bio says his farming-family background and experience with climate-related rural vulnerability motivate his work on smallholder resilience. His LinkedIn link in the PDF is https://www.linkedin.com/in/mhshurid.
-
-*Source pages: 18, 19*
-
-### Imtiaz Hossain - Co-founder and CTO
-
-The memo identifies Imtiaz Hossain as Aunkur's Co-founder and CTO and describes him as a data-system architect and full-stack software engineer with more than 12 years of experience. It lists experience at Field Information Solutions GmbH, Bangladesh-Japan IT, and Mutual Trust Bank's Cyber Security Division. His responsibilities include leading Aunkur's data systems, data collection and sanitization, AI-model development, and scalable analytics, with banking and cyber-security experience supporting financial-institution dashboards. His LinkedIn link in the PDF is https://www.linkedin.com/in/nisat19.
-
-*Source pages: 18, 19*
-
-### Saifullah Mithu - Co-founder and CCO
-
-The text section identifies Saifullah Mithu as Co-founder and CCO. It says he has a bachelor's degree in law from the University of London, a diploma in Disaster Management from the University of Dhaka, and a master's in Development Studies from East West University, with more than 12 years in development and impact work and a network of 80+ local NGOs. He oversees Aunkur's grassroots farmer and franchise network, community relationships, field-team alignment, and liaison with NGOs and government stakeholders. His LinkedIn link in the PDF is https://www.linkedin.com/in/saifullah-mithu-18364a6b.
-
-*Source pages: 18, 19, 20*
-
-## Ownership
-
-### Founder cap table
-
-The page 20 cap-table visual lists founder holdings in IPAGE GLOBAL INC. Mashrur Hossain Shurid: 2,755,000 shares, current ownership 30.6%, fully diluted ownership 27.6%. Imtiaz Hossain: 2,665,000 shares, current ownership 29.6%, fully diluted ownership 26.7%. Mohammad Saifullah Mithu: 2,580,000 shares, current ownership 28.7%, fully diluted ownership 25.8%. Mohammad Zaved Akhtar: 1,000,000 shares, current ownership 11.1%, fully diluted ownership 10.0%. The visual lists PPS as USD 0.00001 and share type as Founder Equity Pool for all four.
-
-*Source pages: 20*
-
-### Holding company and Bangladesh operating company
-
-The memo states that the Delaware C Corporation IPAGE GLOBAL INC is the holding company and sole owner of the Aunkur brand, authorizing subsidiaries to use the brand globally. It also states that IPAGE GLOBAL INC owns 99% of the Bangladeshi operating company THE IPAGE GLOBAL LTD, with the remaining 1% owned by Mashrur because of local corporate regulation.
-
-*Source pages: 20*
-
-## Impact
-
-### Headline impact claims
-
-The page 21 impact visual summarizes Aunkur's reported outcomes as farmers earning 32% more, banks spending 45% less, 50% lower NPL, and about 100 tonnes of CO2 emissions mitigated. The surrounding text says both B2C and B2B users benefit from reduced costs and hassle alongside improved yield and income. These are company-reported impact claims in the memo.
-
-*Source pages: 21*
-
-*Retrieval note: Use attribution such as "Aunkur reports". The memo contains other income/profitability percentages in the detailed impact boxes; do not merge them into one metric.*
-
-### Detailed socio-economic and environmental metrics
-
-The page 21 impact boxes report: 30,000+ smallholder farmers served; 15% average yield improvement; 42% increase in farmer profitability; 34% registered female farmers; 56-83% reduction in cost of capital, described as moving from 30% down to as low as 5%; 92% repayment rate, with the remaining 8% actively followed up by banking partners; 9% sourcing-cost reduction for agri-buyers; 12% sales growth for input vendors; 20% sales boost for agri-machinery partners; 25% reduction in fertilizer usage; approximately 100 tCO2e of carbon emissions avoided annually; and 4.3% average emission reduction per farmer.
-
-*Source pages: 21*
 
 ## Impact and SDGs
 
@@ -399,30 +285,3 @@ Under SDG 13, the memo describes climate resilience through "1500x faster precis
 ### SDG 15 - Life on Land
 
 Under SDG 15, the memo frames Aunkur's work as restoring soil health and combating degradation through smart fertilizer use, erosion prevention, and soil regeneration for long-term productivity. The visual maps this work to SDG target 15.3.
-
-*Source pages: 23*
-
-## Fundraising
-
-### Company milestones and fundraising timeline
-
-The page 25 timeline states: 2019 - incorporated in Bangladesh and initiated R&D in stealth mode. 2021 - survived the COVID-19 pandemic and launched a pilot with 1,050 farmers. 2022 - restructured and reincorporated in Delaware, issued USD 60,000 of angel equity at a USD 600,000 valuation, and launched commercially with 3,500 farmers. 2024 - total raise of USD 472,000, mostly non-dilutive impact capital, while working with 12,500 farmer-touchpoints. 2025 - opened a USD 500,000 pre-seed round via SAFE, with a USD 3.5 million post-money valuation and USD 350,000 committed; the slide also says an early angel realized 5.67x ROI.
-
-*Source pages: 25*
-
-### Pre-seed round status in the memo
-
-The fundraising slide says Aunkur was raising a USD 500,000 pre-seed round via SAFE, with 70% already secured, and that Accelerating Asia Venture Fund was leading the round. It says the company was open to syndicate investors, individual angels, and micro-VCs. The timeline on the same page lists USD 350,000 committed, which is 70% of the USD 500,000 round.
-
-*Source pages: 25*
-
-*Retrieval note: This describes fundraising status as shown in the 2025 memo. Do not present it as current without a newer source.*
-
-## Links
-
-### Official and product links embedded in the memo
-
-The PDF contains the following links: company website https://aunkur.ai/ ; LinkedIn https://bd.linkedin.com/company/aunkur ; Facebook https://www.facebook.com/aunkur.global ; YouTube https://www.youtube.com/@ipageglobal2890 ; Instagram https://www.instagram.com/aunkur.global/ ; animated product demo https://www.youtube.com/watch?v=pXeTGWEgZP0&ab_channel=Aunkur ; real-time product demo https://youtu.be/FWbovEzTztU?si=omeo_U2GUTGbmbjL ; and a latest pitch-deck link https://docs.google.com/presentation/d/15SBLJh115vd_IxM36Qe504qj66BPkjdS?rtpof=true&usp=drive_fs .
-
-*Source pages: 25, 26*
-

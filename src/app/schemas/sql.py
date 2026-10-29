@@ -16,7 +16,7 @@ class QueryPlan(BaseModel):
     operation: Literal["list", "lookup", "count", "aggregate", "unsupported"]
     target: str | None = None
     entities_to_resolve: list[EntityToResolve] = Field(default_factory=list)
-    sort: list[SortItem] = Field(default_factory=list)
+    sort: list[SortItem] | None = Field(default_factory=list)
     limit: int | None = None
     # relationship: str | None = None
 

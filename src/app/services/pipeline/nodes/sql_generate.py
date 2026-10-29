@@ -19,6 +19,7 @@ Rules:
 - Generate only read-only SELECT queries.
 - Use JOINs when relationships are required.
 - Use DISTINCT when duplicate results are possible.
+- For entity name matching, use LIKE instead of exact equality.
 - Do not invent tables, columns, or relationships.
 - Return only the SQL query in the "sql" field.
 - Do not include markdown or explanations.
@@ -26,6 +27,7 @@ Rules:
 
 def sql_generate(state: PipelineState) -> PipelineState:
     plan = state.get("query_plan") or {}
+    query = state.get("rewritten_query") or ""
     if plan.get("operation") == "unsupported":
         return {**state, "sql_query": None, "sql_error": "unsupported operation"}
 
@@ -35,6 +37,9 @@ def sql_generate(state: PipelineState) -> PipelineState:
             content=f"""
 Database Schema:
 {DATABASE_SCHEMA}
+
+Rewritten Query:
+{query}
 
 Query Plan:
 {plan}

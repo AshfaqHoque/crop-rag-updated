@@ -6,8 +6,12 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from langgraph.checkpoint.memory import MemorySaver
+from app.services.pipeline import checkpointer as cp
 from app.services.pipeline.graph import get_chat_graph
 
+# Temporarily inject a dummy checkpointer so get_chat_graph() works
+cp._checkpointer = MemorySaver()
 
 graph = get_chat_graph().get_graph()
 png_path = ROOT / "graph.png"

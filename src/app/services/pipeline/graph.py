@@ -20,6 +20,11 @@ from app.services.pipeline.nodes.retrieve_company import retrieve_company
 from app.services.pipeline.nodes.retrieve_soil_test import retrieve_soil_test
 from app.services.pipeline.nodes.rewrite_query import rewrite_query
 from app.services.pipeline.nodes.route import route
+from app.services.pipeline.nodes.decide_retrieval_mode import decide_retrieval_mode
+from app.services.pipeline.nodes.sql_plan import sql_plan
+from app.services.pipeline.nodes.sql_generate import sql_generate
+from app.services.pipeline.nodes.sql_execute import sql_execute
+from app.services.pipeline.nodes.generate_sql_answer import generate_sql_answer
 from app.services.pipeline.state import PipelineState
 
 
@@ -35,11 +40,17 @@ def route_after_route(state: PipelineState) -> str:
     if state.get("intent") == "capability_query":
         return "generate_capability"
     if state.get("intent") == "crop_query":
-        return "extract_crop"
+        return "decide_retrieval_mode"
     if state.get("intent") == "company_query":
         return "retrieve_company"
     if state.get("intent") == "soil_test_query":
         return "retrieve_soil_test"
+
+
+def route_after_decide(state: PipelineState) -> str:
+    if state.get("retrieval_mode") == "sql":
+        return "sql_plan"
+    return "extract_crop"
 
 
 def fan_out_subqueries(state: PipelineState) -> list[Send]:
@@ -47,7 +58,7 @@ def fan_out_subqueries(state: PipelineState) -> list[Send]:
         Send("retrieve_rerank_and_compress", {
             **state,
             "rewritten_query": q,
-            "retrieved_documents": [],      # important: clear list fields so reducers don’t double-count
+            "retrieved_documents": [],
             "reranked_documents": [],
             "compressed_documents": [],
         })
@@ -73,6 +84,11 @@ def build_chat_graph():
     builder.add_node("generate_meaningless", generate_meaningless)
     builder.add_node("generate_out_of_scope", generate_out_of_scope)
     builder.add_node("handle_agronomist_request", handle_agronomist_request)
+    builder.add_node("decide_retrieval_mode", decide_retrieval_mode)
+    builder.add_node("sql_plan", sql_plan)
+    builder.add_node("sql_generate", sql_generate)
+    builder.add_node("sql_execute", sql_execute)
+    builder.add_node("generate_sql_answer", generate_sql_answer)
 
     builder.add_edge(START, "rewrite_query")
     builder.add_edge("rewrite_query", "route")
@@ -80,7 +96,7 @@ def build_chat_graph():
         "route",
         route_after_route,
         {
-            "extract_crop": "extract_crop",
+            "decide_retrieval_mode": "decide_retrieval_mode",
             "retrieve_company": "retrieve_company",
             "retrieve_soil_test": "retrieve_soil_test",
             "generate_chitchat": "generate_chitchat",
@@ -90,6 +106,20 @@ def build_chat_graph():
             "handle_agronomist_request": "handle_agronomist_request",
         },
     )
+
+    builder.add_conditional_edges(
+        "decide_retrieval_mode",
+        route_after_decide,
+        {
+            "sql_plan": "sql_plan",
+            "extract_crop": "extract_crop",
+        },
+    )
+
+    builder.add_edge("sql_plan", "sql_generate")
+    builder.add_edge("sql_generate", "sql_execute")
+    builder.add_edge("sql_execute", "generate_sql_answer")
+    builder.add_edge("generate_sql_answer", END)
     builder.add_edge("extract_crop", "decompose_query")
     builder.add_conditional_edges("decompose_query", fan_out_subqueries, ["retrieve_rerank_and_compress"])
     builder.add_edge("retrieve_company", "generate_company")

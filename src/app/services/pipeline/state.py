@@ -39,3 +39,13 @@ class PipelineState(TypedDict, total=False):
 
     # HITL escalation
     status: str | None
+
+    # Hybrid SQL / Semantic routing
+    retrieval_mode: str | None          # "sql" | "semantic"
+    # retrieval_mode_reason: str | None
+
+    # SQL path
+    query_plan: dict | None
+    sql_query: str | None
+    sql_results: list[dict] | None
+    sql_error: str | None

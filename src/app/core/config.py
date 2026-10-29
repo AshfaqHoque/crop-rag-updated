@@ -82,6 +82,11 @@ class Settings(BaseSettings):
     ui_api_url: str = "http://localhost:8000/api/v1/chat/stream"
     ui_request_timeout_seconds: float = 120.0
 
+    # Structured crop database (SQLite)
+    crop_db_path: str = "./data/crops.db"
+    sql_max_rows: int = 60          # hard limit returned to the LLM
+    sql_timeout_seconds: float = 5.0
+
     @property
     def chat_model(self) -> str:
         if self.chat_provider == "groq":

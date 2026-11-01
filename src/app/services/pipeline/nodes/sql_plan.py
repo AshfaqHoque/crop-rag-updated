@@ -39,7 +39,7 @@ Output format:
       "mention": "exact user-mentioned name"
     }
   ],
-  "sort": [{"field": "price", "order": "asc"}],
+  "sort": [{"field": "<field name>", "order": "asc | desc"}],
   "limit": null,
 }
 """

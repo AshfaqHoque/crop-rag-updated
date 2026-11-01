@@ -11,30 +11,28 @@ logger = get_logger(__name__)
 
 _SYSTEM = """You are the retrieval-mode router of an agricultural assistant.
 
+Database Schema:
+{schema}
+
 You must choose exactly one mode:
 
-- "sql": when the answer is a list, count, ranking, filter, or simple lookup that maps cleanly to the schema.
-- "semantic": for any open-ended agricultural advice, procedures, cause-effect, or multi-hop reasoning that is not stored as structured columns.
+- "sql": any listing, sorting, ranking, counting, filtering, or lookup, as long as everything the question asks for or filters by is a column in the schema above.
+- "semantic": everything else, including any question that asks for or filters by something not in the schema, plus advice, procedures, and reasoning.
 
-If in doubt, choose "semantic".
-Never answer the user. Return only the structured decision.
+If any part of the question is not in the schema, choose "semantic". Never answer the user.
+Return two fields: "reason" (name the table/columns that answer it, or the part with no column) and "mode" ("sql" or "semantic").
 """
 
 def decide_retrieval_mode(state: PipelineState) -> PipelineState:
     messages = [
-        SystemMessage(content=_SYSTEM),
-        HumanMessage(
-            content=(
-                f"Database Schema:\n{DATABASE_SCHEMA}\n\n"
-                f"User Query:\n{state['rewritten_query']}"
-            )
-        ),
+        SystemMessage(content=_SYSTEM.format(schema=DATABASE_SCHEMA)),
+        HumanMessage(content=(f"User Query:\n{state['rewritten_query']}")),
     ]
     result = invoke_structured(RetrievalModeDecision, messages, temperature=0)
 
-    logger.info("retrieval_mode=%s ", result.mode)
+    logger.info("retrieval_mode=%s , reason=%s", result.mode, result.reason)
     return {
         **state,
         "retrieval_mode": result.mode,
-        # "retrieval_mode_reason": result.reason,
+        "retrieval_mode_reason": result.reason,
     }

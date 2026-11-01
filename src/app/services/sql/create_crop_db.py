@@ -103,9 +103,13 @@ def create_crops_db(json_path: Path = JSON_PATH, db_path: Path = DB_PATH) -> Non
     )
 
     for crop in rows:
+        crop_name = (crop.get("crop_name") or "").strip()
+        bangla_name = (crop.get("crop_bangla_name") or "").strip()
+        combined_name = f"{bangla_name} ({crop_name})"
+        
         cur.execute(
             "INSERT OR IGNORE INTO crop (id, crop_name, crop_category_id) VALUES (?, ?, ?)",
-            (crop["id"], crop["crop_name"], (crop.get("crop_category") or {}).get("id")),
+            (crop["id"], combined_name, (crop.get("crop_category") or {}).get("id")),
         )
 
         for v in crop.get("variety") or []:

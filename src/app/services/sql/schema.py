@@ -1,8 +1,7 @@
 DATABASE_SCHEMA = """
 crop:
   id: Unique crop ID
-  crop_name: English crop name (e.g., Boro Paddy, Aman Rice, Wheat, Potato)
-  crop_bangla_name: Bangla crop name (e.g., বোরো ধান, আমন ধান, গম, আলু)
+  crop_name: English crop name (e.g., বোরো ধান (Boro Paddy), আমন ধান (Aman Rice), গম (Wheat), আলু (Potato))
   crop_category_id: Reference to crop_categories.id
 
 crop_category:

@@ -31,7 +31,6 @@ def create_crops_db(json_path: Path = JSON_PATH, db_path: Path = DB_PATH) -> Non
         CREATE TABLE IF NOT EXISTS crop (
             id               INTEGER PRIMARY KEY,
             crop_name        TEXT NOT NULL,
-            crop_bangla_name TEXT,
             crop_category_id INTEGER,
             FOREIGN KEY (crop_category_id) REFERENCES crop_category(id)
         );
@@ -104,10 +103,9 @@ def create_crops_db(json_path: Path = JSON_PATH, db_path: Path = DB_PATH) -> Non
     )
 
     for crop in rows:
-        cat_id = (crop.get("crop_category") or {}).get("id")
         cur.execute(
-            "INSERT OR IGNORE INTO crop (id, crop_name, crop_bangla_name, crop_category_id) VALUES (?, ?, ?, ?)",
-            (crop["id"], crop["crop_name"], crop.get("crop_bangla_name"), cat_id),
+            "INSERT OR IGNORE INTO crop (id, crop_name, crop_category_id) VALUES (?, ?, ?)",
+            (crop["id"], crop["crop_name"], (crop.get("crop_category") or {}).get("id")),
         )
 
         for v in crop.get("variety") or []:
@@ -140,3 +138,5 @@ def create_crops_db(json_path: Path = JSON_PATH, db_path: Path = DB_PATH) -> Non
 
 if __name__ == "__main__":
     create_crops_db()
+
+# python -m app.services.sql.create_crop_db

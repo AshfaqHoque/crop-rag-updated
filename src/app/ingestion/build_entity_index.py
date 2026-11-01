@@ -47,7 +47,11 @@ def extract_entities(crops: list[dict]) -> list[Document]:
             ))
 
     for crop in crops:
-        add("crop", crop["id"], crop.get("crop_name"))
+        crop_name = (crop.get("crop_name") or "").strip()
+        bangla_name = (crop.get("crop_bangla_name") or "").strip()
+        combined_name = f"{bangla_name} ({crop_name})"
+
+        add("crop", crop["id"], combined_name)
 
         cat = crop.get("crop_category") or {}
         if cat.get("id"):

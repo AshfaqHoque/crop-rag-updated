@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 
 
 class EntityToResolve(BaseModel):
+    # type: Literal["crop", "crop_category", "variety", "pesticide", "herbicide", "chemical", "company"]
     type: str
     mention: str
 
@@ -27,4 +28,4 @@ class SQLResult(BaseModel):
 
 class RetrievalModeDecision(BaseModel):
     mode: Literal["sql", "semantic"]
-    # reason: Optional[str] = Field(description="One short sentence explaining the choice")
+    reason: Optional[str] = Field(description="One short sentence explaining the choice")

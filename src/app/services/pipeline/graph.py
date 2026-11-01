@@ -15,6 +15,7 @@ from app.services.pipeline.nodes.generate_meaningless import generate_meaningles
 from app.services.pipeline.nodes.generate_out_of_scope import generate_out_of_scope
 from app.services.pipeline.nodes.generate_soil_test import generate_soil_test
 from app.services.pipeline.nodes.handle_agronomist_request import handle_agronomist_request
+from app.services.pipeline.nodes.resolve_entities import resolve_entities
 from app.services.pipeline.nodes.retrieve_and_rerank import retrieve_rerank_and_compress
 from app.services.pipeline.nodes.retrieve_company import retrieve_company
 from app.services.pipeline.nodes.retrieve_soil_test import retrieve_soil_test
@@ -86,6 +87,7 @@ def build_chat_graph():
     builder.add_node("handle_agronomist_request", handle_agronomist_request)
     builder.add_node("decide_retrieval_mode", decide_retrieval_mode)
     builder.add_node("sql_plan", sql_plan)
+    builder.add_node("resolve_entities", resolve_entities)
     builder.add_node("sql_generate", sql_generate)
     builder.add_node("sql_execute", sql_execute)
     builder.add_node("generate_sql_answer", generate_sql_answer)
@@ -116,7 +118,8 @@ def build_chat_graph():
         },
     )
 
-    builder.add_edge("sql_plan", "sql_generate")
+    builder.add_edge("sql_plan", "resolve_entities")
+    builder.add_edge("resolve_entities", "sql_generate")
     builder.add_edge("sql_generate", "sql_execute")
     builder.add_edge("sql_execute", "generate_sql_answer")
     builder.add_edge("generate_sql_answer", END)

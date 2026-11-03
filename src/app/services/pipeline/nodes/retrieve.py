@@ -19,6 +19,7 @@ def retrieve(state: PipelineState) -> PipelineState:
     documents, _ = get_semantic_retriever().retrieve(
         query,
         crops=state.get("crops"),
+        sections=state.get("sections"),
         top_k=get_settings().retrieval_top_k,
     )
     logger.info("retrieve documents=%d for query='%s'", len(documents), query)

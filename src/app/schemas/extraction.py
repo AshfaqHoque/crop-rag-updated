@@ -36,3 +36,6 @@ class LLMSplitResult(BaseModel):
 
 class DecomposedQuery(BaseModel):
     subqueries: list[str]
+
+class SectionIdentifier(BaseModel):
+    sections: list[str] = []

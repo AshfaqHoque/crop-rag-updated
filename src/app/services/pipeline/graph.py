@@ -7,6 +7,7 @@ from langgraph.types import Send
 from app.services.pipeline.checkpointer import get_checkpointer
 from app.services.pipeline.nodes.decompose_query import decompose_query
 from app.services.pipeline.nodes.extract_crop import extract_crop
+from app.services.pipeline.nodes.extract_sections import extract_sections
 from app.services.pipeline.nodes.generate import generate
 from app.services.pipeline.nodes.generate_company import generate_company
 from app.services.pipeline.nodes.generate_chitchat import generate_chitchat
@@ -73,6 +74,7 @@ def build_chat_graph():
     builder.add_node("rewrite_query", rewrite_query)
     builder.add_node("route", route)
     builder.add_node("extract_crop", extract_crop)
+    builder.add_node("extract_sections", extract_sections)
     builder.add_node("retrieve_rerank_and_compress", retrieve_rerank_and_compress)
     builder.add_node("decompose_query", decompose_query)
     builder.add_node("retrieve_company", retrieve_company)
@@ -123,7 +125,8 @@ def build_chat_graph():
     builder.add_edge("sql_generate", "sql_execute")
     builder.add_edge("sql_execute", "generate_sql_answer")
     builder.add_edge("generate_sql_answer", END)
-    builder.add_edge("extract_crop", "decompose_query")
+    builder.add_edge("extract_crop", "extract_sections")
+    builder.add_edge("extract_sections", "decompose_query")
     builder.add_conditional_edges("decompose_query", fan_out_subqueries, ["retrieve_rerank_and_compress"])
     builder.add_edge("retrieve_company", "generate_company")
     builder.add_edge("retrieve_soil_test", "generate_soil_test")

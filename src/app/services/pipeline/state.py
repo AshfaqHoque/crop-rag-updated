@@ -27,6 +27,7 @@ class PipelineState(TypedDict, total=False):
     current_subquery: str
     # deterministic entity extraction
     crops: list[str]
+    sections: list[str]
 
     # retrieval/reranking
     # reducers so parallel branches merge cleanly

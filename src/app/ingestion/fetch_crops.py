@@ -161,6 +161,7 @@ query getAllCropsFullDetails($updated_within_days: Int) {
         price
         price_unit
         priority
+        image
         application_guide
         is_deleted
         is_verified
@@ -177,6 +178,9 @@ query getAllCropsFullDetails($updated_within_days: Int) {
         damage_control
         control_measure
         is_verified
+        image{
+          image
+        }
         chemical {
           id
           pesticide_id

@@ -16,7 +16,7 @@ from app.services.pipeline.nodes.generate_meaningless import generate_meaningles
 from app.services.pipeline.nodes.generate_out_of_scope import generate_out_of_scope
 from app.services.pipeline.nodes.generate_soil_test import generate_soil_test
 from app.services.pipeline.nodes.handle_agronomist_request import handle_agronomist_request
-from app.services.pipeline.nodes.resolve_entities import resolve_entities
+from app.services.pipeline.nodes.resolve_entities import resolve_entities_sql, resolve_entities_semantic
 from app.services.pipeline.nodes.retrieve_and_rerank import retrieve_rerank_and_compress
 from app.services.pipeline.nodes.retrieve_company import retrieve_company
 from app.services.pipeline.nodes.retrieve_soil_test import retrieve_soil_test
@@ -27,6 +27,7 @@ from app.services.pipeline.nodes.sql_plan import sql_plan
 from app.services.pipeline.nodes.sql_generate import sql_generate
 from app.services.pipeline.nodes.sql_execute import sql_execute
 from app.services.pipeline.nodes.generate_sql_answer import generate_sql_answer
+from app.services.pipeline.nodes.get_image import get_image
 from app.services.pipeline.state import PipelineState
 
 
@@ -89,10 +90,12 @@ def build_chat_graph():
     builder.add_node("handle_agronomist_request", handle_agronomist_request)
     builder.add_node("decide_retrieval_mode", decide_retrieval_mode)
     builder.add_node("sql_plan", sql_plan)
-    builder.add_node("resolve_entities", resolve_entities)
+    builder.add_node("resolve_entities_sql", resolve_entities_sql)
+    builder.add_node("resolve_entities_semantic", resolve_entities_semantic)
     builder.add_node("sql_generate", sql_generate)
     builder.add_node("sql_execute", sql_execute)
     builder.add_node("generate_sql_answer", generate_sql_answer)
+    builder.add_node("get_image", get_image)
 
     builder.add_edge(START, "rewrite_query")
     builder.add_edge("rewrite_query", "route")
@@ -120,13 +123,15 @@ def build_chat_graph():
         },
     )
 
-    builder.add_edge("sql_plan", "resolve_entities")
-    builder.add_edge("resolve_entities", "sql_generate")
+    builder.add_edge("sql_plan", "resolve_entities_sql")
+    builder.add_edge("resolve_entities_sql", "sql_generate")
     builder.add_edge("sql_generate", "sql_execute")
     builder.add_edge("sql_execute", "generate_sql_answer")
     builder.add_edge("generate_sql_answer", END)
     builder.add_edge("extract_crop", "extract_sections")
-    builder.add_edge("extract_sections", "decompose_query")
+    builder.add_edge("extract_sections", "resolve_entities_semantic")
+    builder.add_edge("resolve_entities_semantic", "get_image")
+    builder.add_edge("get_image", "decompose_query")
     builder.add_conditional_edges("decompose_query", fan_out_subqueries, ["retrieve_rerank_and_compress"])
     builder.add_edge("retrieve_company", "generate_company")
     builder.add_edge("retrieve_soil_test", "generate_soil_test")

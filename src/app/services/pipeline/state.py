@@ -28,7 +28,11 @@ class PipelineState(TypedDict, total=False):
     # deterministic entity extraction
     crops: list[str]
     sections: list[str]
+    entities_to_resolve: list[dict]
+    resolved_entities: list[dict]
 
+    image_urls: list[str]
+    
     # retrieval/reranking
     # reducers so parallel branches merge cleanly
     retrieved_documents: Annotated[list[Document], add]

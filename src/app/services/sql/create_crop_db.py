@@ -49,6 +49,7 @@ def create_crops_db(json_path: Path = JSON_PATH, db_path: Path = DB_PATH) -> Non
             disease_name TEXT,
             disease_type TEXT,
             crop_id      INTEGER,
+            image_urls    TEXT,
             FOREIGN KEY (crop_id) REFERENCES crop(id)
         );
 
@@ -80,9 +81,9 @@ def create_crops_db(json_path: Path = JSON_PATH, db_path: Path = DB_PATH) -> Non
         if cat.get("id"):
             categories[cat["id"]] = cat.get("category_name")
 
-        for h in crop.get("herbicide") or []:
-            if h.get("company_id"):
-                companies[h["company_id"]] = h.get("company_name")
+        # for h in crop.get("herbicide") or []:
+        #     if h.get("company_id"):
+        #         companies[h["company_id"]] = h.get("company_name")
 
         for p in crop.get("pesticide") or []:
             for c in p.get("chemical") or []:
@@ -119,9 +120,13 @@ def create_crops_db(json_path: Path = JSON_PATH, db_path: Path = DB_PATH) -> Non
             )
 
         for p in crop.get("pesticide") or []:
+            images = p.get("image") or []
+            if isinstance(images, dict):
+                images = [images]
+            image_urls = [ img["image"] for img in images if isinstance(img, dict) and img.get("image")]
             cur.execute(
-                "INSERT OR IGNORE INTO pesticide (id, disease_name, disease_type, crop_id) VALUES (?, ?, ?, ?)",
-                (p["id"], p.get("disease_name"), p.get("disease_type"), p.get("crop_id")),
+                "INSERT OR IGNORE INTO pesticide (id, disease_name, disease_type, crop_id, image_urls) VALUES (?, ?, ?, ?, ?)",
+                (p["id"], p.get("disease_name"), p.get("disease_type"), p.get("crop_id"), json.dumps(image_urls, ensure_ascii=False),),
             )
             for c in p.get("chemical") or []:
                 cur.execute(

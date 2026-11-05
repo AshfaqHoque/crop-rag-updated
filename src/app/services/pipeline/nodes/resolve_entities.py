@@ -88,11 +88,31 @@ def _pick(etype: str, mention: str, candidates: list[str]) -> str | None:
     return None
 
 
-def resolve_entities(state: PipelineState) -> PipelineState:
+def resolve_entities_sql(state: PipelineState) -> PipelineState:
     plan = state.get("query_plan")
     if not plan or plan.get("operation") == "unsupported":
         return state
     entities = plan.get("entities_to_resolve") or []
+    if not entities:
+        return {"resolved_entities": []}
+    resolved = []
+    for ent in entities:
+        etype = (ent.get("type") or "").strip().lower()
+        mention = (ent.get("mention") or "").strip()
+        if not etype or not mention:
+            resolved.append(ent)
+            continue
+        cands = _search(etype, mention)
+        name = _pick(etype, mention, cands) if cands else None
+        if name:
+            logger.info("resolved %s %r → %r", etype, mention, name)
+        resolved.append({"type": etype, "mention": name or mention})
+
+    return {**state, "query_plan": {**plan, "entities_to_resolve": resolved}}
+
+
+def resolve_entities_semantic(state: PipelineState) -> PipelineState:
+    entities = state.get("entities_to_resolve") or []
     if not entities:
         return state
 
@@ -109,4 +129,4 @@ def resolve_entities(state: PipelineState) -> PipelineState:
             logger.info("resolved %s %r → %r", etype, mention, name)
         resolved.append({"type": etype, "mention": name or mention})
 
-    return {**state, "query_plan": {**plan, "entities_to_resolve": resolved}}
+    return {"resolved_entities": resolved,}

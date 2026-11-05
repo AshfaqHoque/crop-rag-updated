@@ -37,6 +37,7 @@ class ChatService:
                 "session_id": request.session_id,
                 "raw_query": request.message.strip(),
                 "language_type": request.language_type,
+                "image_urls": [],
             }
             result = await run_in_threadpool(self._graph.invoke, initial_state, config)
             answer = result.get("answer", "").strip()
@@ -57,12 +58,13 @@ class ChatService:
                 "session_id": request.session_id,
                 "raw_query": request.message.strip(),
                 "language_type": request.language_type,
+                "image_urls": [],
             }
 
             NEXT = {
                 "rewrite_query": lambda u: ["route"],
                 "route": lambda u: {
-                    "crop_query": ["extract_crop"],
+                    "crop_query": ["decide_retrieval_mode"],
                     "company_query": ["retrieve_company"],
                     "soil_test_query": ["retrieve_soil_test"],
                     "chitchat": ["generate_chitchat"],
@@ -71,9 +73,24 @@ class ChatService:
                     "out_of_scope": ["generate_out_of_scope"],
                     "request_agronomist": ["handle_agronomist_request"],
                 }.get(u.get("intent"), []),
-                "extract_crop": lambda u: ["decompose_query"],
+                "decide_retrieval_mode": lambda u: (
+                    ["sql_plan"]
+                    if u.get("retrieval_mode") == "sql"
+                    else ["extract_crop"]
+                ),
+                # SQL flow
+                "sql_plan": lambda u: ["resolve_entities_sql"],
+                "resolve_entities_sql": lambda u: ["sql_generate"],
+                "sql_generate": lambda u: ["sql_execute"],
+                "sql_execute": lambda u: ["generate_sql_answer"],
+                # Semantic flow
+                "extract_crop": lambda u: ["extract_sections"],
+                "extract_sections": lambda u: ["resolve_entities_semantic"],
+                "resolve_entities_semantic": lambda u: ["get_image"],
+                "get_image": lambda u: ["decompose_query"],
                 "decompose_query": lambda u: ["retrieve_rerank_and_compress"],
                 "retrieve_rerank_and_compress": lambda u: ["generate"],
+                # Other flows
                 "retrieve_company": lambda u: ["generate_company"],
                 "retrieve_soil_test": lambda u: ["generate_soil_test"],
             }
@@ -86,18 +103,26 @@ class ChatService:
             if evt: yield evt
             announced = {"rewrite_query"}
             active_message_id, answer = None, ""
+            image_urls = []
+            final_answer = None
 
             # Stream both node updates (for progress) and LLM tokens (for the answer)
             async for mode, chunk in self._graph.astream(initial_state, config, stream_mode=["updates", "messages"]):
                 if mode == "updates":
-                        for node, update in chunk.items():
-                            if node == "extract_crop":
-                                crops = (update or {}).get("crops", [])
-                            for nxt in NEXT.get(node, lambda u: [])(update or {}):
-                                if nxt not in announced:
-                                    announced.add(nxt)
-                                    evt = _think(nxt)
-                                    if evt: yield evt
+                    for node, update in chunk.items():
+                        update = update or {}
+                        if node == "extract_crop":
+                            crops = update.get("crops", [])
+                        if node == "get_image":
+                            image_urls = update.get("image_urls") or []
+                        if node in _TERMINAL_GENERATE_NODES:
+                            if update.get("answer") is not None:
+                                final_answer = update["answer"]
+                        for nxt in NEXT.get(node, lambda u: [])(update):
+                            if nxt not in announced:
+                                announced.add(nxt)
+                                evt = _think(nxt)
+                                if evt: yield evt
                 elif mode == "messages":
                     msg_chunk, metadata = chunk
                     # Only forward tokens from the actual answer-generating nodes —
@@ -112,8 +137,16 @@ class ChatService:
                         answer += msg_chunk.content
                         yield f"data: {json.dumps({'type': 'token', 'content': msg_chunk.content}, ensure_ascii=False)}\n\n"
                         await asyncio.sleep(get_settings().stream_chunk_delay_seconds)
-            yield f"data: {json.dumps({'type': 'done', 'answer': answer}, ensure_ascii=False)}\n\n"
-
+            # Ensure the complete final answer is available.
+            if final_answer is not None:
+                if final_answer.startswith(answer):
+                    remaining = final_answer[len(answer):]
+                    if remaining:
+                        yield (f"data: {json.dumps({'type': 'token', 'content': remaining}, ensure_ascii=False)}\n\n")
+                answer = final_answer
+            if image_urls:
+                yield (f"data: {json.dumps({'type': 'image', 'image_urls': image_urls}, ensure_ascii=False)}\n\n")
+            yield (f"data: {json.dumps({'type': 'done', 'answer': answer, 'image_urls': image_urls}, ensure_ascii=False)}\n\n")
 
     @staticmethod
     def _to_response(session_id: str, result: dict, answer: str) -> ChatResponse:
@@ -144,6 +177,7 @@ class ChatService:
             rewritten_query=result.get("rewritten_query"),
             sources=sources,
             messages=result.get("messages", []),
+            image_urls=result.get("image_urls") or [],
         )
 
 

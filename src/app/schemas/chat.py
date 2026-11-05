@@ -33,3 +33,4 @@ class ChatResponse(BaseModel):
     rewritten_query: str | None = None
     sources: list[SourceChunk] = Field(default_factory=list)
     messages: list[AnyMessage] = Field(default_factory=list)
+    image_urls: list[str] = Field(default_factory=list)

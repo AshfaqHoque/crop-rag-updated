@@ -2,6 +2,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from app.schemas.sql import EntityToResolve
+
 
 class QueryUnderstanding(BaseModel):
     intent: Literal["chitchat", "company_query", "crop_query", "meaningless", "soil_test_query", "request_agronomist", "capability_query", "out_of_scope"] = Field(
@@ -39,3 +41,4 @@ class DecomposedQuery(BaseModel):
 
 class SectionIdentifier(BaseModel):
     sections: list[str] = []
+    entities: list[EntityToResolve] = Field(default_factory=list)

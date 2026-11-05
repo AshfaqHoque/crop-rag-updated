@@ -69,8 +69,10 @@ def stream_backend(message: str,language_type: str,session_id: str,):
 
             if event_type == "thinking":
                 yield "thinking", data.get("content", "")
-            if event_type == "token":
+            elif event_type == "token":
                 yield "token", data.get("content", "")
+            elif event_type == "image":
+                yield "image", data.get("image_urls", [])
 
             elif event_type == "done":
                 yield "done", data.get("answer", "")
@@ -105,7 +107,7 @@ def get_active_conversation():
         st.session_state.active_session_id
     )
 
-def save_message_pair(user_message: str, assistant_message: str):
+def save_message_pair(user_message: str, assistant_message: str, image_urls: list[str] | None = None,):
     session_id = st.session_state.active_session_id
     conversation = get_active_conversation()
     messages = [
@@ -116,6 +118,7 @@ def save_message_pair(user_message: str, assistant_message: str):
         {
             "role": "assistant",
             "content": assistant_message,
+            "images": image_urls or [],
         },
     ]
     if conversation:
@@ -184,8 +187,14 @@ with st.sidebar:
 conversation = get_active_conversation()
 if conversation:
     for message in conversation["messages"]:
-        with st.chat_message(message["role"],avatar=AVATARS[message["role"]],):
+        with st.chat_message(
+            message["role"],
+            avatar=AVATARS[message["role"]],
+        ):
             st.markdown(message["content"])
+
+            for url in message.get("images", []):
+                st.image(url, width=300)
 else:
     st.title("Crop Advisory AI")
     st.write("Ask about crops, fertilizers, pests, diseases, or farming practices.")
@@ -241,6 +250,7 @@ if user_input:
             )
 
             final_answer = [""]
+            image_urls = []
             def stream_with_loading():
                 for event_type, content in stream_backend(
                     message=user_input,
@@ -285,17 +295,26 @@ if user_input:
                     elif event_type == "token":
                         loading.empty()
                         yield content
+
+                    elif event_type == "image":
+                        for url in content:
+                            if url not in image_urls:
+                                image_urls.append(url)
+
                     elif event_type == "done":
                         final_answer[0] = content
 
             st.write_stream(stream_with_loading())
+            # Display images after the streamed text.
+            for url in image_urls:
+                st.image(url, width=300)
             answer = final_answer[0]
         except Exception as error:
             st.error(get_backend_error(error))
             answer = None
     # Persist completed exchange.
     if answer:
-        save_message_pair(user_input, answer)
+        save_message_pair(user_input, answer, image_urls)
         st.rerun()
 
 

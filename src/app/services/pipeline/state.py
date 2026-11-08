@@ -32,6 +32,7 @@ class PipelineState(TypedDict, total=False):
     resolved_entities: list[dict]
 
     image_urls: list[str]
+    shown_image_urls: list[str]
     
     # retrieval/reranking
     # reducers so parallel branches merge cleanly

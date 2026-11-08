@@ -3,6 +3,7 @@ import json
 import sqlite3
 from pathlib import Path
 from urllib.parse import urlsplit
+import requests
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
@@ -20,6 +21,111 @@ IMAGE_SOURCES = {
     ),
 }
 
+def is_valid_image_url(url: str) -> bool:
+    """
+    Check whether the URL actually contains a valid image.
+    Skip broken URLs, 403/404 errors, and non-image responses.
+    """
+    try:
+        with requests.get(
+            url,
+            headers={"Range": "bytes=0-2047"},
+            stream=True,
+            allow_redirects=True,
+            timeout=(2, 5),
+        ) as response:
+
+            # Check HTTP status
+            if response.status_code not in (200, 206):
+                logger.info(
+                    "Skipping image: HTTP %s from %s",
+                    response.status_code,
+                    url,
+                )
+                return False
+
+            # Check content type
+            content_type = (
+                response.headers.get("Content-Type", "")
+                .split(";", 1)[0]
+                .strip()
+                .lower()
+            )
+
+            if content_type in {
+                "text/html",
+                "text/xml",
+                "application/xml",
+                "application/json",
+            }:
+                return False
+
+            # Read first 2048 bytes
+            data = next(
+                response.iter_content(chunk_size=2048),
+                b"",
+            )
+
+            if not data:
+                return False
+
+            # JPEG, PNG, GIF, BMP
+            if data.startswith((
+                b"\xff\xd8\xff",
+                b"\x89PNG\r\n\x1a\n",
+                b"GIF87a",
+                b"GIF89a",
+                b"BM",
+            )):
+                return True
+
+            # WEBP
+            if (
+                len(data) >= 12
+                and data[:4] == b"RIFF"
+                and data[8:12] == b"WEBP"
+            ):
+                return True
+
+            # TIFF, ICO
+            if data.startswith((
+                b"II*\x00",
+                b"MM\x00*",
+                b"\x00\x00\x01\x00",
+            )):
+                return True
+
+            # AVIF, HEIC
+            if (
+                len(data) >= 12
+                and data[4:8] == b"ftyp"
+                and data[8:12] in {
+                    b"avif",
+                    b"avis",
+                    b"heic",
+                    b"heix",
+                    b"mif1",
+                }
+            ):
+                return True
+
+            # SVG
+            if (
+                content_type == "image/svg+xml"
+                and b"<svg" in data[:2048].lower()
+            ):
+                return True
+
+            logger.info("Invalid image content: %s", url)
+            return False
+
+    except requests.RequestException as exc:
+        logger.warning(
+            "Skipping unreachable image %s: %s",
+            url,
+            exc,
+        )
+        return False
 
 def parse_image_urls(value: str | None) -> list[str]:
     """
@@ -44,7 +150,10 @@ def parse_image_urls(value: str | None) -> list[str]:
         return []
     urls = []
     for item in decoded:
+        if not isinstance(item, str):
+            continue
         url = item.strip()
+
         try:
             parts = urlsplit(url)
             valid = (parts.scheme.lower() in ("http", "https")and bool(parts.hostname))
@@ -93,7 +202,7 @@ def lookup_images(entity_type: str,name: str,) -> list[str]:
     image_urls = []
     for (value,) in rows:
         for url in parse_image_urls(value):
-            if url not in image_urls:
+            if url not in image_urls and is_valid_image_url(url):
                 image_urls.append(url)
     return image_urls
 
@@ -104,6 +213,11 @@ def get_image(state: PipelineState) -> dict:
         return {"image_urls": []}
 
     resolved_entities = state.get("resolved_entities") or []
+
+    # Previously shown images from this session
+    shown_image_urls = list(state.get("shown_image_urls") or [])
+    seen = set(shown_image_urls)
+
     image_urls = []
 
     for entity in resolved_entities:
@@ -113,14 +227,15 @@ def get_image(state: PipelineState) -> dict:
         entity_type = (entity.get("type") or "").strip().lower()
         entity_name = (entity.get("mention") or "").strip()
 
-        # Only retrieve pesticide images for now.
         if entity_type != "pesticide":
             continue
 
         urls = lookup_images(entity_type=entity_type,name=entity_name,)
         for url in urls:
-            if url not in image_urls:
+            if url not in seen:
                 image_urls.append(url)
+                seen.add(url)
 
-    logger.info("Get Image node: found %d image URLs", len(image_urls))
-    return {"image_urls": image_urls,}
+    logger.info("Get Image node: %d unseen image URLs", len(image_urls))
+
+    return {"image_urls": image_urls,"shown_image_urls": shown_image_urls + image_urls,}

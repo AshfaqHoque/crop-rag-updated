@@ -40,12 +40,23 @@ def get_vector_store(collection_name: str | None = None) -> Chroma:
 def build_metadata_filter(
     crops: list[str] | None = None,
     sections: list[str] | None = None,
+    entity_filters: dict[str, list[str]] | None = None,
 ) -> dict | None:
     clauses: list[dict] = []
     if crops:
         clauses.append({"crop_name": {"$in": crops}})
     if sections:
         clauses.append({"section": {"$in": sections}})
+    if entity_filters:
+        entity_clauses = [
+            {field: {"$in": names}}
+            for field, names in entity_filters.items()
+            if field in {"variety_name", "disease_name"} and names
+        ]
+        if len(entity_clauses) == 1:
+            clauses.append(entity_clauses[0])
+        elif entity_clauses:
+            clauses.append({"$or": entity_clauses})
     if not clauses:
         return None
     if len(clauses) == 1:
@@ -59,11 +70,12 @@ def similarity_search(
     k: int = 8,
     crops: list[str] | None = None,
     sections: list[str] | None = None,
+    entity_filters: dict[str, list[str]] | None = None,
     collection_name: str | None = None,
 ) -> list[tuple[Document, float]]:
     """Return (document, distance) pairs after metadata pre-filtering."""
     try:
-        where = build_metadata_filter(crops, sections)
+        where = build_metadata_filter(crops, sections, entity_filters)
         return get_vector_store(collection_name).similarity_search_with_score(
             query,
             k=k,
@@ -78,11 +90,12 @@ def list_documents(
     *,
     crops: list[str] | None = None,
     sections: list[str] | None = None,
+    entity_filters: dict[str, list[str]] | None = None,
     collection_name: str | None = None,
 ) -> list[Document]:
     """Load documents for lexical retrieval using the same metadata filter."""
     try:
-        where = build_metadata_filter(crops, sections)
+        where = build_metadata_filter(crops, sections, entity_filters)
         result = get_vector_store(collection_name).get(where=where,include=["documents", "metadatas"],)
         ids = result.get("ids") or []
         texts = result.get("documents") or []

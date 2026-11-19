@@ -15,8 +15,8 @@ def test_full_graph_crop_query_path(monkeypatch):
             "crops": [],
         }
 
-    def extract(state):
-        visited.append("extract")
+    def extract_sections(state):
+        visited.append("extract_sections")
         return {**state, "crops": ["Boro Paddy"]}
 
     def rewrite(state):
@@ -43,7 +43,7 @@ def test_full_graph_crop_query_path(monkeypatch):
         return {**state, "answer": "answer [1]"}
 
     monkeypatch.setattr(graph_module, "route", route)
-    monkeypatch.setattr(graph_module, "extract_crop", extract)
+    monkeypatch.setattr(graph_module, "extract_sections", extract_sections)
     monkeypatch.setattr(graph_module, "rewrite_query", rewrite)
     monkeypatch.setattr(graph_module, "decompose_query", decompose)
     monkeypatch.setattr(retrieve_and_rerank_module, "retrieve_and_rerank", retrieve_and_rerank)
@@ -54,7 +54,7 @@ def test_full_graph_crop_query_path(monkeypatch):
         {"session_id": "s", "raw_query": "what about it?", "messages": []},
         {"configurable": {"thread_id": "s"}},
     )
-    assert visited[:3] == ["rewrite", "route", "extract"]
+    assert visited[:3] == ["rewrite", "route", "extract_sections"]
     assert sorted(visited[3:-1]) == [
         "compress:query one",
         "compress:query two",
@@ -85,7 +85,7 @@ def test_full_graph_chitchat_skips_retrieval(monkeypatch):
     )
     monkeypatch.setattr(
         graph_module,
-        "extract_crop",
+        "extract_sections",
         lambda state: (_ for _ in ()).throw(AssertionError("crop extraction should be skipped")),
     )
     def generate_chitchat(state):
@@ -121,7 +121,7 @@ def test_full_graph_meaningless_skips_retrieval(monkeypatch):
     )
     monkeypatch.setattr(
         graph_module,
-        "extract_crop",
+        "extract_sections",
         lambda state: (_ for _ in ()).throw(AssertionError("crop extraction should be skipped")),
     )
 

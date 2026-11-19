@@ -76,7 +76,7 @@ class ChatService:
                 "decide_retrieval_mode": lambda u: (
                     ["sql_plan"]
                     if u.get("retrieval_mode") == "sql"
-                    else ["extract_crop"]
+                    else ["extract_sections"]
                 ),
                 # SQL flow
                 "sql_plan": lambda u: ["resolve_entities_sql"],
@@ -84,7 +84,6 @@ class ChatService:
                 "sql_generate": lambda u: ["sql_execute"],
                 "sql_execute": lambda u: ["generate_sql_answer"],
                 # Semantic flow
-                "extract_crop": lambda u: ["extract_sections"],
                 "extract_sections": lambda u: ["resolve_entities_semantic"],
                 "resolve_entities_semantic": lambda u: ["get_image"],
                 "get_image": lambda u: ["decompose_query"],
@@ -111,7 +110,7 @@ class ChatService:
                 if mode == "updates":
                     for node, update in chunk.items():
                         update = update or {}
-                        if node == "extract_crop":
+                        if node == "resolve_entities_semantic":
                             crops = update.get("crops", [])
                         if node == "get_image":
                             image_urls = update.get("image_urls") or []
@@ -126,7 +125,7 @@ class ChatService:
                 elif mode == "messages":
                     msg_chunk, metadata = chunk
                     # Only forward tokens from the actual answer-generating nodes —
-                    # not rewrite_query/route/extract_crop, which also call the LLM.
+                    # not rewrite_query/route/extract_sections, which also call the LLM.
                     if metadata.get("langgraph_node") not in _TERMINAL_GENERATE_NODES:
                         continue
                     if active_message_id is None:

@@ -1,4 +1,5 @@
 """Resolve entity mentions via semantic search + LLM."""
+import re
 from typing import Optional
 
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -28,6 +29,7 @@ _ALIAS = {
     "variety.variety_name": "variety",
 
     # Pest or disease
+    "pest": "disease",
     "pesticide": "disease",
     "disease": "disease",
     "disease_name": "disease",
@@ -83,8 +85,9 @@ def _pick(etype: str, mention: str, candidates: list[str]) -> str | None:
         SystemMessage(content=_SYSTEM_PROMPT),
         HumanMessage(content=f"Type: {etype}\nMention: {mention}\nCandidates:\n{lines}"),
     ], temperature=0)
-    if choice.selected_name in candidates and choice.confidence >= 0.35:
-        return choice.selected_name
+    selected_name = (choice.selected_name or "").strip()
+    if selected_name in candidates and choice.confidence >= 0.35:
+        return selected_name
     return None
 
 
@@ -114,9 +117,17 @@ def resolve_entities_sql(state: PipelineState) -> PipelineState:
 def resolve_entities_semantic(state: PipelineState) -> PipelineState:
     entities = state.get("entities_to_resolve") or []
     if not entities:
-        return state
+        return {**state, "crops": [], "resolved_entities": [], "entity_filters": {}}
 
     resolved = []
+    crops = []
+    entity_filters: dict[str, list[str]] = {}
+    metadata_fields = {
+        "variety": "variety_name",
+        "pest": "disease_name",
+        "pesticide": "disease_name",
+        "disease": "disease_name",
+    }
     for ent in entities:
         etype = (ent.get("type") or "").strip().lower()
         mention = (ent.get("mention") or "").strip()
@@ -127,6 +138,18 @@ def resolve_entities_semantic(state: PipelineState) -> PipelineState:
         name = _pick(etype, mention, cands) if cands else None
         if name:
             logger.info("resolved %s %r → %r", etype, mention, name)
+            if etype == "crop":
+                crop_name = re.sub(r"^.*\(([^()]+)\)\s*$", r"\1", name).strip()
+                crops.append(crop_name)
+            metadata_field = metadata_fields.get(etype)
+            if metadata_field:
+                entity_filters.setdefault(metadata_field, []).append(name)
         resolved.append({"type": etype, "mention": name or mention})
 
-    return {"resolved_entities": resolved,}
+    logger.info("resolve_entities_semantic resolved_entities=%s crops=%s entity_filters=%s",resolved,crops,entity_filters,)
+    return {
+        **state,
+        "resolved_entities": resolved,
+        "crops": crops,
+        "entity_filters": entity_filters,
+    }

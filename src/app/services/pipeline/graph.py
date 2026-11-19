@@ -6,7 +6,6 @@ from langgraph.types import Send
 
 from app.services.pipeline.checkpointer import get_checkpointer
 from app.services.pipeline.nodes.decompose_query import decompose_query
-from app.services.pipeline.nodes.extract_crop import extract_crop
 from app.services.pipeline.nodes.extract_sections import extract_sections
 from app.services.pipeline.nodes.generate import generate
 from app.services.pipeline.nodes.generate_company import generate_company
@@ -53,7 +52,7 @@ def route_after_route(state: PipelineState) -> str:
 def route_after_decide(state: PipelineState) -> str:
     if state.get("retrieval_mode") == "sql":
         return "sql_plan"
-    return "extract_crop"
+    return "extract_sections"
 
 
 def fan_out_subqueries(state: PipelineState) -> list[Send]:
@@ -74,7 +73,6 @@ def build_chat_graph():
     
     builder.add_node("rewrite_query", rewrite_query)
     builder.add_node("route", route)
-    builder.add_node("extract_crop", extract_crop)
     builder.add_node("extract_sections", extract_sections)
     builder.add_node("retrieve_rerank_and_compress", retrieve_rerank_and_compress)
     builder.add_node("decompose_query", decompose_query)
@@ -119,7 +117,7 @@ def build_chat_graph():
         route_after_decide,
         {
             "sql_plan": "sql_plan",
-            "extract_crop": "extract_crop",
+            "extract_sections": "extract_sections",
         },
     )
 
@@ -128,7 +126,6 @@ def build_chat_graph():
     builder.add_edge("sql_generate", "sql_execute")
     builder.add_edge("sql_execute", "generate_sql_answer")
     builder.add_edge("generate_sql_answer", END)
-    builder.add_edge("extract_crop", "extract_sections")
     builder.add_edge("extract_sections", "resolve_entities_semantic")
     builder.add_edge("resolve_entities_semantic", "get_image")
     builder.add_edge("get_image", "decompose_query")

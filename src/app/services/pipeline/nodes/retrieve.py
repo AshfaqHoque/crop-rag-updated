@@ -20,6 +20,7 @@ def retrieve(state: PipelineState) -> PipelineState:
         query,
         crops=state.get("crops"),
         sections=state.get("sections"),
+        entity_filters=state.get("entity_filters"),
         top_k=get_settings().retrieval_top_k,
     )
     logger.info("retrieve documents=%d for query='%s'", len(documents), query)

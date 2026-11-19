@@ -43,6 +43,7 @@ class SemanticRetriever:
         *,
         crops: list[str] | None = None,
         sections: list[str] | None = None,
+        entity_filters: dict[str, list[str]] | None = None,
         top_k: int | None = None,
     ) -> tuple[list[Document], str]:
         settings = get_settings()
@@ -53,6 +54,7 @@ class SemanticRetriever:
                 "k": limit,
                 "crops": crops,
                 "sections": sections,
+                "entity_filters": entity_filters,
             }
             if self._collection_name:
                 search_kwargs["collection_name"] = self._collection_name
@@ -60,6 +62,7 @@ class SemanticRetriever:
             lexical_kwargs = {
                 "crops": crops,
                 "sections": sections,
+                "entity_filters": entity_filters,
             }
             if self._collection_name:
                 lexical_kwargs["collection_name"] = self._collection_name

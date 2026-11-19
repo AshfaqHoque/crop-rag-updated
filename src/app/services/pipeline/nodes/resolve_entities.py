@@ -73,7 +73,7 @@ def _search(etype: str, mention: str, k: int = 5) -> list[str]:
 _SYSTEM_PROMPT = """
 Pick the best matching name from the candidates. Return null if none fit. Never invent names.
 Output a JSON object with two fields:
-- `selected_name`: The best matching name or null
+- `selected_name`: The best matching name exactly as it appears in the candidates or null
 - `confidence`: A confidence score between 0 and 1
 """
 

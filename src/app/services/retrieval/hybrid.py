@@ -43,6 +43,8 @@ class SemanticRetriever:
         *,
         crops: list[str] | None = None,
         sections: list[str] | None = None,
+        varieties: list[str] | None = None,
+        pests: list[str] | None = None,
         top_k: int | None = None,
     ) -> tuple[list[Document], str]:
         settings = get_settings()
@@ -53,13 +55,18 @@ class SemanticRetriever:
                 "k": limit,
                 "crops": crops,
                 "sections": sections,
+                "varieties": varieties,
+                "pests": pests,
             }
             if self._collection_name:
                 search_kwargs["collection_name"] = self._collection_name
             dense_results = self._dense_search(query, **search_kwargs)
+
             lexical_kwargs = {
                 "crops": crops,
                 "sections": sections,
+                "varieties": varieties,
+                "pests": pests,
             }
             if self._collection_name:
                 lexical_kwargs["collection_name"] = self._collection_name

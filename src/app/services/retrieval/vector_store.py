@@ -37,15 +37,22 @@ def get_vector_store(collection_name: str | None = None) -> Chroma:
     return Chroma(**kwargs)
 
 
+# vector_store.py  – replace build_metadata_filter + update the two callers
 def build_metadata_filter(
     crops: list[str] | None = None,
     sections: list[str] | None = None,
+    varieties: list[str] | None = None,
+    pests: list[str] | None = None,
 ) -> dict | None:
     clauses: list[dict] = []
     if crops:
         clauses.append({"crop_name": {"$in": crops}})
     if sections:
         clauses.append({"section": {"$in": sections}})
+    if varieties:
+        clauses.append({"variety_name": {"$in": varieties}})
+    if pests:
+        clauses.append({"disease_name": {"$in": pests}})
     if not clauses:
         return None
     if len(clauses) == 1:
@@ -59,17 +66,16 @@ def similarity_search(
     k: int = 8,
     crops: list[str] | None = None,
     sections: list[str] | None = None,
+    varieties: list[str] | None = None,
+    pests: list[str] | None = None,
     collection_name: str | None = None,
 ) -> list[tuple[Document, float]]:
-    """Return (document, distance) pairs after metadata pre-filtering."""
     try:
-        where = build_metadata_filter(crops, sections)
+        where = build_metadata_filter(crops, sections, varieties, pests)
         return get_vector_store(collection_name).similarity_search_with_score(
-            query,
-            k=k,
-            filter=where,
+            query, k=k, filter=where,
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.error("Vector search failed: %s", exc)
         raise RetrievalError(str(exc)) from exc
 
@@ -78,12 +84,15 @@ def list_documents(
     *,
     crops: list[str] | None = None,
     sections: list[str] | None = None,
+    varieties: list[str] | None = None,
+    pests: list[str] | None = None,
     collection_name: str | None = None,
 ) -> list[Document]:
-    """Load documents for lexical retrieval using the same metadata filter."""
     try:
-        where = build_metadata_filter(crops, sections)
-        result = get_vector_store(collection_name).get(where=where,include=["documents", "metadatas"],)
+        where = build_metadata_filter(crops, sections, varieties, pests)
+        result = get_vector_store(collection_name).get(
+            where=where, include=["documents", "metadatas"],
+        )
         ids = result.get("ids") or []
         texts = result.get("documents") or []
         metadatas = result.get("metadatas") or []
@@ -94,6 +103,6 @@ def list_documents(
                 metadata["chunk_id"] = ids[index]
             docs.append(Document(page_content=text or "", metadata=metadata))
         return docs
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.error("Listing Chroma documents failed: %s", exc)
         raise RetrievalError(str(exc)) from exc

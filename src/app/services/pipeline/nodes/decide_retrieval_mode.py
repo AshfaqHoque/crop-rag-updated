@@ -18,8 +18,10 @@ You must choose exactly one mode:
 
 - "sql": any listing, sorting, ranking, counting, filtering, or lookup, as long as everything the question asks for or filters by is a column in the schema above.
 - "semantic": everything else, including any question that asks for or filters by something not in the schema, plus advice, procedures, and reasoning.
-
 If any part of the question is not in the schema, choose "semantic". Never answer the user.
+
+Example: "আমন ধানের কী কী রোগ আছে?" → "sql". List pesticide.disease_name, join pesticide.crop_id to crop.id, and filter by crop.crop_name.
+
 Return two fields: "reason" (name the table/columns that answer it, or the part with no column) and "mode" ("sql" or "semantic").
 """
 

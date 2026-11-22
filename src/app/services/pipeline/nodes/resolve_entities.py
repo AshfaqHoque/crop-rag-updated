@@ -6,6 +6,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import BaseModel, Field
 
 from app.core.logging import get_logger
+from app.ingestion.prepare_data import normalize_name
 from app.services.llm.client import invoke_structured
 from app.services.pipeline.state import PipelineState
 from app.services.retrieval.vector_store import get_vector_store
@@ -114,42 +115,47 @@ def resolve_entities_sql(state: PipelineState) -> PipelineState:
     return {**state, "query_plan": {**plan, "entities_to_resolve": resolved}}
 
 
+# resolve_entities.py  – replace resolve_entities_semantic
 def resolve_entities_semantic(state: PipelineState) -> PipelineState:
     entities = state.get("entities_to_resolve") or []
     if not entities:
-        return {**state, "crops": [], "resolved_entities": [], "entity_filters": {}}
+        return {
+            "resolved_entities": [],
+            "varieties": [],
+            "pests": [],
+        }
 
     resolved = []
-    crops = []
-    entity_filters: dict[str, list[str]] = {}
-    metadata_fields = {
-        "variety": "variety_name",
-        "pest": "disease_name",
-        "pesticide": "disease_name",
-        "disease": "disease_name",
-    }
+    varieties: list[str] = []
+    pests: list[str] = []
+
     for ent in entities:
         etype = (ent.get("type") or "").strip().lower()
         mention = (ent.get("mention") or "").strip()
         if not etype or not mention:
             resolved.append(ent)
             continue
+
+        canonical_type = _ALIAS.get(etype, etype)
         cands = _search(etype, mention)
         name = _pick(etype, mention, cands) if cands else None
+        final_name = normalize_name(name or mention)
+
         if name:
             logger.info("resolved %s %r → %r", etype, mention, name)
-            if etype == "crop":
-                crop_name = re.sub(r"^.*\(([^()]+)\)\s*$", r"\1", name).strip()
-                crops.append(crop_name)
-            metadata_field = metadata_fields.get(etype)
-            if metadata_field:
-                entity_filters.setdefault(metadata_field, []).append(name)
-        resolved.append({"type": etype, "mention": name or mention})
 
-    logger.info("resolve_entities_semantic resolved_entities=%s crops=%s entity_filters=%s",resolved,crops,entity_filters,)
+        resolved.append({"type": etype, "mention": final_name})
+
+        if canonical_type == "variety" and final_name:
+            if final_name not in varieties:
+                varieties.append(final_name)
+        elif canonical_type in ("disease", "pesticide") and final_name:
+            if final_name not in pests:
+                pests.append(final_name)
+
+    logger.info("resolve_entities_semantic varieties=%s pests=%s", varieties, pests)
     return {
-        **state,
         "resolved_entities": resolved,
-        "crops": crops,
-        "entity_filters": entity_filters,
+        "varieties": varieties,
+        "pests": pests,
     }

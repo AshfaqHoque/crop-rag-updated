@@ -46,6 +46,16 @@ from app.core.logging import get_logger
 logger = get_logger(__name__)
 
 MAX_CHUNK_SIZE = 5000
+import re
+import unicodedata
+
+def normalize_name(s: str) -> str:
+    if not s:
+        return ""
+    s = unicodedata.normalize("NFC", s)
+    s = s.replace("\u00a0", " ")          # non-breaking space → normal
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
 
 def safe_str(val: Any) -> str:
     """Safely convert None, int, float, or string values to a stripped string."""
@@ -311,7 +321,7 @@ def chunk_varieties(crop: dict) -> list[Chunk]:
                     "crop_category_name": (crop.get("crop_category") or {}).get("category_name") or "",
                     "section": "variety",
                     "variety_id": str(v.get("id")),
-                    "variety_name": name,
+                    "variety_name": normalize_name(name),
                 },
             )
         )
@@ -371,7 +381,7 @@ def chunk_pesticides(crop: dict) -> list[Chunk]:
                     "crop_bangla_name": crop.get("crop_bangla_name"),
                     "crop_category_name": (crop.get("crop_category") or {}).get("category_name") or "",
                     "section": "pesticide",
-                    "disease_name": disease_name,
+                    "disease_name": normalize_name(disease_name),
                     "disease_type": p.get("disease_type"),
                 },
             )

@@ -32,6 +32,9 @@ class PipelineState(TypedDict, total=False):
     resolved_entities: list[dict]
     entity_filters: dict[str, list[str]]
 
+    varieties: list[str]
+    pests: list[str]
+
     image_urls: list[str]
     shown_image_urls: list[str]
     

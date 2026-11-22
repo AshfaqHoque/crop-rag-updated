@@ -14,14 +14,19 @@ def get_semantic_retriever() -> SemanticRetriever:
     return SemanticRetriever()
 
 
+# retrieve.py  – pass the new state fields
 def retrieve(state: PipelineState) -> PipelineState:
     query = state.get("rewritten_query") or state["raw_query"]
     documents, _ = get_semantic_retriever().retrieve(
         query,
         crops=state.get("crops"),
         sections=state.get("sections"),
-        entity_filters=state.get("entity_filters"),
+        varieties=state.get("varieties"),
+        pests=state.get("pests"),
         top_k=get_settings().retrieval_top_k,
     )
-    logger.info("retrieve documents=%d for query='%s'", len(documents), query)
+    logger.info(
+        "retrieve documents=%d for query='%s' varieties=%s pests=%s",
+        len(documents), query, state.get("varieties"), state.get("pests"),
+    )
     return {"retrieved_documents": documents}

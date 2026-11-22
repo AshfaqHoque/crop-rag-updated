@@ -136,17 +136,16 @@ def resolve_entities_semantic(state: PipelineState) -> PipelineState:
         canonical_type = _ALIAS.get(etype, etype)
         cands = _search(etype, mention)
         name = _pick(etype, mention, cands) if cands else None
-        final_name = normalize_name(name or mention)
-
-        if name:
-            logger.info("resolved %s %r → %r", etype, mention, name)
-
+        if not name:
+            logger.warning("unresolved %s %r, skipping filter", etype, mention)
+            continue                      # <- don't filter on an unmatched name
+        final_name = normalize_name(name)
+        logger.info("resolved %s %r → %r", etype, mention, name)
         resolved.append({"type": etype, "mention": final_name})
-
-        if canonical_type == "variety" and final_name:
+        if canonical_type == "variety":
             if final_name not in varieties:
                 varieties.append(final_name)
-        elif canonical_type in ("disease", "pesticide") and final_name:
+        elif canonical_type in ("disease", "pesticide"):
             if final_name not in pests:
                 pests.append(final_name)
 

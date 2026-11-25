@@ -17,6 +17,8 @@ class FakeGraph:
         return {
             **state,
             "language": "en",
+            "intent": "crop_query",
+            "intent_reason": "The user is asking for agricultural advice.",
             "rewritten_query": "standalone query",
             "answer": "grounded answer [1]",
             "reranked_documents": [
@@ -49,6 +51,8 @@ async def test_chat_service_uses_langgraph_thread_state():
     assert graph.states[0]["messages"][0].content == "follow up"
     assert graph.states[0]["language_type"] == "english"
     assert response.answer == "grounded answer [1]"
+    assert response.intent == "crop_query"
+    assert response.intent_reason == "The user is asking for agricultural advice."
     assert response.sources[0].chunk_id == "5_seed"
     assert response.sources[0].distance == 0.91
 
@@ -72,7 +76,12 @@ async def test_stream_chat_uses_bangla_thinking_message():
 async def test_stream_chat_emits_out_of_scope_fallback_from_node_update():
     class OutOfScopeGraph:
         async def astream(self, state, config, stream_mode):
-            yield "updates", {"route": {"intent": "out_of_scope"}}
+            yield "updates", {
+                "route": {
+                    "intent": "out_of_scope",
+                    "intent_reason": "The user is asking for something unrelated to agriculture.",
+                }
+            }
             yield "updates", {
                 "generate_out_of_scope": {
                     "answer": "Sorry, I can't help with this topic. Would you like to know something about agriculture?"
@@ -89,3 +98,5 @@ async def test_stream_chat_emits_out_of_scope_fallback_from_node_update():
     assert any(event["type"] == "token" and event["content"].startswith("Sorry,") for event in events)
     assert events[-1]["type"] == "done"
     assert events[-1]["answer"].startswith("Sorry,")
+    assert events[-1]["intent"] == "out_of_scope"
+    assert events[-1]["intent_reason"] == "The user is asking for something unrelated to agriculture."

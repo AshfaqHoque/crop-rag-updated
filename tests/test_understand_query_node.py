@@ -9,20 +9,27 @@ MODULE = "app.services.pipeline.nodes.route"
 
 
 @patch(f"{MODULE}.invoke_structured")
-def test_route_returns_intent_only(mock_invoke):
-    mock_invoke.return_value = QueryUnderstanding(intent="crop_query")
+def test_route_returns_intent_and_reason(mock_invoke):
+    mock_invoke.return_value = QueryUnderstanding(
+        intent="crop_query",
+        reason="The user is asking for agricultural advice about rice.",
+    )
     state = {"raw_query": "বোরো ধানের বীজ হার কত?", "history": []}
 
     result = route(state)
 
     assert result["intent"] == "crop_query"
+    assert result["intent_reason"] == "The user is asking for agricultural advice about rice."
     assert "sections" not in result
     assert result["raw_query"] == "বোরো ধানের বীজ হার কত?"
 
 
 @patch(f"{MODULE}.invoke_structured")
 def test_route_does_not_detect_sections(mock_invoke):
-    mock_invoke.return_value = QueryUnderstanding(intent="crop_query")
+    mock_invoke.return_value = QueryUnderstanding(
+        intent="crop_query",
+        reason="The user is asking about crops.",
+    )
     state = {"raw_query": "some query", "history": []}
 
     result = route(state)
@@ -33,7 +40,10 @@ def test_route_does_not_detect_sections(mock_invoke):
 
 @patch(f"{MODULE}.invoke_structured")
 def test_route_chitchat(mock_invoke):
-    mock_invoke.return_value = QueryUnderstanding(intent="chitchat")
+    mock_invoke.return_value = QueryUnderstanding(
+        intent="chitchat",
+        reason="The user is greeting the assistant.",
+    )
     state = {"raw_query": "hi there", "history": []}
 
     result = route(state)
@@ -43,7 +53,10 @@ def test_route_chitchat(mock_invoke):
 
 @patch(f"{MODULE}.invoke_structured")
 def test_route_uses_raw_query_and_history(mock_invoke):
-    mock_invoke.return_value = QueryUnderstanding(intent="crop_query")
+    mock_invoke.return_value = QueryUnderstanding(
+        intent="crop_query",
+        reason="The follow-up concerns the previous crop question.",
+    )
     state = {
         "raw_query": "এতে কতবার সেচ দিতে হয়?",
         "messages": [

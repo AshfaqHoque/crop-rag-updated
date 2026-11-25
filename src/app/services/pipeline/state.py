@@ -19,6 +19,7 @@ class PipelineState(TypedDict, total=False):
 
     # query routing
     intent: str
+    intent_reason: str
 
     # subject resolution
     rewritten_query: str

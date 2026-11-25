@@ -9,6 +9,9 @@ class QueryUnderstanding(BaseModel):
     intent: Literal["chitchat", "company_query", "crop_query", "meaningless", "soil_test_query", "request_agronomist", "capability_query", "out_of_scope"] = Field(
         description="The conversational intent of the current message."
     )
+    reason: str = Field(
+        description="One short sentence explaining why the message has this intent."
+    )
 
 
 class QueryRewrite(BaseModel):

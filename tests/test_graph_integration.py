@@ -65,6 +65,64 @@ def test_full_graph_crop_query_path(monkeypatch):
     assert result["answer"] == "answer [1]"
 
 
+def test_full_graph_uses_web_search_when_compression_is_empty(monkeypatch):
+    visited = []
+    search_document = Document(
+        page_content="Source: https://ais.gov.bd/rice\n\nRice guidance",
+        metadata={"source": "web_search", "url": "https://ais.gov.bd/rice"},
+    )
+
+    monkeypatch.setattr(
+        graph_module,
+        "rewrite_query",
+        lambda state: {**state, "rewritten_query": "rice guidance"},
+    )
+    monkeypatch.setattr(
+        graph_module,
+        "route",
+        lambda state: {**state, "intent": "crop_query"},
+    )
+    monkeypatch.setattr(graph_module, "extract_crop", lambda state: state)
+    monkeypatch.setattr(graph_module, "extract_sections", lambda state: state)
+    monkeypatch.setattr(graph_module, "resolve_entities_semantic", lambda state: state)
+    monkeypatch.setattr(graph_module, "get_image", lambda state: state)
+    monkeypatch.setattr(
+        graph_module,
+        "decompose_query",
+        lambda state: {**state, "subqueries": ["rice guidance"]},
+    )
+    monkeypatch.setattr(
+        retrieve_and_rerank_module,
+        "retrieve_and_rerank",
+        lambda state: {"retrieved_documents": [], "reranked_documents": []},
+    )
+
+    async def compress(state):
+        return {"compressed_documents": []}
+
+    async def search(state):
+        visited.append(("web_search", state["rewritten_query"]))
+        return {"compressed_documents": [search_document]}
+
+    def generate(state):
+        visited.append(("generate", state["compressed_documents"]))
+        return {**state, "answer": "grounded answer"}
+
+    monkeypatch.setattr(retrieve_and_rerank_module, "compress_chunk", compress)
+    monkeypatch.setattr(graph_module, "web_search", search)
+    monkeypatch.setattr(graph_module, "generate", generate)
+
+    result = graph_module.build_chat_graph().invoke(
+        {"session_id": "s", "raw_query": "How to grow rice?", "messages": []},
+        {"configurable": {"thread_id": "s"}},
+    )
+
+    assert visited[0] == ("web_search", "rice guidance")
+    assert visited[1][0] == "generate"
+    assert visited[1][1] == [search_document]
+    assert result["answer"] == "grounded answer"
+
+
 def test_full_graph_chitchat_skips_retrieval(monkeypatch):
     visited = []
 

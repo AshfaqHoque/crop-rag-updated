@@ -76,9 +76,13 @@ flowchart TD
     FO --> RRC2[retrieve_rerank_and_compress]
     FO --> RRCn[retrieve_rerank_and_compress ...]
 
-    RRC1 --> GEN[generate]
-    RRC2 --> GEN
-    RRCn --> GEN
+    RRC1 -->|relevant context| GEN[generate]
+    RRC2 -->|relevant context| GEN
+    RRCn -->|relevant context| GEN
+    RRC1 -->|empty context| WS[web_search]
+    RRC2 -->|empty context| WS
+    RRCn -->|empty context| WS
+    WS --> GEN
 
     RC --> GCo[generate_company]
     RS --> GST[generate_soil_test]
@@ -126,7 +130,8 @@ flowchart LR
 | **rewrite_query** | Resolves pronouns/coreferences from conversation history; converts Banglish → native Bangla script; preserves entity identity |
 | **route** | Classifies intent: `crop_query`, `company_query`, `soil_test_query`, `chitchat`, `capability_query`, `meaningless`, `request_agronomist` |
 | **decompose_query** | Splits multi-entity questions into subqueries while retaining shared context (crop + disease, etc.) |
-| **retrieve_rerank_and_compress** | Hybrid retrieval → external reranker → LLM span extraction (runs in parallel per subquery) |
+| **retrieve_rerank_and_compress** | Hybrid retrieval → external reranker → LLM span extraction (runs in parallel per subquery); empty results use the AIS web-search endpoint |
+| **web_search** | Fetches AIS search results when local retrieval has no relevant context; results are passed to `generate` as grounded context |
 | **generate** | Produces a grounded, conversational answer in the user’s language; never invents rates or cites the context as a source |
 
 Other intents bypass retrieval and go to dedicated generation nodes.
@@ -211,6 +216,7 @@ CHROMA_COMPANY_COLLECTION=company_knowledge_base
 CHROMA_SOIL_TEST_COLLECTION=soil_test_knowledge_base
 
 RERANKER_URL=http://localhost:8090/rerank
+WEB_SEARCH_URL=http://localhost:8000/search
 CHECKPOINT_BACKEND=memory     # or redis
 ```
 

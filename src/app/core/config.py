@@ -68,6 +68,10 @@ class Settings(BaseSettings):
     reranker_url: str = "http://localhost:8090/rerank"
     reranker_timeout_seconds: float = 30.0
 
+    # External AIS web search
+    web_search_url: str = "http://localhost:8086/search"
+    web_search_timeout_seconds: float = 20.0
+
     # LangSmith tracing
     langsmith_tracing: bool = True
     langsmith_api_key: SecretStr | None = None

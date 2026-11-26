@@ -28,6 +28,7 @@ from app.services.pipeline.nodes.sql_generate import sql_generate
 from app.services.pipeline.nodes.sql_execute import sql_execute
 from app.services.pipeline.nodes.generate_sql_answer import generate_sql_answer
 from app.services.pipeline.nodes.get_image import get_image
+from app.services.pipeline.nodes.web_search import web_search
 from app.services.pipeline.state import PipelineState
 
 
@@ -54,6 +55,10 @@ def route_after_decide(state: PipelineState) -> str:
     if state.get("retrieval_mode") == "sql":
         return "sql_plan"
     return "extract_crop"
+
+
+def route_after_compression(state: PipelineState) -> str:
+    return "generate" if state.get("compressed_documents") else "web_search"
 
 
 def fan_out_subqueries(state: PipelineState) -> list[Send]:
@@ -96,6 +101,7 @@ def build_chat_graph():
     builder.add_node("sql_execute", sql_execute)
     builder.add_node("generate_sql_answer", generate_sql_answer)
     builder.add_node("get_image", get_image)
+    builder.add_node("web_search", web_search)
 
     builder.add_edge(START, "rewrite_query")
     builder.add_edge("rewrite_query", "route")
@@ -135,7 +141,12 @@ def build_chat_graph():
     builder.add_conditional_edges("decompose_query", fan_out_subqueries, ["retrieve_rerank_and_compress"])
     builder.add_edge("retrieve_company", "generate_company")
     builder.add_edge("retrieve_soil_test", "generate_soil_test")
-    builder.add_edge("retrieve_rerank_and_compress", "generate")
+    builder.add_conditional_edges(
+        "retrieve_rerank_and_compress",
+        route_after_compression,
+        {"web_search": "web_search", "generate": "generate"},
+    )
+    builder.add_edge("web_search", "generate")
     builder.add_edge("generate", END)
     builder.add_edge("generate_company", END)
     builder.add_edge("generate_chitchat", END)

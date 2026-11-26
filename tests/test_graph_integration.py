@@ -123,6 +123,67 @@ def test_full_graph_uses_web_search_when_compression_is_empty(monkeypatch):
     assert result["answer"] == "grounded answer"
 
 
+def test_full_graph_uses_web_search_when_sql_results_are_empty(monkeypatch):
+    visited = []
+    search_document = Document(
+        page_content="Source: https://ais.gov.bd/rice\n\nRice guidance",
+        metadata={"source": "web_search", "url": "https://ais.gov.bd/rice"},
+    )
+
+    monkeypatch.setattr(
+        graph_module,
+        "rewrite_query",
+        lambda state: {**state, "rewritten_query": "rice guidance"},
+    )
+    monkeypatch.setattr(
+        graph_module,
+        "route",
+        lambda state: {**state, "intent": "crop_query"},
+    )
+    monkeypatch.setattr(
+        graph_module,
+        "decide_retrieval_mode",
+        lambda state: {**state, "retrieval_mode": "sql"},
+    )
+    monkeypatch.setattr(graph_module, "sql_plan", lambda state: state)
+    monkeypatch.setattr(graph_module, "resolve_entities_sql", lambda state: state)
+    monkeypatch.setattr(graph_module, "sql_generate", lambda state: state)
+    monkeypatch.setattr(
+        graph_module,
+        "sql_execute",
+        lambda state: {**state, "sql_results": []},
+    )
+    monkeypatch.setattr(
+        graph_module,
+        "generate_sql_answer",
+        lambda state: (_ for _ in ()).throw(
+            AssertionError("SQL answer generation should be skipped")
+        ),
+    )
+
+    async def search(state):
+        visited.append(("web_search", state["rewritten_query"]))
+        return {"compressed_documents": [search_document]}
+
+    def generate(state):
+        visited.append(("generate", state["compressed_documents"]))
+        return {**state, "answer": "grounded answer"}
+
+    monkeypatch.setattr(graph_module, "web_search", search)
+    monkeypatch.setattr(graph_module, "generate", generate)
+
+    result = graph_module.build_chat_graph().invoke(
+        {"session_id": "s", "raw_query": "How to grow rice?", "messages": []},
+        {"configurable": {"thread_id": "s"}},
+    )
+
+    assert visited == [
+        ("web_search", "rice guidance"),
+        ("generate", [search_document]),
+    ]
+    assert result["answer"] == "grounded answer"
+
+
 def test_full_graph_chitchat_skips_retrieval(monkeypatch):
     visited = []
 

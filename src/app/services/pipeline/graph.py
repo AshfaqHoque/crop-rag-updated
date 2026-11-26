@@ -61,6 +61,10 @@ def route_after_compression(state: PipelineState) -> str:
     return "generate" if state.get("compressed_documents") else "web_search"
 
 
+def route_after_sql_execute(state: PipelineState) -> str:
+    return "generate_sql_answer" if state.get("sql_results") else "web_search"
+
+
 def fan_out_subqueries(state: PipelineState) -> list[Send]:
     return [
         Send("retrieve_rerank_and_compress", {
@@ -132,7 +136,14 @@ def build_chat_graph():
     builder.add_edge("sql_plan", "resolve_entities_sql")
     builder.add_edge("resolve_entities_sql", "sql_generate")
     builder.add_edge("sql_generate", "sql_execute")
-    builder.add_edge("sql_execute", "generate_sql_answer")
+    builder.add_conditional_edges(
+        "sql_execute",
+        route_after_sql_execute,
+        {
+            "generate_sql_answer": "generate_sql_answer",
+            "web_search": "web_search",
+        },
+    )
     builder.add_edge("generate_sql_answer", END)
     builder.add_edge("extract_crop", "extract_sections")
     builder.add_edge("extract_sections", "resolve_entities_semantic")

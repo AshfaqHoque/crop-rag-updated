@@ -68,8 +68,10 @@ class Settings(BaseSettings):
     reranker_url: str = "http://localhost:8090/rerank"
     reranker_timeout_seconds: float = 30.0
 
-    # External AIS web search
-    web_search_url: str = "http://localhost:8086/search"
+    # External AIS web search (SearXNG)
+    searxng_url: str = "http://localhost:8085/search"
+    web_search_site: str = "ais.gov.bd"
+    web_search_limit: int = 5
     web_search_timeout_seconds: float = 20.0
 
     # LangSmith tracing
